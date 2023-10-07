@@ -1,0 +1,37 @@
+---
+layout: default.njk
+title: Observation Summary
+js: obssummary
+---
+
+{%block content%}
+    {% import "imports/searchform.njk" as searchform %}
+
+    <form id="form" novalidate>
+
+        <div id="search-crit" class="no-exclude">
+
+            <div id="f1" class="filter section">
+
+                {{ searchform.inp_proj("f1") }}
+                {{ searchform.inp_place("f1") }}
+                {{ searchform.inp_taxon("f1") }}
+
+                <input type="checkbox" id="f1-researchgrade">
+                <label for="f1-researchgrade">Research Grade</label>
+
+                <div class="buttons section">
+                    <input type="submit" id="filter-submit">
+                </div>
+
+            </div>
+
+        </div>
+
+    </form>
+
+    {%include "imports/progress.njk"%}
+
+    <div id="results"></div>
+
+{% endblock %}

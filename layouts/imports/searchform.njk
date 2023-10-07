@@ -1,0 +1,35 @@
+{% macro inp_observer(prefix) %}
+    <div class="form-input">
+        <label for="{{prefix}}-observer-name">Observer</label>
+        <input list="{{prefix}}-observer-name-list" id="{{prefix}}-observer-name" autocomplete="off">
+        <input type="hidden" id="{{prefix}}-observer-id">
+        <datalist id="{{prefix}}-observer-name-list"></datalist>
+    </div>
+{% endmacro %}
+
+{% macro inp_place(prefix) %}
+    <div class="form-input">
+        <label for="{{prefix}}-place-name">Place</label>
+        <input list="{{prefix}}-place-name-list" id="{{prefix}}-place-name" autocomplete="off">
+        <input type="hidden" id="{{prefix}}-place-id">
+        <datalist id="{{prefix}}-place-name-list"></datalist>
+    </div>
+{% endmacro %}
+
+{% macro inp_proj(prefix) %}
+    <div class="form-input">
+        <label for="{{prefix}}-proj-name">Project</label>
+        <input list="{{prefix}}-proj-name-list" id="{{prefix}}-proj-name" autocomplete="off">
+        <input type="hidden" id="{{prefix}}-proj-id">
+        <datalist id="{{prefix}}-proj-name-list"></datalist>
+    </div>
+{% endmacro %}
+
+{% macro inp_taxon(prefix) %}
+    <div class="form-input">
+        <label for="{{prefix}}-taxon-name">Taxon</label>
+        <input list="{{prefix}}-taxon-name-list" id="{{prefix}}-taxon-name" autocomplete="off">
+        <input type="hidden" id="{{prefix}}-taxon-id">
+        <datalist id="{{prefix}}-taxon-name-list"></datalist>
+    </div>
+{% endmacro %}

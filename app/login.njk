@@ -1,0 +1,17 @@
+---
+layout: default.njk
+title: Login
+js: login
+---
+
+{%block content%}
+
+    <div class="section">
+        <form id="form" style="display:none;">
+            <textarea id="token" style="width:100%"></textarea>
+            <input type="submit">
+        </form>
+        <input type="button" value="Log Out" id="logout" style="display:none;">
+    </div>
+
+{% endblock %}

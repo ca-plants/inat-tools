@@ -1,0 +1,21 @@
+---
+layout: default.njk
+title: Observation Detail
+js: obsdetail
+---
+
+{%block content%}
+
+    <h1 id="h1"></h1>
+
+    <div id="filterdesc" class="section summary"></div>
+
+    <div class="section">
+        <form id="form"></form>
+    </div>
+
+    {%include "imports/progress.njk"%}
+
+    <div id="results"></div>
+
+{% endblock %}

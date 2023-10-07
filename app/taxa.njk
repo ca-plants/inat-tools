@@ -1,0 +1,79 @@
+---
+layout: default.njk
+title: Species Summary
+js: taxa
+---
+
+{%block content%}
+    {% import "imports/searchform.njk" as searchform %}
+
+    <form id="form">
+
+        <div id="search-crit" class="no-exclude">
+
+            <div id="f1" class="filter section">
+
+                <div>Include:</div>
+
+                {{ searchform.inp_place("f1") }}
+                {{ searchform.inp_observer("f1") }}
+                {{ searchform.inp_taxon("f1") }}
+
+                <fieldset>
+                    <legend>Date</legend>
+                    <div class="form-input">
+                        <label for="f1-month1">Month</label>
+                        <select id="f1-month1">
+                            <option></option>
+                            <option value="1">January</option>
+                            <option value="2">February</option>
+                            <option value="3">March</option>
+                            <option value="4">April</option>
+                            <option value="5">May</option>
+                            <option value="6">June</option>
+                            <option value="7">July</option>
+                            <option value="8">August</option>
+                            <option value="9">September</option>
+                            <option value="10">October</option>
+                            <option value="11">November</option>
+                            <option value="12">December</option>
+                        </select>
+                    </div>
+                </fieldset>
+
+                <input type="checkbox" id="f1-researchgrade">
+                <label for="f1-researchgrade">Research Grade</label>
+
+                <div class="buttons section">
+                    <input type="submit" id="filter-submit">
+                    <input type="button" id="add-exclusions" value="Add Exclusions">
+                </div>
+
+            </div>
+
+            <div id="f2" class="filter section" style="display: none;">
+
+                <div>Exclude:</div>
+
+                {{ searchform.inp_place("f2") }}
+                {{ searchform.inp_observer("f2") }}
+                {{ searchform.inp_taxon("f2") }}
+
+                <input type="checkbox" id="f2-researchgrade">
+                <label for="f2-researchgrade">Research Grade</label>
+
+                <div class="buttons section">
+                    <input type="button" id="remove-exclusions" value="Remove Exclusions">
+                </div>
+
+            </div>
+
+        </div>
+
+    </form>
+
+    {%include "imports/progress.njk"%}
+
+    <div id="results"></div>
+
+    {%endblock%}
