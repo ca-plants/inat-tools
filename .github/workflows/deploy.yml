@@ -19,7 +19,7 @@ jobs:
         with:
           node-version: '*'
       - run: npm update
-      - run: node build.js
+      - run: node build.js --path "/inat-tools/"
 
       - uses: actions/upload-pages-artifact@v1
         with:
