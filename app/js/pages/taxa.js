@@ -214,7 +214,7 @@ class UI extends SearchUI {
             this.removeExclusions();
         }
 
-        document.getElementById( "f1-place-name" ).focus();
+        document.getElementById( "f1-proj-name" ).focus();
 
     }
 
