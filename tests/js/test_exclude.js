@@ -1,4 +1,5 @@
 import test from "ava";
+import { DataRetriever } from "../../app/js/lib/dataretriever.js";
 
 const RES_BROMUS = {
     taxon: {
@@ -40,8 +41,6 @@ const RES_BROMUS_DIANDRUS = {
         ],
     }
 };
-
-import { DataRetriever } from "../../app/js/dataretriever.js";
 
 const exclude = test.macro( {
     async exec( t, include, exclude, expected ) {
