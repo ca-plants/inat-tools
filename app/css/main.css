@@ -13,10 +13,12 @@ a[inert] {
 fieldset {
     border: 1px solid;
     padding: 0 .25rem;
+    display: flex;
+    gap: 2rem;
 }
 
-input[type="checkbox"] {
-    margin-right: .25rem;
+div.form-input input.year {
+    width: 4rem;
 }
 
 input:invalid {
@@ -180,6 +182,10 @@ div.form-input {
 
 div.form-input label {
     min-width: 4rem;
+}
+
+fieldset div.form-input label {
+    min-width: auto;
 }
 
 div.form-input input {

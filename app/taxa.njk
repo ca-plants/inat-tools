@@ -40,6 +40,7 @@ js: taxa
                             <option value="12">December</option>
                         </select>
                     </div>
+                    {{ searchform.inp_year("f1") }}
                 </fieldset>
 
                 <input type="checkbox" id="f1-researchgrade">
@@ -59,6 +60,11 @@ js: taxa
                 {{ searchform.inp_place("f2") }}
                 {{ searchform.inp_observer("f2") }}
                 {{ searchform.inp_taxon("f2") }}
+
+                <fieldset>
+                    <legend>Date</legend>
+                    {{ searchform.inp_year("f2") }}
+                </fieldset>
 
                 <input type="checkbox" id="f2-researchgrade">
                 <label for="f2-researchgrade">Research Grade</label>

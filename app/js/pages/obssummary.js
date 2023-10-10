@@ -158,7 +158,7 @@ class ObsUI extends SearchUI {
         // Add handlers for form.
         document.getElementById( "form" ).addEventListener( "submit", ( e ) => this.onSubmit( e ) );
 
-        this.initAutoComplete( "f1" );
+        this.initEventListeners( "f1" );
         await this.initForm( "f1", this.#f1 );
 
         document.getElementById( "f1-proj-name" ).focus();

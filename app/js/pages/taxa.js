@@ -202,10 +202,10 @@ class UI extends SearchUI {
         document.getElementById( "add-exclusions" ).addEventListener( "click", () => this.addExclusions() );
         document.getElementById( "remove-exclusions" ).addEventListener( "click", () => this.removeExclusions() );
 
-        this.initAutoComplete( "f1" );
+        this.initEventListeners( "f1" );
         await this.initForm( "f1", this.#f1 );
 
-        this.initAutoComplete( "f2" );
+        this.initEventListeners( "f2" );
         await this.initForm( "f2", this.#f2 );
 
         if ( this.#f2 !== undefined ) {

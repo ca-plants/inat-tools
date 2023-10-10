@@ -1,3 +1,4 @@
+import { DateUtils } from "./dateutils.js";
 import { DOMUtils } from "./domutils.js";
 import { FP, SpeciesFilter } from "./speciesfilter.js";
 import { UI } from "./ui.js";
@@ -98,7 +99,14 @@ class SearchUI extends UI {
         }
     }
 
-    initAutoComplete( prefix ) {
+    initEventListeners( prefix ) {
+
+        function handleYearClick( e ) {
+            if ( !e.currentTarget.value ) {
+                e.preventDefault();
+                e.currentTarget.value = DateUtils.getCurrentYear();
+            }
+        }
 
         function initField( ui, id, config ) {
             const input = document.getElementById( id );
@@ -123,6 +131,11 @@ class SearchUI extends UI {
                 prefix + "-" + field.name + "-name",
                 new AutoCompleteConfig( prefix + "-" + field.name + "-name-list", prefix + "-" + field.name + "-id", field.fn )
             );
+        }
+
+        const e = document.getElementById( prefix + "-year1" );
+        if ( e ) {
+            e.addEventListener( "click", ( e ) => handleYearClick( e ) );
         }
 
     }
@@ -164,6 +177,11 @@ class SearchUI extends UI {
             filterArgs[ FP.MONTH ] = month1;
         }
 
+        const year1 = DOMUtils.getFormElementValue( prefix + "-year1" );
+        if ( year1 ) {
+            filterArgs[ FP.YEAR ] = year1;
+        }
+
         if ( document.getElementById( prefix + "-researchgrade" ).checked ) {
             filterArgs[ FP.QUALITY_GRADE ] = "research";
         }
@@ -183,6 +201,20 @@ class SearchUI extends UI {
                 return;
             }
             DOMUtils.setFormElementValue( prefix + "-month1", month );
+        }
+
+        function initYear( filter ) {
+            const id = prefix + "-year1";
+            const e = document.getElementById( id );
+            if ( !e ) {
+                return;
+            }
+            e.setAttribute( "max", DateUtils.getCurrentYear() );
+            const year = filter.getParamValue( FP.YEAR );
+            if ( !year ) {
+                return;
+            }
+            DOMUtils.setFormElementValue( e, year );
         }
 
         async function initObserver( api, filter ) {
@@ -249,6 +281,7 @@ class SearchUI extends UI {
         await initObserver( this.getAPI(), filter );
         await initTaxon( this.getAPI(), filter );
         initMonth( filter );
+        initYear( filter );
 
         const qualityGrade = filter.getParamValue( FP.QUALITY_GRADE );
         DOMUtils.enableCheckBox( prefix + "-researchgrade", qualityGrade === "research" );

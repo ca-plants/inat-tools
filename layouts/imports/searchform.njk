@@ -33,3 +33,10 @@
         <datalist id="{{prefix}}-taxon-name-list"></datalist>
     </div>
 {% endmacro %}
+
+{% macro inp_year(prefix) %}
+    <div class="form-input">
+        <label for="{{prefix}}-year1">Year</label>
+        <input type="number" class="year" inputmode="numeric" min="2000" id="{{prefix}}-year1" maxlength="4" autocomplete="off">
+    </div>
+{% endmacro %}

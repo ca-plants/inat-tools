@@ -41,6 +41,7 @@ const descrip = test.macro( {
 
 test( "project", descrip, { "project_id": 1 }, undefined, "Species observed in project \"projname\"" );
 test( "month", descrip, { "month": 3 }, undefined, "Species observed in March" );
+test( "year", descrip, { "year": 2023 }, undefined, "Species observed in 2023" );
 test( "place", descrip, { "place_id": "3523" }, undefined, "Species observed in Tilden Regional Park, CA, US" );
 test( "place - research grade", descrip, { "place_id": "3523", quality_grade: "research" }, undefined, "Species observed in Tilden Regional Park, CA, US (research grade only)" );
 test( "place - not research grade", descrip, { "place_id": "3523", quality_grade: "needs_id" }, undefined, "Species observed in Tilden Regional Park, CA, US (needs ID only)" );

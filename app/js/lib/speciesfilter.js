@@ -5,6 +5,7 @@ const FP = {
     QUALITY_GRADE: "quality_grade",
     TAXON_ID: "taxon_id",
     USER_ID: "user_id",
+    YEAR: "year",
 };
 
 const MONTH_NAMES = [
@@ -56,6 +57,9 @@ class SpeciesFilter {
         }
         if ( this.#params[ FP.MONTH ] ) {
             descrip += " in " + MONTH_NAMES[ this.#params[ FP.MONTH ] - 1 ];
+        }
+        if ( this.#params[ FP.YEAR ] ) {
+            descrip += " in " + this.#params[ FP.YEAR ];
         }
         switch ( this.#params[ FP.QUALITY_GRADE ] ) {
             case "needs_id":
