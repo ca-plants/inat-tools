@@ -19,6 +19,23 @@ class DB {
         );
     }
 
+    async delete( store, key ) {
+        const transaction = this.#db.transaction( store, "readwrite" );
+        const objectStore = transaction.objectStore( store );
+        return new Promise(
+            ( resolve, reject ) => {
+                const request = objectStore.delete( key );
+                request.onerror = ( event ) => {
+                    reject( event );
+                };
+                request.onsuccess = () => {
+                    resolve( request.result );
+                };
+
+            }
+        );
+    }
+
     async get( store, key ) {
         const transaction = this.#db.transaction( store );
         const objectStore = transaction.objectStore( store );

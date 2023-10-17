@@ -6,12 +6,15 @@ js: login
 
 {%block content%}
 
-    <div class="section">
-        <form id="form" style="display:none;">
-            <textarea id="token" style="width:100%"></textarea>
-            <input type="submit">
-        </form>
-        <input type="button" value="Log Out" id="logout" style="display:none;">
+    <div id="error-section" class="section center" style="display:none;">
+        <div id="error-text"></div>
+        <div>
+            <input type="button" value="Login" id="error-retry">
+            <input type="button" value="Cancel" id="error-cancel">
+        </div>
     </div>
 
+    <div id="logout-section" class="section center" style="display:none;">
+        <input type="button" value="Log Out" id="logout-button">
+    </div>
 {% endblock %}

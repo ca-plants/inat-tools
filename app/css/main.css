@@ -2,6 +2,10 @@ nav.navbar {
     background-color: #eee;
 }
 
+.center {
+    text-align: center;
+}
+
 .right {
     text-align: right;
 }

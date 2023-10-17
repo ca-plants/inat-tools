@@ -37,6 +37,7 @@ class ProgressReporter {
     }
 
 }
+
 class UI {
 
     #api;
@@ -69,8 +70,15 @@ class UI {
         const loginName = await Login.getLoginName();
         const linkText = loginName ? loginName : "Login";
         const eLogin = document.getElementById( "nav-login" );
-        DOMUtils.removeChildren( eLogin );
-        eLogin.appendChild( DOMUtils.createLinkElement( this.getPathPrefix() + "login.html", linkText ) );
+        eLogin.appendChild( document.createTextNode( linkText ) );
+        eLogin.addEventListener( "click", () => { this.updateLoginTarget(); } );
+    }
+
+    updateLoginTarget() {
+        const url = new URL( this.getPathPrefix() + "login.html", document.location.origin );
+        url.searchParams.set( "url", document.location );
+        const eLogin = document.getElementById( "nav-login" );
+        eLogin.setAttribute( "href", url );
     }
 
 }

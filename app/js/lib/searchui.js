@@ -228,7 +228,7 @@ class SearchUI extends UI {
             if ( !data ) {
                 return;
             }
-            DOMUtils.setFormElementValue( prefix + "-observer", data.login );
+            DOMUtils.setFormElementValue( prefix + "-observer-name", data.login );
         }
 
         async function initPlace( api, filter ) {
