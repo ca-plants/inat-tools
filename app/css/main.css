@@ -16,13 +16,9 @@ a[inert] {
 
 fieldset {
     border: 1px solid;
-    padding: 0 .25rem;
+    padding: 0 .25rem .1rem;
     display: flex;
     gap: 2rem;
-}
-
-div.form-input input.year {
-    width: 4rem;
 }
 
 input:invalid {
@@ -181,11 +177,15 @@ div.form-input {
     display: flex;
     align-items: center;
     column-gap: .5rem;
-    margin-bottom: .1rem;
+    margin-top: .1rem;
 }
 
 div.form-input label {
     min-width: 4rem;
+}
+
+div.form-input input.year {
+    width: 4rem;
 }
 
 fieldset div.form-input label {
@@ -201,7 +201,7 @@ div.summary {
     padding: .25rem;
 }
 
-div.summary-desc {
+div.flex-fullwidth {
     column-gap: 1rem;
     display: flex;
     justify-content: space-between;

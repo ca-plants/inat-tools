@@ -13,7 +13,10 @@ js: taxa
 
             <div id="f1" class="filter section">
 
-                <div>Include:</div>
+                <div class="flex-fullwidth">
+                    <div>Include:</div>
+                    <div><input type="button" id="add-exclusions" value="Add Exclusions"></div>
+                </div>
 
                 {{ searchform.inp_proj("f1") }}
                 {{ searchform.inp_place("f1") }}
@@ -46,16 +49,14 @@ js: taxa
                 <input type="checkbox" id="f1-researchgrade">
                 <label for="f1-researchgrade">Research Grade</label>
 
-                <div class="buttons section">
-                    <input type="submit" id="filter-submit">
-                    <input type="button" id="add-exclusions" value="Add Exclusions">
-                </div>
-
             </div>
 
             <div id="f2" class="filter section" style="display: none;">
 
-                <div>Exclude:</div>
+                <div class="flex-fullwidth">
+                    <div>Exclude:</div>
+                    <div><input type="button" id="remove-exclusions" value="Remove"></div>
+                </div>
 
                 {{ searchform.inp_place("f2") }}
                 {{ searchform.inp_observer("f2") }}
@@ -69,12 +70,12 @@ js: taxa
                 <input type="checkbox" id="f2-researchgrade">
                 <label for="f2-researchgrade">Research Grade</label>
 
-                <div class="buttons section">
-                    <input type="button" id="remove-exclusions" value="Remove Exclusions">
-                </div>
-
             </div>
 
+        </div>
+
+        <div class="buttons section">
+            <input type="submit" id="filter-submit">
         </div>
 
     </form>

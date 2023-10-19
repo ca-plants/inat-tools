@@ -111,7 +111,7 @@ class UI extends SearchUI {
         const button = DOMUtils.createElement( "input", { type: "button", value: "Change Filter", style: "width:100%;" } );
         button.addEventListener( "click", ( e ) => this.changeFilter( e ) );
 
-        const summaryDesc = DOMUtils.createElement( "div", { class: "summary-desc" } );
+        const summaryDesc = DOMUtils.createElement( "div", { class: "flex-fullwidth" } );
         summaryDesc.appendChild( descrip );
         summaryDesc.appendChild( count );
         summaryDesc.appendChild( download );
