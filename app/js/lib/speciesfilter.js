@@ -1,3 +1,5 @@
+import { DateUtils } from "./dateutils.js";
+
 const FP = {
     MONTH: "month",
     PLACE_ID: "place_id",
@@ -5,7 +7,8 @@ const FP = {
     QUALITY_GRADE: "quality_grade",
     TAXON_ID: "taxon_id",
     USER_ID: "user_id",
-    YEAR: "year",
+    YEAR1: "year1",
+    YEAR2: "year2",
 };
 
 const MONTH_NAMES = [
@@ -58,8 +61,22 @@ class SpeciesFilter {
         if ( this.#params[ FP.MONTH ] ) {
             descrip += " in " + MONTH_NAMES[ this.#params[ FP.MONTH ] - 1 ];
         }
-        if ( this.#params[ FP.YEAR ] ) {
-            descrip += " in " + this.#params[ FP.YEAR ];
+        const year1 = this.#params[ FP.YEAR1 ];
+        const year2 = this.#params[ FP.YEAR2 ];
+        if ( year1 ) {
+            if ( year2 ) {
+                if ( year1 === year2 ) {
+                    descrip += " in " + year1;
+                } else {
+                    descrip += " from " + year1 + " through " + year2;
+                }
+            } else {
+                descrip += " in " + year1 + " or later";
+            }
+        } else {
+            if ( year2 ) {
+                descrip += " in " + year2 + " or earlier";
+            }
         }
         switch ( this.#params[ FP.QUALITY_GRADE ] ) {
             case "needs_id":
@@ -87,6 +104,12 @@ class SpeciesFilter {
         const url = new URL( urlStr );
         for ( const [ k, v ] of Object.entries( this.#params ) ) {
             switch ( k ) {
+                case FP.YEAR1:
+                    url.searchParams.set( "d1", DateUtils.getDateString( new Date( v, 0, 1 ) ) );
+                    break;
+                case FP.YEAR2:
+                    url.searchParams.set( "d2", DateUtils.getDateString( new Date( v, 11, 31 ) ) );
+                    break;
                 default:
                     url.searchParams.set( k, v );
                     break;

@@ -34,9 +34,21 @@
     </div>
 {% endmacro %}
 
-{% macro inp_year(prefix) %}
+{% macro inp_year(prefix, suffix) %}
+    <div>
+        <input type="number" class="year" inputmode="numeric" min="2000" id="{{prefix}}-year{{suffix}}" maxlength="4" autocomplete="off">
+    </div>
+{% endmacro %}
+
+{% macro inp_years(prefix) %}
     <div class="form-input">
-        <label for="{{prefix}}-year1">Year</label>
-        <input type="number" class="year" inputmode="numeric" min="2000" id="{{prefix}}-year1" maxlength="4" autocomplete="off">
+        <label for="{{prefix}}-year">Year</label>
+        <select id="{{prefix}}-year">
+            <option>Any</option>
+            <option>This</option>
+            <option>Last</option>
+            <option>Range</option>
+        </select>
+        {{ inp_year(prefix,1) }} to {{ inp_year(prefix,2) }}
     </div>
 {% endmacro %}

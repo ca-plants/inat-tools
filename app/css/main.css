@@ -18,7 +18,8 @@ fieldset {
     border: 1px solid;
     padding: 0 .25rem .1rem;
     display: flex;
-    gap: 2rem;
+    flex-flow: wrap;
+    column-gap: 2rem;
 }
 
 input:invalid {

@@ -29,6 +29,8 @@ class AutoCompleteConfig {
 
 }
 
+const MIN_YEAR = 2000;
+
 class SearchUI extends UI {
 
     #debounceTimer;
@@ -101,11 +103,32 @@ class SearchUI extends UI {
 
     initEventListeners( prefix ) {
 
-        function handleYearClick( e ) {
-            if ( !e.currentTarget.value ) {
-                e.preventDefault();
-                e.currentTarget.value = DateUtils.getCurrentYear();
+        function handleYearChange( e ) {
+            const prefix = e.id.substring( 0, e.id.length - 1 );
+            SearchUI.setYearMinMax( prefix );
+            SearchUI.setYearMode( prefix );
+        }
+
+        function handleYearModeChange( e ) {
+
+            function setValues( year ) {
+                DOMUtils.setFormElementValue( document.getElementById( e.id + "1" ), year );
+                DOMUtils.setFormElementValue( document.getElementById( e.id + "2" ), year );
+                SearchUI.setYearMinMax( e.id );
             }
+
+            switch ( DOMUtils.getFormElementValue( e ) ) {
+                case "Any":
+                    setValues( "" );
+                    break;
+                case "This":
+                    setValues( DateUtils.getCurrentYear() );
+                    break;
+                case "Last":
+                    setValues( DateUtils.getCurrentYear() - 1 );
+                    break;
+            }
+
         }
 
         function initField( ui, id, config ) {
@@ -133,9 +156,11 @@ class SearchUI extends UI {
             );
         }
 
-        const e = document.getElementById( prefix + "-year1" );
-        if ( e ) {
-            e.addEventListener( "click", ( e ) => handleYearClick( e ) );
+        const eSelect = document.getElementById( prefix + "-year" );
+        if ( eSelect ) {
+            eSelect.addEventListener( "change", ( e ) => handleYearModeChange( e.target ) );
+            document.getElementById( prefix + "-year1" ).addEventListener( "change", ( e ) => handleYearChange( e.target ) );
+            document.getElementById( prefix + "-year2" ).addEventListener( "change", ( e ) => handleYearChange( e.target ) );
         }
 
     }
@@ -178,8 +203,12 @@ class SearchUI extends UI {
         }
 
         const year1 = DOMUtils.getFormElementValue( prefix + "-year1" );
+        const year2 = DOMUtils.getFormElementValue( prefix + "-year2" );
         if ( year1 ) {
-            filterArgs[ FP.YEAR ] = year1;
+            filterArgs[ FP.YEAR1 ] = year1;
+        }
+        if ( year2 ) {
+            filterArgs[ FP.YEAR2 ] = year2;
         }
 
         if ( document.getElementById( prefix + "-researchgrade" ).checked ) {
@@ -204,17 +233,12 @@ class SearchUI extends UI {
         }
 
         function initYear( filter ) {
-            const id = prefix + "-year1";
-            const e = document.getElementById( id );
-            if ( !e ) {
-                return;
-            }
-            e.setAttribute( "max", DateUtils.getCurrentYear() );
-            const year = filter.getParamValue( FP.YEAR );
-            if ( !year ) {
-                return;
-            }
-            DOMUtils.setFormElementValue( e, year );
+            const year1 = filter.getParamValue( FP.YEAR1 );
+            const year2 = filter.getParamValue( FP.YEAR2 );
+            DOMUtils.setFormElementValue( prefix + "-year1", year1 ? year1 : "" );
+            DOMUtils.setFormElementValue( prefix + "-year2", year2 ? year2 : "" );
+            SearchUI.setYearMinMax( prefix + "-year" );
+            SearchUI.setYearMode( prefix + "-year" );
         }
 
         async function initObserver( api, filter ) {
@@ -285,6 +309,37 @@ class SearchUI extends UI {
 
         const qualityGrade = filter.getParamValue( FP.QUALITY_GRADE );
         DOMUtils.enableCheckBox( prefix + "-researchgrade", qualityGrade === "research" );
+
+    }
+
+    static setYearMinMax( prefix ) {
+        const d1 = document.getElementById( prefix + "1" );
+        const d2 = document.getElementById( prefix + "2" );
+        d1.setAttribute( "max", d2.value ? d2.value : DateUtils.getCurrentYear() );
+        d2.setAttribute( "min", d1.value ? d1.value : MIN_YEAR );
+        d2.setAttribute( "max", DateUtils.getCurrentYear() );
+    }
+
+    static setYearMode( prefix ) {
+
+        function getMode( prefix ) {
+            const d1 = document.getElementById( prefix + "1" ).value;
+            const d2 = document.getElementById( prefix + "2" ).value;
+            if ( d1 === d2 ) {
+                if ( d1 === "" ) {
+                    return "Any";
+                }
+                if ( parseInt( d1 ) === DateUtils.getCurrentYear() ) {
+                    return "This";
+                }
+                if ( parseInt( d1 ) === DateUtils.getCurrentYear() - 1 ) {
+                    return "Last";
+                }
+            }
+            return "Range";
+        }
+
+        DOMUtils.setFormElementValue( prefix, getMode( prefix ) );
 
     }
 

@@ -36,8 +36,11 @@ class DOMUtils {
         e.checked = state;
     }
 
-    static getFormElementValue( id ) {
-        const e = document.getElementById( id );
+    static getFormElementValue( e ) {
+        if ( typeof e === "string" ) {
+            // Assume it's an id.
+            return this.getFormElementValue( document.getElementById( e ) );
+        }
         if ( !e ) {
             return;
         }
