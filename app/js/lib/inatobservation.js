@@ -28,7 +28,17 @@ class INatObservation {
     }
 
     static getPlaceGuess( obs ) {
-        return obs.private_place_guess ? obs.private_place_guess : obs.place_guess;
+        if ( obs.private_place_guess ) {
+            return obs.private_place_guess;
+        }
+        if ( obs.place_guess ) {
+            return obs.place_guess;
+        }
+        if ( obs.private_location ) {
+            // For geoprivacy: "private", we can see the coordinates of trusted users, but there is no place_guess.
+            return obs.private_location;
+        }
+        return "unknown";
     }
 
     static getURL( obs ) {
