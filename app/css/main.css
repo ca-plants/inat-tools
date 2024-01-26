@@ -88,35 +88,6 @@ th.c-num {
     text-align: right;
 }
 
-@media (min-width: 600px) {
-
-    table {
-        width: auto;
-    }
-
-    table thead {
-        display: table-header-group;
-    }
-
-    table tbody tr {
-        display: table-row;
-    }
-
-    td,
-    th {
-        border: solid 1px black;
-    }
-
-    td.c-cat {
-        text-align: left;
-    }
-
-    span.sm-label {
-        display: none;
-    }
-
-}
-
 /* Filter Form */
 div.section {
     margin-top: .25rem;
@@ -206,4 +177,37 @@ div.flex-fullwidth {
     column-gap: 1rem;
     display: flex;
     justify-content: space-between;
+}
+
+@media (min-width: 600px) {
+
+    table {
+        width: auto;
+    }
+
+    table thead {
+        display: table-header-group;
+    }
+
+    table tbody tr {
+        display: table-row;
+    }
+
+    td,
+    th {
+        border: solid 1px black;
+    }
+
+    td.c-cat {
+        text-align: left;
+    }
+
+    span.sm-label {
+        display: none;
+    }
+
+    #search-crit div.buttons {
+        grid-column: 1/span 2;
+    }
+
 }

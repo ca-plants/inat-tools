@@ -1,8 +1,28 @@
 class DOMUtils {
 
+    /**
+     * 
+     * @param {string} id 
+     * @param {string} className 
+     */
     static addClass( id, className ) {
         const e = document.getElementById( id );
-        e.classList.add( className );
+        if ( e ) {
+            e.classList.add( className );
+        }
+    }
+
+    /**
+     * @param {string|Element} e 
+     * @param {string} type 
+     * @param {*} fn 
+     */
+    static addEventListener( e, type, fn ) {
+        const elem = this.getElement( e );
+        if ( elem ) {
+            elem.addEventListener( type, fn );
+        }
+
     }
 
     static createElement( name, attributes ) {
@@ -28,12 +48,27 @@ class DOMUtils {
         return eLink;
     }
 
-    static enableCheckBox( id, state ) {
-        const e = document.getElementById( id );
-        if ( !e ) {
+    /**
+     * @param {string|Element} e 
+     * @param {boolean} state 
+     */
+    static enableCheckBox( e, state ) {
+        const elem = this.getElement( e );
+        if ( !( elem instanceof HTMLInputElement ) ) {
             return;
         }
-        e.checked = state;
+        elem.checked = state;
+    }
+
+    /**
+     * @param {string|Element} e 
+     * @returns {Element|null}
+     */
+    static getElement( e ) {
+        if ( typeof e === "string" ) {
+            return document.getElementById( e );
+        }
+        return e;
     }
 
     static getFormElementValue( e ) {

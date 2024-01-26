@@ -198,9 +198,9 @@ class UI extends SearchUI {
         await super.init();
 
         // Add handlers for form.
-        document.getElementById( "form" ).addEventListener( "submit", ( e ) => this.onSubmit( e ) );
-        document.getElementById( "add-exclusions" ).addEventListener( "click", () => this.addExclusions() );
-        document.getElementById( "remove-exclusions" ).addEventListener( "click", () => this.removeExclusions() );
+        DOMUtils.addEventListener( "form", "submit", ( e ) => this.onSubmit( e ) );
+        DOMUtils.addEventListener( "add-exclusions", "click", () => this.addExclusions() );
+        DOMUtils.addEventListener( "remove-exclusions", "click", () => this.removeExclusions() );
 
         this.initEventListeners( "f1" );
         await this.initForm( "f1", this.#f1 );
@@ -262,6 +262,9 @@ class UI extends SearchUI {
     async showResults() {
 
         const divResults = document.getElementById( "results" );
+        if ( !divResults ) {
+            return;
+        }
         DOMUtils.removeChildren( divResults );
 
         this.#results = await DataRetriever.getSpeciesData( this.getAPI(), this.#f1, this.#f2, this.getProgressReporter() );
