@@ -156,14 +156,17 @@ class ObsUI extends SearchUI {
         await super.init();
 
         // Add handlers for form.
-        document.getElementById( "form" ).addEventListener( "submit", ( e ) => this.onSubmit( e ) );
+        DOMUtils.getRequiredElement( "form" ).addEventListener( "submit", ( e ) => this.onSubmit( e ) );
 
         this.initEventListeners( "f1" );
         await this.initForm( "f1", this.#f1 );
 
-        document.getElementById( "f1-proj-name" ).focus();
+        DOMUtils.setFocusTo( "f1-proj-name" );
     }
 
+    /**
+     * @param {Event} e 
+     */
     async onSubmit( e ) {
 
         e.preventDefault();
@@ -215,7 +218,7 @@ class ObsUI extends SearchUI {
 
     async showResults() {
 
-        const divResults = document.getElementById( "results" );
+        const divResults = DOMUtils.getRequiredElement( "results" );
         DOMUtils.removeChildren( divResults );
 
         this.#results = await DataRetriever.getObservationData( this.getAPI(), this.#f1, this.getProgressReporter() );

@@ -115,7 +115,7 @@ class ObsDetailUI extends UI {
     }
 
     clearResults() {
-        const eResults = document.getElementById( "results" );
+        const eResults = DOMUtils.getRequiredElement( "results" );
         DOMUtils.removeChildren( eResults );
         return eResults;
     }
@@ -139,7 +139,7 @@ class ObsDetailUI extends UI {
         }
         const ui = new ObsDetailUI( initArgs.taxon_id, initArgs.f1, initArgs.fp );
         await ui.init( initArgs.sel );
-
+        return ui;
     }
 
     getMembershipStatus( id ) {
@@ -196,7 +196,7 @@ class ObsDetailUI extends UI {
             }
             const div = DOMUtils.createElement( "div" );
             const id = "sel-" + label;
-            const cb = DOMUtils.createElement( "input", { type: "checkbox", id: id } );
+            const cb = DOMUtils.createInputElement( { type: "checkbox", id: id } );
             cb.checked = selArray.includes( label );
             cb.addEventListener( "click", () => ui.handleCoordinateChange() );
             const lbl = DOMUtils.createElement( "label", { for: id } );
@@ -242,9 +242,9 @@ class ObsDetailUI extends UI {
 
         // Show filter description.
         const filter = new SpeciesFilter( this.#getAllFilterParams() );
-        document.getElementById( "filterdesc" ).appendChild( document.createTextNode( await filter.getDescription( api ) ) );
+        DOMUtils.getRequiredElement( "filterdesc" ).appendChild( document.createTextNode( await filter.getDescription( api ) ) );
 
-        const form = document.getElementById( "form" );
+        const form = DOMUtils.getRequiredElement( "form" );
         const checkBoxes = DOMUtils.createElement( "div", { class: "coordoptions" } );
         form.appendChild( checkBoxes );
         addBucket( checkBoxes, this.#results.countPublic, "public", this );
@@ -520,9 +520,11 @@ class ObsDetailUI extends UI {
         }
 
         const url = getURL( this );
-        const link = document.getElementById( "viewininat" );
-        link.inert = ( url === "" );
-        link.href = url;
+        const link = DOMUtils.getRequiredElement( "viewininat" );
+        if ( link instanceof HTMLAnchorElement ) {
+            link.inert = ( url === "" );
+            link.href = url.toString();
+        }
     }
 
     wrapResults( eResultsDiv, eResultDetail ) {

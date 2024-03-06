@@ -103,17 +103,26 @@ class SearchUI extends UI {
 
     initEventListeners( prefix ) {
 
+        /**
+         * @param {Element} e 
+         */
         function handleYearChange( e ) {
             const prefix = e.id.substring( 0, e.id.length - 1 );
             SearchUI.setYearMinMax( prefix );
             SearchUI.setYearMode( prefix );
         }
 
+        /**
+         * @param {Element} e 
+         */
         function handleYearModeChange( e ) {
 
+            /**
+             * @param {string|number} year 
+             */
             function setValues( year ) {
-                DOMUtils.setFormElementValue( document.getElementById( e.id + "1" ), year );
-                DOMUtils.setFormElementValue( document.getElementById( e.id + "2" ), year );
+                DOMUtils.setFormElementValue( e.id + "1", year.toString() );
+                DOMUtils.setFormElementValue( e.id + "2", year.toString() );
                 SearchUI.setYearMinMax( e.id );
             }
 
@@ -180,15 +189,15 @@ class SearchUI extends UI {
 
         for ( const field of FILT_AUTOCOMPLETE_FIELDS ) {
             const id = DOMUtils.getFormElementValue( prefix + "-" + field.name + "-id" );
-            const input = document.getElementById( prefix + "-" + field.name + "-name" );
+            const input = DOMUtils.getElement( prefix + "-" + field.name + "-name" );
             if ( id ) {
                 filterArgs[ field.query_param ] = id;
             } else {
                 // Make sure the associated text input is blank.
-                if ( input ) {
+                if ( input instanceof HTMLInputElement ) {
                     if ( input.value ) {
                         input.setCustomValidity( "Invalid " + field.label + "." );
-                        input.focus();
+                        DOMUtils.setFocusTo( input );
                         hasErrors = true;
                     } else {
                         input.setCustomValidity( "" );
@@ -312,20 +321,30 @@ class SearchUI extends UI {
 
     }
 
+    /**
+     * @param {string} prefix 
+     */
     static setYearMinMax( prefix ) {
         const d1 = document.getElementById( prefix + "1" );
         const d2 = document.getElementById( prefix + "2" );
-        d1.setAttribute( "max", d2.value ? d2.value : DateUtils.getCurrentYear() );
-        d2.setAttribute( "min", d1.value ? d1.value : MIN_YEAR );
-        d2.setAttribute( "max", DateUtils.getCurrentYear() );
+        if ( d1 && d2 ) {
+            const d1Val = DOMUtils.getFormElementValue( d1 );
+            const d2Val = DOMUtils.getFormElementValue( d2 );
+            d1.setAttribute( "max", d2Val ? d2Val : DateUtils.getCurrentYear().toString() );
+            d2.setAttribute( "min", d1Val ? d1Val : MIN_YEAR.toString() );
+            d2.setAttribute( "max", DateUtils.getCurrentYear().toString() );
+        }
     }
 
+    /**
+     * @param {string} prefix 
+     */
     static setYearMode( prefix ) {
 
-        function getMode( prefix ) {
-            const d1 = document.getElementById( prefix + "1" ).value;
-            const d2 = document.getElementById( prefix + "2" ).value;
-            if ( d1 === d2 ) {
+        function getMode() {
+            const d1 = DOMUtils.getFormElementValue( prefix + "1" );
+            const d2 = DOMUtils.getFormElementValue( prefix + "2" );
+            if ( d1 === d2 && d1 !== undefined ) {
                 if ( d1 === "" ) {
                     return "Any";
                 }
@@ -339,7 +358,7 @@ class SearchUI extends UI {
             return "Range";
         }
 
-        DOMUtils.setFormElementValue( prefix, getMode( prefix ) );
+        DOMUtils.setFormElementValue( prefix, getMode() );
 
     }
 

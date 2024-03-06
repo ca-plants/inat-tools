@@ -25,6 +25,11 @@ class DOMUtils {
 
     }
 
+    /**
+     * @param {string} name 
+     * @param {Object.<string,string>|string} [attributes] 
+     * @returns {Element}
+     */
     static createElement( name, attributes ) {
         const e = document.createElement( name );
         switch ( typeof attributes ) {
@@ -37,6 +42,18 @@ class DOMUtils {
                     e.setAttribute( k, v );
                 }
                 break;
+        }
+        return e;
+    }
+
+    /**
+     * @param {*} attributes 
+     * @returns {HTMLInputElement}
+     */
+    static createInputElement( attributes ) {
+        const e = this.createElement( "input", attributes );
+        if ( !( e instanceof HTMLInputElement ) ) {
+            throw new Error();
         }
         return e;
     }
@@ -71,15 +88,30 @@ class DOMUtils {
         return e;
     }
 
+    /**
+     * @param {string|Element} e 
+     * @returns {Element}
+     */
+    static getRequiredElement( e ) {
+        const elem = this.getElement( e );
+        if ( !elem ) {
+            throw new Error( JSON.stringify( e ) );
+        }
+        return elem;
+    }
+
+    /**
+     * @param {string|Element|null} e 
+     * @returns {string|undefined}
+     */
     static getFormElementValue( e ) {
         if ( typeof e === "string" ) {
             // Assume it's an id.
-            return this.getFormElementValue( document.getElementById( e ) );
+            return this.getFormElementValue( this.getElement( e ) );
         }
-        if ( !e ) {
-            return;
+        if ( e instanceof HTMLInputElement || e instanceof HTMLSelectElement ) {
+            return e.value;
         }
-        return e.value;
     }
 
     static removeChildren( e ) {
@@ -88,26 +120,48 @@ class DOMUtils {
         }
     }
 
-    static removeClass( id, className ) {
-        const e = document.getElementById( id );
-        e.classList.remove( className );
+    static removeClass( e, className ) {
+        const elem = this.getElement( e );
+        if ( elem ) {
+            elem.classList.remove( className );
+        }
     }
 
     static setElementText( id, text ) {
-        const e = document.getElementById( id );
-        this.removeChildren( e );
-        e.appendChild( document.createTextNode( text ) );
-    }
-
-    static setFormElementValue( e, value ) {
-        if ( typeof e === "string" ) {
-            // Assume it's an id.
-            return this.setFormElementValue( document.getElementById( e ), value );
-        }
-        if ( !e ) {
+        const elem = this.getElement( id );
+        if ( !elem ) {
             return;
         }
-        e.value = ( value === undefined ? "" : value );
+        this.removeChildren( elem );
+        elem.appendChild( document.createTextNode( text ) );
+    }
+
+    /**
+     * @param {string|HTMLElement} e 
+     */
+    static setFocusTo( e ) {
+        const elem = this.getElement( e );
+        if ( !elem ) {
+            console.warn( "element " + e + " not found" );
+            return;
+        }
+        if ( !( elem instanceof HTMLElement ) ) {
+            console.warn( e + " is not an HTMLElement" );
+            return;
+        }
+        elem.focus();
+    }
+
+    /**
+     * @param {string|Element} e 
+     * @param {string|undefined} value 
+     */
+    static setFormElementValue( e, value ) {
+        const elem = this.getElement( e );
+        if ( !elem ) {
+            return;
+        }
+        elem.setAttribute( "value", value === undefined ? "" : value );
     }
 
     static showElement( e, show = true ) {

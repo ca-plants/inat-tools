@@ -2,6 +2,8 @@ import { DOMUtils } from "./domutils.js";
 import { INatAPI } from "./inatapi.js";
 import { Login } from "./login.js";
 
+const NAV_LOGIN_ID = "nav-login";
+
 class ProgressReporter {
 
     #api;
@@ -40,6 +42,7 @@ class ProgressReporter {
 
 class UI {
 
+    /** @type INatAPI */
     #api;
 
     getAPI() {
@@ -49,12 +52,14 @@ class UI {
     static async getInstance() {
         const ui = new UI();
         await ui.init();
-        return ui;
     }
 
     getPathPrefix() {
-        const homeURL = document.getElementById( "homelink" ).href;
-        return new URL( homeURL ).pathname;
+        const homeLink = document.getElementById( "homelink" );
+        if ( !homeLink ) {
+            return "";
+        }
+        return new URL( homeLink[ "href" ] ).pathname;
     }
 
     getProgressReporter() {
@@ -69,15 +74,19 @@ class UI {
     async setLoginLink() {
         const loginName = await Login.getLoginName();
         const linkText = loginName ? loginName : "Login";
-        const eLogin = document.getElementById( "nav-login" );
+        const eLogin = document.getElementById( NAV_LOGIN_ID );
+        if ( !eLogin ) {
+            console.error( NAV_LOGIN_ID + " not found" );
+            return;
+        }
         eLogin.appendChild( document.createTextNode( linkText ) );
-        eLogin.addEventListener( "click", () => { this.updateLoginTarget(); } );
+        DOMUtils.addEventListener( eLogin, "click", () => { this.updateLoginTarget(); } );
     }
 
     updateLoginTarget() {
         const url = new URL( this.getPathPrefix() + "login.html", document.location.origin );
         url.searchParams.set( "url", document.location );
-        const eLogin = document.getElementById( "nav-login" );
+        const eLogin = document.getElementById( NAV_LOGIN_ID );
         eLogin.setAttribute( "href", url );
     }
 
