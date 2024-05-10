@@ -1,10 +1,13 @@
 import { DOMUtils } from "../lib/domutils.js";
-import { DataRetriever, INPROP } from "../lib/dataretriever.js";
+import { DataRetriever } from "../lib/dataretriever.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
 
-import { csvFormatRows } from "https://cdn.skypack.dev/d3-dsv@3";
+import { csvFormatRows } from "https://cdn.skypack.dev/d3-dsv";
 import { SearchUI } from "../lib/searchui.js";
 
+/** @typedef {{count:number,taxon:{id:string,name:string,preferred_common_name:string,rank:string,rank_level:number}}} TaxonResult */
+
+/** @type {{label:string,value:function(TaxonResult):string}[]} */
 const COLUMNS = [
     {
         label: "Name",
@@ -15,6 +18,9 @@ const COLUMNS = [
     {
         label: "Common Name",
         value: ( result ) => {
+            /**
+             * @param {string} phrase 
+             */
             function capitalizeFirstLetters( phrase ) {
                 if ( phrase === undefined ) {
                     return "";
@@ -25,7 +31,7 @@ const COLUMNS = [
             }
 
             let taxon = result.taxon;
-            let commonName = taxon[ INPROP.COMMON_NAME ];
+            let commonName = taxon.preferred_common_name;
             if ( !commonName && taxon.rank_level > 10 ) {
                 commonName = taxon.rank + " " + taxon.name;
             }
@@ -35,7 +41,7 @@ const COLUMNS = [
     {
         label: "# Obs",
         value: ( result ) => {
-            return result.count;
+            return result.count.toString();
         }
     }
 ];
@@ -44,8 +50,13 @@ class UI extends SearchUI {
 
     #f1;
     #f2;
+    /** @type {TaxonResult[]|undefined} */
     #results;
 
+    /**
+     * @param {object} f1 
+     * @param {object} f2 
+     */
     constructor( f1 = {}, f2 ) {
         super();
         this.#f1 = new SpeciesFilter( f1 );
@@ -54,9 +65,12 @@ class UI extends SearchUI {
 
     addExclusions() {
 
+        /**
+         * @param {string[]} suffixes 
+         */
         function copyChecks( suffixes ) {
             for ( const suffix of suffixes ) {
-                document.getElementById( "f2" + suffix ).checked = document.getElementById( "f1" + suffix ).checked;
+                DOMUtils.enableCheckBox( "f2" + suffix, DOMUtils.isChecked( "f1" + suffix ) );
             }
         }
 
@@ -69,15 +83,22 @@ class UI extends SearchUI {
         if ( f.isEmpty() ) {
             // Copy values.
             for ( const idSuffix of [ "-observer-name", "-observer-id", "-place-name", "-place-id", "-taxon-name", "-taxon-id" ] ) {
-                const val = document.getElementById( "f1" + idSuffix ).value;
-                document.getElementById( "f2" + idSuffix ).value = val;
+                const val = DOMUtils.getFormElementValue( "f1" + idSuffix );
+                DOMUtils.setFormElementValue( "f2" + idSuffix, val );
             }
             // Copy checked state.
             copyChecks( [ "-researchgrade" ] );
         }
     }
 
+    /**
+     * @param {Element} e 
+     */
     #downloadCSV( e ) {
+
+        if ( !this.#results ) {
+            return;
+        }
 
         const data = [];
         data.push( COLUMNS.map( ( col ) => col.label ) );
@@ -91,9 +112,12 @@ class UI extends SearchUI {
         }
 
         var file = new Blob( [ csvFormatRows( data ) ], { type: "text/plain" } );
-        e.target.setAttribute( "href", URL.createObjectURL( file ) );
+        e.setAttribute( "href", URL.createObjectURL( file ) );
     }
 
+    /**
+     * @param {TaxonResult[]} speciesData 
+     */
     async #getSummaryDOM( speciesData ) {
 
         const descrip = DOMUtils.createElement( "div" );
@@ -104,7 +128,7 @@ class UI extends SearchUI {
 
         const download = DOMUtils.createElement( "div" );
         const downloadLink = DOMUtils.createElement( "a", { download: "species.csv", href: "" } );
-        downloadLink.addEventListener( "click", ( e ) => this.#downloadCSV( e ) );
+        downloadLink.addEventListener( "click", () => this.#downloadCSV( downloadLink ) );
         downloadLink.appendChild( document.createTextNode( "Download CSV" ) );
         download.appendChild( downloadLink );
 
@@ -123,10 +147,21 @@ class UI extends SearchUI {
         return summary;
     }
 
+    /**
+     * @param {SpeciesFilter} filter 
+     * @param {TaxonResult[]} results
+     */
     getTaxaSummaryTable( filter, results ) {
 
+        /**
+         * @param {TaxonResult} result 
+         */
         function getTaxonSummary( result ) {
 
+            /**
+             * @param {Element|string} content 
+             * @param {string} className 
+             */
             function getCol( content, className ) {
                 const td = DOMUtils.createElement( "td", className );
                 if ( content instanceof Element ) {
@@ -214,12 +249,19 @@ class UI extends SearchUI {
             this.removeExclusions();
         }
 
-        document.getElementById( "f1-proj-name" ).focus();
+        DOMUtils.setFocusTo( "f1-proj-name" );
 
     }
 
+    /**
+     * @param {Event} e 
+     */
     async onSubmit( e ) {
 
+        /**
+         * @param {SpeciesFilter} f1 
+         * @param {SpeciesFilter|undefined} f2 
+         */
         function checkFilters( f1, f2 ) {
             if ( f2 ) {
                 if ( JSON.stringify( f1 ) === JSON.stringify( f2 ) ) {
@@ -230,7 +272,7 @@ class UI extends SearchUI {
 
         e.preventDefault();
 
-        const hasExclusions = !document.getElementById( "search-crit" ).classList.contains( "no-exclude" );
+        const hasExclusions = !DOMUtils.getRequiredElement( "search-crit" ).classList.contains( "no-exclude" );
         const f1 = this.initFilterFromForm( "f1" );
         if ( !f1 ) {
             return;
@@ -244,6 +286,9 @@ class UI extends SearchUI {
             return;
         }
 
+        /** @typedef {{f1:SpeciesFilter,f2?:SpeciesFilter}} HashParams */
+
+        /** @type HashParams */
         const params = { f1: this.#f1 };
         if ( this.#f2 !== undefined ) {
             params.f2 = this.#f2;

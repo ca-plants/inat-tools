@@ -1,5 +1,9 @@
 import { Cache } from "./cache.js";
 import { QueryCancelledException } from "./inatapi.js";
+// eslint-disable-next-line no-unused-vars
+import { INatAPI } from "./inatapi.js";
+// eslint-disable-next-line no-unused-vars
+import { SpeciesFilter } from "./speciesfilter.js";
 
 const INPROP = {
     COMMON_NAME: "preferred_common_name",
@@ -9,8 +13,16 @@ const INPROP = {
     TOTAL_RESULTS: "total_results",
 };
 
+/** @typedef {{count:number,taxon:{id:string,name:string,preferred_common_name:string,rank:string,rank_level:number}}} TaxonResult */
+
 class DataRetriever {
 
+    /**
+     * @param {INatAPI} api 
+     * @param {SpeciesFilter} filtInclude
+     * @param {SpeciesFilter|undefined} filtExclude
+     * @returns {Promise<TaxonResult[]>}
+     */
     static async getSpeciesData( api, filtInclude, filtExclude, progressReporter ) {
 
         const include = await this.#retrieveSpeciesData( "species", api, filtInclude, progressReporter );
@@ -25,11 +37,19 @@ class DataRetriever {
 
     }
 
+    /**
+     * @param {INatAPI} api 
+     * @param {SpeciesFilter} filter
+     */
     static async getObservationData( api, filter, progressReporter ) {
         const url = filter.getURL( "https://api.inaturalist.org/v1/observations?verifiable=true&per_page=500" );
         return await this.#retrievePagedData( url, "species", api, progressReporter );
     }
 
+    /**
+     * @param {INatAPI} api 
+     * @param {string} id
+     */
     static async getProjectMembers( api, id, progressReporter ) {
         const url = new URL( "https://api.inaturalist.org/v1/projects/" + id + "/members" );
         return await this.#retrievePagedData( url, "project members", api, progressReporter );
@@ -64,6 +84,9 @@ class DataRetriever {
 
     static async #retrievePagedData( baseURL, label, api, progressReporter ) {
 
+        /**
+         * @param {number} pageNum 
+         */
         async function getPage( pageNum ) {
             baseURL.searchParams.set( INPROP.PAGE, pageNum );
             return await api.getJSON( baseURL );
@@ -130,6 +153,12 @@ class DataRetriever {
 
     }
 
+    /**
+     * 
+     * @param {string} label 
+     * @param {INatAPI} api 
+     * @param {SpeciesFilter} filter 
+     */
     static async #retrieveSpeciesData( label, api, filter, progressReporter ) {
         // Include verifiable=true; this seems to be consistent with iNat web UI default.
         const url = filter.getURL( "https://api.inaturalist.org/v1/observations/species_counts?verifiable=true" );

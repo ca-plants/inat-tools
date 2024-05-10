@@ -15,7 +15,7 @@ class DOMUtils {
     /**
      * @param {string|Element} e 
      * @param {string} type 
-     * @param {*} fn 
+     * @param {function(Event):void} fn 
      */
     static addEventListener( e, type, fn ) {
         const elem = this.getElement( e );
@@ -112,6 +112,17 @@ class DOMUtils {
         if ( e instanceof HTMLInputElement || e instanceof HTMLSelectElement ) {
             return e.value;
         }
+    }
+
+    /**
+     * @param {string|Element} e 
+     */
+    static isChecked( e ) {
+        const elem = this.getElement( e );
+        if ( !( elem instanceof HTMLInputElement ) ) {
+            return false;
+        }
+        return elem.checked;
     }
 
     static removeChildren( e ) {

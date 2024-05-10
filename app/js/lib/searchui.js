@@ -9,6 +9,12 @@ class AutoCompleteConfig {
     #valueID;
     #fnRetrieve;
 
+    /**
+     * 
+     * @param {string} listID 
+     * @param {string} valueID 
+     * @param {function (string) :xx} fnRetrieve 
+     */
     constructor( listID, valueID, fnRetrieve ) {
         this.#listID = listID;
         this.#valueID = valueID;
@@ -19,6 +25,9 @@ class AutoCompleteConfig {
         return this.#listID;
     }
 
+    /**
+     * @param {string} value 
+     */
     getResults( value ) {
         return this.#fnRetrieve( value );
     }
@@ -174,6 +183,11 @@ class SearchUI extends UI {
 
     }
 
+    /**
+     * 
+     * @param {string} prefix 
+     * @returns {SpeciesFilter}
+     */
     initFilterFromForm( prefix ) {
 
         const FILT_AUTOCOMPLETE_FIELDS = [
