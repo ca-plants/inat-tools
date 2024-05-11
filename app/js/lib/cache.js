@@ -41,6 +41,10 @@ class Cache {
      */
     async get(key) {
         const result = await this.getEntry(key);
+        if (result && this.isExpired(result)) {
+            this.clearExpired();
+            return undefined;
+        }
         return result ? result.value : undefined;
     }
 
