@@ -8,6 +8,12 @@ class CacheUI {
         await this.showCache();
     }
 
+    async clearExpired() {
+        const cache = await Cache.getInstance();
+        await cache.clearExpired();
+        await this.showCache();
+    }
+
     /**
      * @param {Event} e
      * @param {string} key
@@ -25,6 +31,11 @@ class CacheUI {
             "clear-all",
             "click",
             async () => await ui.clearAll()
+        );
+        DOMUtils.addEventListener(
+            "clear-expired",
+            "click",
+            async () => await ui.clearExpired()
         );
         await ui.showCache();
     }
@@ -75,12 +86,16 @@ class CacheUI {
                 tr.appendChild(td);
             }
 
-            const tr = DOMUtils.createElement("tr");
-
-            const data = await cache.get(key, true);
+            const data = await cache.getEntry(key);
             const url = new URL(key);
+
+            const className = cache.isExpired(data) ? "expired" : undefined;
+
+            const tr = DOMUtils.createElement("tr", className);
+
             getCol(url.pathname, { class: "overflow", title: key });
             getCol(formatDateTime(data.date));
+            getCol(formatDateTime(data.expires));
 
             const copy = DOMUtils.createElement("img", {
                 src: "/img/icon/clipboard.svg",
@@ -114,7 +129,7 @@ class CacheUI {
         table.appendChild(thead);
         const tr = DOMUtils.createElement("tr");
         thead.appendChild(tr);
-        for (const col of ["Key", "Cached", "Actions"]) {
+        for (const col of ["Key", "Cached", "Expires", "Actions"]) {
             const th = DOMUtils.createElement("th");
             tr.appendChild(th);
             th.appendChild(document.createTextNode(col));

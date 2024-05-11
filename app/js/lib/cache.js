@@ -1,6 +1,10 @@
 import { DB } from "./db.js";
 
+/** @typedef {{date:Date,expires:Date,value:any}} CacheEntry */
+
 const OBJECT_STORE = "cache";
+
+const SETTINGS = { cacheExpirationMillis: 1000 * 60 * 60 };
 
 class Cache {
     /** @type Cache */
@@ -14,11 +18,45 @@ class Cache {
         await this.#db.clear(OBJECT_STORE);
     }
 
+    async clearExpired() {
+        const keys = await this.getAllKeys();
+
+        for (const key of keys) {
+            const entry = await this.getEntry(key);
+            if (this.isExpired(entry)) {
+                this.delete(key);
+            }
+        }
+    }
+
     /**
      * @param {string} key
      */
     async delete(key) {
         await this.#db.delete(OBJECT_STORE, key);
+    }
+
+    /**
+     * @param {string} key
+     */
+    async get(key) {
+        const result = await this.getEntry(key);
+        return result ? result.value : undefined;
+    }
+
+    /**
+     * @returns {Promise<string[]>}
+     */
+    async getAllKeys() {
+        return await this.#db.getAllKeys(OBJECT_STORE);
+    }
+
+    /**
+     * @param {string} key
+     * @returns {Promise<CacheEntry>}
+     */
+    async getEntry(key) {
+        return await this.#db.get(OBJECT_STORE, key);
     }
 
     /**
@@ -32,20 +70,16 @@ class Cache {
         return this.#instance;
     }
 
-    /**
-     * @param {string} key
-     */
-    async get(key, returnAll = false) {
-        const result = await this.#db.get(OBJECT_STORE, key);
-        return result ? (returnAll ? result : result.value) : undefined;
-    }
-
-    async getAllKeys() {
-        return await this.#db.getAllKeys(OBJECT_STORE);
-    }
-
     async #initCache() {
         this.#db = await DB.getInstance("InatCache", OBJECT_STORE);
+    }
+
+    /**
+     * @param {CacheEntry} entry
+     * @returns {boolean}
+     */
+    isExpired(entry) {
+        return entry.expires.valueOf() <= Date.now();
     }
 
     /**
@@ -53,8 +87,10 @@ class Cache {
      * @param {object} data
      */
     async put(key, data) {
+        const d = Date.now();
         await this.#db.put(OBJECT_STORE, key, {
-            date: Date.now(),
+            date: d,
+            expires: d + SETTINGS.cacheExpirationMillis,
             value: data,
         });
     }

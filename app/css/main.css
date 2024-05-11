@@ -10,6 +10,10 @@ nav.navbar {
     text-align: right;
 }
 
+.expired {
+    color: red;
+}
+
 a[inert] {
     opacity: 20%;
 }

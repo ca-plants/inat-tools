@@ -57,14 +57,14 @@ class DOMUtils {
     }
 
     /**
-     * @param {string|undefined} url
+     * @param {URL|string|undefined} url
      * @param {Node|string} eLinkText
      * @param {Object.<string,string>|string} [attributes]
      */
     static createLinkElement(url, eLinkText, attributes) {
         const eLink = this.createElement("a", attributes);
         if (url !== undefined) {
-            eLink.setAttribute("href", url);
+            eLink.setAttribute("href", url.toString());
         }
         eLink.appendChild(
             eLinkText instanceof Node
