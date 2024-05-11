@@ -2,6 +2,12 @@ import { Cache } from "../lib/cache.js";
 import { DOMUtils } from "../lib/domutils.js";
 
 class CacheUI {
+    async clearAll() {
+        const cache = await Cache.getInstance();
+        await cache.clear();
+        await this.showCache();
+    }
+
     /**
      * @param {Event} e
      * @param {string} key
@@ -15,6 +21,11 @@ class CacheUI {
 
     static async init() {
         const ui = new CacheUI();
+        DOMUtils.addEventListener(
+            "clear-all",
+            "click",
+            async () => await ui.clearAll()
+        );
         await ui.showCache();
     }
 
@@ -87,7 +98,7 @@ class CacheUI {
                 await ui.removeValue(e, key);
             });
 
-            const actions = DOMUtils.createElement("div");
+            const actions = DOMUtils.createElement("div", { class: "center" });
             actions.appendChild(del);
             actions.appendChild(copy);
             getCol(actions);

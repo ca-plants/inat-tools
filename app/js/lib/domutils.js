@@ -140,6 +140,10 @@ class DOMUtils {
         }
     }
 
+    /**
+     * @param {string|Element} e
+     * @param {string} className
+     */
     static removeClass(e, className) {
         const elem = this.getElement(e);
         if (elem) {
