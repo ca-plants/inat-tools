@@ -3,6 +3,8 @@ import { QueryCancelledException } from "./inatapi.js";
 // eslint-disable-next-line no-unused-vars
 import { INatAPI } from "./inatapi.js";
 // eslint-disable-next-line no-unused-vars
+import { ProgressReporter } from "./progressreporter.js";
+// eslint-disable-next-line no-unused-vars
 import { SpeciesFilter } from "./speciesfilter.js";
 
 const INPROP = {
@@ -21,6 +23,7 @@ class DataRetriever {
      * @param {INatAPI} api 
      * @param {SpeciesFilter} filtInclude
      * @param {SpeciesFilter|undefined} filtExclude
+     * @param {ProgressReporter} progressReporter
      * @returns {Promise<TaxonResult[]>}
      */
     static async getSpeciesData( api, filtInclude, filtExclude, progressReporter ) {
@@ -82,13 +85,19 @@ class DataRetriever {
         return results;
     }
 
+    /**
+     * @param {URL} baseURL 
+     * @param {string} label 
+     * @param {INatAPI} api 
+     * @param {ProgressReporter} progressReporter 
+     */
     static async #retrievePagedData( baseURL, label, api, progressReporter ) {
 
         /**
          * @param {number} pageNum 
          */
         async function getPage( pageNum ) {
-            baseURL.searchParams.set( INPROP.PAGE, pageNum );
+            baseURL.searchParams.set( INPROP.PAGE, pageNum.toString() );
             return await api.getJSON( baseURL );
         }
 
@@ -150,14 +159,13 @@ class DataRetriever {
             progressReporter.hide();
         }
 
-
     }
 
     /**
-     * 
      * @param {string} label 
      * @param {INatAPI} api 
      * @param {SpeciesFilter} filter 
+     * @param {ProgressReporter} progressReporter
      */
     static async #retrieveSpeciesData( label, api, filter, progressReporter ) {
         // Include verifiable=true; this seems to be consistent with iNat web UI default.

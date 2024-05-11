@@ -1,44 +1,9 @@
+import { ProgressReporter } from "./progressreporter.js";
 import { DOMUtils } from "./domutils.js";
 import { INatAPI } from "./inatapi.js";
 import { Login } from "./login.js";
 
 const NAV_LOGIN_ID = "nav-login";
-
-class ProgressReporter {
-
-    #api;
-
-    constructor( api ) {
-        this.#api = api;
-    }
-
-    hide() {
-        DOMUtils.showElement( "progress", false );
-        this.#api.cancelQuery( false );
-    }
-
-    async modalAlert( msg ) {
-        alert( msg );
-    }
-
-    setLabel( label ) {
-        DOMUtils.setElementText( "prog-label", label );
-    }
-
-    setNumPages( numPages ) {
-        DOMUtils.showElement( "prog-page-of", numPages !== 0 );
-        DOMUtils.setElementText( "prog-page-max", numPages );
-    }
-
-    setPage( page ) {
-        DOMUtils.setElementText( "prog-page", page );
-    }
-
-    show() {
-        DOMUtils.showElement( "progress", true );
-    }
-
-}
 
 class UI {
 
