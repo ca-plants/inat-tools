@@ -1,6 +1,4 @@
 import { DOMUtils } from "./domutils.js";
-// eslint-disable-next-line no-unused-vars
-import { UI } from "./ui.js";
 
 class ColDef {
     #th;
@@ -9,7 +7,7 @@ class ColDef {
 
     /**
      * @param {string} th
-     * @param {function (any,UI) : Element|string} fnValue
+     * @param {function (any,any[]) : Element|string} fnValue
      * @param {string} [className]
      */
     constructor(th, fnValue, className) {
@@ -62,10 +60,10 @@ class ColDef {
 
     /**
      * @param {any} entry
-     * @param {UI} ui
+     * @param {any[]} args
      */
-    getValue(entry, ui) {
-        return this.#fnValue(entry, ui);
+    getValue(entry, ...args) {
+        return this.#fnValue(entry, args);
     }
 }
 

@@ -1,9 +1,22 @@
-import { ColDef } from "../lib/coldef.js";
+import { ColDef as BaseColDef } from "../lib/coldef.js";
 import { DataRetriever } from "../lib/dataretriever.js";
 import { DOMUtils } from "../lib/domutils.js";
 import { INatObservation } from "../lib/inatobservation.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { UI } from "../lib/ui.js";
+
+class ColDef extends BaseColDef {
+    /**
+     * @param {string} th
+     * @param {function (any,...ObsDetailUI) : Element|string} fnValue
+     * @param {string} [className]
+     */
+    constructor(th, fnValue, className) {
+        /** @type {function (any,...any) : Element|string} */
+        const f = fnValue;
+        super(th, f, className);
+    }
+}
 
 const DETAIL_COLS = {
     OBS_DATE: new ColDef("Date", (obs) => {
