@@ -24,8 +24,19 @@ class DOMUtils {
     }
 
     /**
+     * @param {string|Element} e
+     */
+    static clickElement(e) {
+        const elem = this.getElement(e);
+        if (!(elem instanceof HTMLInputElement)) {
+            return;
+        }
+        elem.click();
+    }
+
+    /**
      * @param {string} name
-     * @param {Object.<string,string>|string} [attributes]
+     * @param {Object.<string,string|number>|string} [attributes]
      * @returns {Element}
      */
     static createElement(name, attributes) {
@@ -37,7 +48,7 @@ class DOMUtils {
                 break;
             case "object":
                 for (const [k, v] of Object.entries(attributes)) {
-                    e.setAttribute(k, v);
+                    e.setAttribute(k, v.toString());
                 }
                 break;
         }
@@ -45,7 +56,7 @@ class DOMUtils {
     }
 
     /**
-     * @param {*} attributes
+     * @param {Object.<string,string|number>|string} attributes
      * @returns {HTMLInputElement}
      */
     static createInputElement(attributes) {
@@ -58,7 +69,7 @@ class DOMUtils {
 
     /**
      * @param {URL|string|undefined} url
-     * @param {Node|string} eLinkText
+     * @param {Node|string|number} eLinkText
      * @param {Object.<string,string>|string} [attributes]
      */
     static createLinkElement(url, eLinkText, attributes) {
@@ -69,7 +80,7 @@ class DOMUtils {
         eLink.appendChild(
             eLinkText instanceof Node
                 ? eLinkText
-                : document.createTextNode(eLinkText)
+                : document.createTextNode(eLinkText.toString())
         );
         return eLink;
     }
@@ -99,6 +110,18 @@ class DOMUtils {
 
     /**
      * @param {string|Element} e
+     * @param {string} elName
+     */
+    static getFormElement(e, elName) {
+        const form = this.getElement(e);
+        if (!(form instanceof HTMLFormElement)) {
+            return;
+        }
+        return form.elements.namedItem(elName);
+    }
+
+    /**
+     * @param {string|Element} e
      * @returns {Element}
      */
     static getRequiredElement(e) {
@@ -110,7 +133,7 @@ class DOMUtils {
     }
 
     /**
-     * @param {string|Element|null} e
+     * @param {string|Element|RadioNodeList|null|undefined} e
      * @returns {string|undefined}
      */
     static getFormElementValue(e) {
@@ -118,7 +141,11 @@ class DOMUtils {
             // Assume it's an id.
             return this.getFormElementValue(this.getElement(e));
         }
-        if (e instanceof HTMLInputElement || e instanceof HTMLSelectElement) {
+        if (
+            e instanceof HTMLInputElement ||
+            e instanceof HTMLSelectElement ||
+            e instanceof RadioNodeList
+        ) {
             return e.value;
         }
     }
@@ -151,8 +178,12 @@ class DOMUtils {
         }
     }
 
-    static setElementText(id, text) {
-        const elem = this.getElement(id);
+    /**
+     * @param {string|Element} e
+     * @param {string} text
+     */
+    static setElementText(e, text) {
+        const elem = this.getElement(e);
         if (!elem) {
             return;
         }
@@ -184,6 +215,9 @@ class DOMUtils {
         const elem = this.getElement(e);
         if (!elem) {
             return;
+        }
+        if (elem instanceof HTMLTextAreaElement) {
+            elem.value = value ? value : "";
         }
         elem.setAttribute("value", value === undefined ? "" : value);
     }

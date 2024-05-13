@@ -1,14 +1,19 @@
-import { ColDef as BaseColDef } from "../lib/coldef.js";
+import { ColDef } from "../lib/coldef.js";
 import { DataRetriever } from "../lib/dataretriever.js";
 import { DOMUtils } from "../lib/domutils.js";
-import { INatObservation } from "../lib/inatobservation.js";
+import { INatObservationX as INatObservation } from "../lib/inatobservationx.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { UI } from "../lib/ui.js";
 
-class ColDef extends BaseColDef {
+/** @typedef {[string,string][]} ExtraParams */
+/** @typedef {{role:string}} ProjectMember */
+/** @typedef {{countObscured:number,countPublic:number,countTrusted:number,observations:INatObservation[]}} Results */
+/** @typedef {{count:number,count_public:number,count_trusted:number,count_obscured:number,id:string,login:string,display_name:string}} UserSummary */
+
+class DetailColDef extends ColDef {
     /**
      * @param {string} th
-     * @param {function (any,...ObsDetailUI) : Element|string} fnValue
+     * @param {function (INatObservation,...ObsDetailUI) : Element|string} fnValue
      * @param {string} [className]
      */
     constructor(th, fnValue, className) {
@@ -19,65 +24,70 @@ class ColDef extends BaseColDef {
 }
 
 const DETAIL_COLS = {
-    OBS_DATE: new ColDef("Date", (obs) => {
+    OBS_DATE: new DetailColDef("Date", (obs) => {
         return DOMUtils.createLinkElement(
-            INatObservation.getURL(obs),
-            INatObservation.getObsDateString(obs),
+            obs.getURL(),
+            obs.getObsDateString(),
             { target: "_blank" }
         );
     }),
-    OBSERVER: new ColDef("Observer", (obs) => {
+    OBSERVER: new DetailColDef("Observer", (obs) => {
         return DOMUtils.createLinkElement(
-            "https://www.inaturalist.org/people/" +
-                INatObservation.getUserLogin(obs),
-            INatObservation.getUserDisplayName(obs),
+            "https://www.inaturalist.org/people/" + obs.getUserLogin(),
+            obs.getUserDisplayName(),
             { target: "_blank" }
         );
     }),
-    LOCATION: new ColDef("Location", (obs) => {
-        if (INatObservation.isObscured(obs)) {
+    LOCATION: new DetailColDef("Location", (obs) => {
+        if (obs.isObscured()) {
             return "";
         }
         const url = new URL("https://www.google.com/maps/search/?api=1");
-        url.searchParams.set(
-            "query",
-            INatObservation.getCoordinatesString(obs)
-        );
-        return DOMUtils.createLinkElement(
-            url,
-            INatObservation.getPlaceGuess(obs),
-            { target: "_blank" }
-        );
+        url.searchParams.set("query", obs.getCoordinatesString());
+        return DOMUtils.createLinkElement(url, obs.getPlaceGuess(), {
+            target: "_blank",
+        });
     }),
-    COORDS: new ColDef("Coords", (obs) => {
-        return INatObservation.getCoordType(obs);
+    COORDS: new DetailColDef("Coords", (obs) => {
+        return obs.getCoordType();
     }),
-    PROJECT: new ColDef("Proj Mem", (obs, ui) => {
-        return ui.getMembershipStatus(INatObservation.getUserID(obs));
+    PROJECT: new DetailColDef("Proj Mem", (obs, ui) => {
+        return ui.getMembershipStatus(obs.getUserID());
     }),
 };
 
+class SummaryColDef extends ColDef {
+    /**
+     * @param {string} th
+     * @param {function (UserSummary,ObsDetailUI) : Element|string} fnValue
+     * @param {string} [className]
+     */
+    constructor(th, fnValue, className) {
+        super(th, fnValue, className);
+    }
+}
+
 const SUMMARY_COLS = {
-    OBSERVER: new ColDef("Observer", (summ) => {
+    OBSERVER: new SummaryColDef("Observer", (summ) => {
         return DOMUtils.createLinkElement(
             "https://www.inaturalist.org/people/" + summ.login,
             summ.display_name,
             { target: "_blank" }
         );
     }),
-    NUM_OBS: new ColDef("Total", (summ, ui) => {
+    NUM_OBS: new SummaryColDef("Total", (summ, ui) => {
         return ui.getObserverINatLink(summ.login, summ.count);
     }),
-    NUM_PUBLIC: new ColDef("Public", (summ) => {
-        return summ.count_public;
+    NUM_PUBLIC: new SummaryColDef("Public", (summ) => {
+        return summ.count_public.toString();
     }),
-    NUM_TRUSTED: new ColDef("Trusted", (summ) => {
-        return summ.count_trusted;
+    NUM_TRUSTED: new SummaryColDef("Trusted", (summ) => {
+        return summ.count_trusted.toString();
     }),
-    NUM_OBSCURED: new ColDef("Obscured", (summ) => {
-        return summ.count_obscured;
+    NUM_OBSCURED: new SummaryColDef("Obscured", (summ) => {
+        return summ.count_obscured.toString();
     }),
-    PROJECT: new ColDef("Proj Mem", (summ, ui) => {
+    PROJECT: new SummaryColDef("Proj Mem", (summ, ui) => {
         return ui.getMembershipStatus(summ.id);
     }),
 };
@@ -85,21 +95,29 @@ const SUMMARY_COLS = {
 class ObsDetailUI extends UI {
     #taxon_id;
     #f1;
-    #fp;
-    #taxon_data;
-    #results;
-    #project_members;
+    #extraParams;
+    #taxon_data = { id: "", rank: "" };
+    /** @type {Results} */
+    #results = {
+        countObscured: 0,
+        countPublic: 0,
+        countTrusted: 0,
+        observations: [],
+    };
+    /** @type {Object<string,ProjectMember>} */
+    #project_members = {};
 
     /**
      *
      * @param {string} taxon_id
-     * @param {SpeciesFilter} f1
+     * @param {import("../../../types/types.js").SpeciesFilterParams} f1
+     * @param {ExtraParams} extraParams
      */
-    constructor(taxon_id, f1, fp = []) {
+    constructor(taxon_id, f1, extraParams = []) {
         super();
         this.#taxon_id = taxon_id;
         this.#f1 = new SpeciesFilter(f1);
-        this.#fp = fp;
+        this.#extraParams = extraParams;
     }
 
     clearResults() {
@@ -111,8 +129,12 @@ class ObsDetailUI extends UI {
     #getAllFilterParams() {
         const params = this.#f1.getParams();
         params.taxon_id = this.#taxon_id;
-        for (const param of this.#fp) {
-            params[param[0]] = param[1];
+        for (const param of this.#extraParams) {
+            switch (param[0]) {
+                case "quality_grade":
+                    params.quality_grade = param[1];
+                    break;
+            }
         }
         return params;
     }
@@ -127,7 +149,7 @@ class ObsDetailUI extends UI {
             initArgs = {};
         }
         const ui = new ObsDetailUI(initArgs.taxon_id, initArgs.f1, initArgs.fp);
-        await ui.init(initArgs.sel);
+        await ui.initInstance(initArgs.sel);
         return ui;
     }
 
@@ -142,6 +164,10 @@ class ObsDetailUI extends UI {
         return data.role ? data.role : "yes";
     }
 
+    /**
+     * @param {string} login
+     * @param {number} count
+     */
     getObserverINatLink(login, count) {
         const params = this.#getAllFilterParams();
         params.user_id = login;
@@ -158,17 +184,23 @@ class ObsDetailUI extends UI {
     getSelectedTypes() {
         const types = [];
         for (const type of ["public", "trusted", "obscured"]) {
-            const cb = document.getElementById("sel-" + type);
-            if (cb && cb.checked) {
+            if (DOMUtils.isChecked("sel-" + type)) {
                 types.push(type);
             }
         }
         return types;
     }
 
+    #getTaxonData() {
+        if (!this.#taxon_data) {
+            throw new Error();
+        }
+        return this.#taxon_data;
+    }
+
     handleCoordinateChange() {
-        const form = document.getElementById("form");
-        switch (form["displayopt"].value) {
+        const elem = DOMUtils.getFormElement("form", "displayopt");
+        switch (DOMUtils.getFormElementValue(elem)) {
             case "geojson":
                 this.showGeoJSON();
                 break;
@@ -184,7 +216,16 @@ class ObsDetailUI extends UI {
         this.#updateViewInINaturalistLink();
     }
 
-    async init(selArray) {
+    /**
+     * @param {string[]} selArray
+     */
+    async initInstance(selArray) {
+        /**
+         * @param {Element} container
+         * @param {number} count
+         * @param {string} label
+         * @param {ObsDetailUI} ui
+         */
         function addBucket(container, count, label, ui) {
             if (count === 0) {
                 return;
@@ -204,10 +245,16 @@ class ObsDetailUI extends UI {
             container.appendChild(div);
         }
 
+        /**
+         *
+         * @param {string} value
+         * @param {string} label
+         * @param {function():void} onclick
+         */
         function addDisplayOption(value, label, onclick) {
             const id = "disp-" + value;
             const div = DOMUtils.createElement("div");
-            const rb = DOMUtils.createElement("input", {
+            const rb = DOMUtils.createInputElement({
                 type: "radio",
                 id: id,
                 value: value,
@@ -289,14 +336,23 @@ class ObsDetailUI extends UI {
         form.appendChild(optionDiv);
 
         this.#updateViewInINaturalistLink();
-        document.getElementById("disp-details").click();
+        DOMUtils.clickElement("disp-details");
     }
 
     showDetails() {
+        /**
+         * @param {INatObservation} obs
+         * @param {DetailColDef[]} cols
+         * @param {ObsDetailUI} ui
+         */
         function getRow(obs, cols, ui) {
             const tr = DOMUtils.createElement("tr");
             for (const col of cols) {
-                ColDef.addColElement(tr, col.getValue(obs, ui), col.getClass());
+                DetailColDef.addColElement(
+                    tr,
+                    col.getValue(obs, ui),
+                    col.getClass()
+                );
             }
 
             return tr;
@@ -314,13 +370,13 @@ class ObsDetailUI extends UI {
         if (this.#project_members) {
             cols.push(DETAIL_COLS.PROJECT);
         }
-        const eTable = ColDef.createTable(cols);
+        const eTable = DetailColDef.createTable(cols);
 
         const tbody = DOMUtils.createElement("tbody");
         eTable.appendChild(tbody);
 
         for (const obs of this.#results.observations) {
-            if (!selectedTypes.includes(INatObservation.getCoordType(obs))) {
+            if (!selectedTypes.includes(obs.getCoordType())) {
                 continue;
             }
             tbody.appendChild(getRow(obs, cols, this));
@@ -335,20 +391,20 @@ class ObsDetailUI extends UI {
 
         const features = [];
         for (const obs of this.#results.observations) {
-            if (!selectedTypes.includes(INatObservation.getCoordType(obs))) {
+            if (!selectedTypes.includes(obs.getCoordType())) {
                 continue;
             }
             const properties = {
-                url: INatObservation.getURL(obs),
-                date: INatObservation.getObsDateString(obs),
-                observer: INatObservation.getUserDisplayName(obs),
+                url: obs.getURL(),
+                date: obs.getObsDateString(),
+                observer: obs.getUserDisplayName(),
             };
             const feature = {
                 type: "Feature",
                 properties: properties,
                 geometry: {
                     type: "Point",
-                    coordinates: INatObservation.getCoordinatesGeoJSON(obs),
+                    coordinates: obs.getCoordinatesGeoJSON(),
                 },
             };
             features.push(feature);
@@ -368,16 +424,24 @@ class ObsDetailUI extends UI {
 
         const eDivText = DOMUtils.createElement("div", { class: "section" });
         const textarea = DOMUtils.createElement("textarea", { rows: 15 });
-        textarea.value = JSON.stringify(geoJSON, null, 2);
+        DOMUtils.setFormElementValue(
+            textarea,
+            JSON.stringify(geoJSON, null, 2)
+        );
         eDivText.appendChild(textarea);
         eResults.appendChild(eDivText);
     }
 
     showUserSumm() {
+        /**
+         * @param {UserSummary} userSumm
+         * @param {DetailColDef[]} cols
+         * @param {ObsDetailUI} ui
+         */
         function getRow(userSumm, cols, ui) {
             const tr = DOMUtils.createElement("tr");
             for (const col of cols) {
-                ColDef.addColElement(
+                DetailColDef.addColElement(
                     tr,
                     col.getValue(userSumm, ui),
                     col.getClass()
@@ -390,18 +454,19 @@ class ObsDetailUI extends UI {
         const selectedTypes = this.getSelectedTypes();
 
         // Summarize results.
+        /** @type {Object<string,UserSummary>} */
         const summary = {};
         for (const obs of this.#results.observations) {
-            if (!selectedTypes.includes(INatObservation.getCoordType(obs))) {
+            if (!selectedTypes.includes(obs.getCoordType())) {
                 continue;
             }
-            const id = INatObservation.getUserID(obs);
+            const id = obs.getUserID();
             let userSumm = summary[id];
             if (!userSumm) {
                 userSumm = {
                     id: id,
-                    login: INatObservation.getUserLogin(obs),
-                    display_name: INatObservation.getUserDisplayName(obs),
+                    login: obs.getUserLogin(),
+                    display_name: obs.getUserDisplayName(),
                     count: 0,
                     count_public: 0,
                     count_trusted: 0,
@@ -409,7 +474,7 @@ class ObsDetailUI extends UI {
                 };
                 summary[id] = userSumm;
             }
-            switch (INatObservation.getCoordType(obs)) {
+            switch (obs.getCoordType()) {
                 case "public":
                     userSumm.count_public++;
                     break;
@@ -433,7 +498,7 @@ class ObsDetailUI extends UI {
         if (this.#project_members) {
             cols.push(SUMMARY_COLS.PROJECT);
         }
-        const eTable = ColDef.createTable(cols);
+        const eTable = DetailColDef.createTable(cols);
 
         const tbody = DOMUtils.createElement("tbody");
         eTable.appendChild(tbody);
@@ -447,7 +512,15 @@ class ObsDetailUI extends UI {
         this.wrapResults(eResults, eTable);
     }
 
+    /**
+     * @param {import("../lib/dataretriever.js").RawObservation[]} rawResults
+     * @returns {Promise<Results>}
+     */
     async summarizeResults(rawResults) {
+        /**
+         * @param {import("../lib/dataretriever.js").RawObservation} result
+         * @param {ExtraParams} fp
+         */
         function resultMatchesFilter(result, fp) {
             for (const param of fp) {
                 switch (param[0]) {
@@ -466,32 +539,34 @@ class ObsDetailUI extends UI {
             return true;
         }
 
+        const taxon_data = this.#getTaxonData();
         const taxonSummary = {
-            taxon_id: this.#taxon_data.id,
-            rank: this.#taxon_data.rank,
+            taxon_id: taxon_data.id,
+            rank: taxon_data.rank,
             count: 0,
             countPublic: 0,
             countTrusted: 0,
             countObscured: 0,
             countResearchGrade: 0,
-            observations: [],
+            /** @type {INatObservation[]} */ observations: [],
         };
 
-        for (const result of rawResults) {
-            if (result.taxon.id !== this.#taxon_id) {
+        for (const rawResult of rawResults) {
+            if (rawResult.taxon.id !== this.#taxon_id) {
                 continue;
             }
 
-            if (!resultMatchesFilter(result, this.#fp)) {
+            if (!resultMatchesFilter(rawResult, this.#extraParams)) {
                 continue;
             }
 
+            const result = new INatObservation(rawResult);
             taxonSummary.observations.push(result);
             taxonSummary.count++;
-            if (result.quality_grade === "research") {
+            if (rawResult.quality_grade === "research") {
                 taxonSummary.countResearchGrade++;
             }
-            switch (INatObservation.getCoordType(result)) {
+            switch (result.getCoordType()) {
                 case "public":
                     taxonSummary.countPublic++;
                     break;
@@ -518,7 +593,7 @@ class ObsDetailUI extends UI {
                 const url = filter.getURL(
                     "https://www.inaturalist.org/observations"
                 );
-                url.searchParams.set("lrank", ui.#taxon_data.rank);
+                url.searchParams.set("lrank", ui.#getTaxonData().rank);
                 return url;
             }
 
@@ -534,7 +609,7 @@ class ObsDetailUI extends UI {
                     const url = filter.getURL(
                         "https://www.inaturalist.org/observations"
                     );
-                    url.searchParams.set("lrank", ui.#taxon_data.rank);
+                    url.searchParams.set("lrank", ui.#getTaxonData().rank);
                     url.searchParams.set("taxon_geoprivacy", "open");
                     url.searchParams.set("geoprivacy", "open");
                     return url;
@@ -544,12 +619,8 @@ class ObsDetailUI extends UI {
                 case "obscured": {
                     const selectedIDs = [];
                     for (const obs of ui.#results.observations) {
-                        if (
-                            selectedTypes.includes(
-                                INatObservation.getCoordType(obs)
-                            )
-                        ) {
-                            selectedIDs.push(obs.id);
+                        if (selectedTypes.includes(obs.getCoordType())) {
+                            selectedIDs.push(obs.getID());
                         }
                     }
                     const url = new URL(

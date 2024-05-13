@@ -7,7 +7,7 @@ class ColDef {
 
     /**
      * @param {string} th
-     * @param {function (any,any[]) : Element|string} fnValue
+     * @param {function (any,...any) : Element|string} fnValue
      * @param {string} [className]
      */
     constructor(th, fnValue, className) {
@@ -19,7 +19,7 @@ class ColDef {
     /**
      * @param {Element} tr
      * @param {Node|string} content
-     * @param {string} className
+     * @param {string|undefined} className
      */
     static addColElement(tr, content, className) {
         const td = DOMUtils.createElement("td", className);
@@ -63,7 +63,7 @@ class ColDef {
      * @param {any[]} args
      */
     getValue(entry, ...args) {
-        return this.#fnValue(entry, args);
+        return this.#fnValue(entry, ...args);
     }
 }
 
