@@ -6,7 +6,6 @@ import { INatObservationX as INatObservation } from "../lib/inatobservationx.js"
 import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { UI } from "../lib/ui.js";
 
-/** @typedef {[string,string][]} ExtraParams */
 /** @typedef {{role:string}} ProjectMember */
 /** @typedef {{countObscured:number,countPublic:number,countTrusted:number,observations:INatObservation[]}} Results */
 /** @typedef {{count:number,count_public:number,count_trusted:number,count_obscured:number,id:string,login:string,display_name:string}} UserSummary */
@@ -18,9 +17,7 @@ class DetailColDef extends ColDef {
      * @param {string} [className]
      */
     constructor(th, fnValue, className) {
-        /** @type {function (any,...any) : Element|string} */
-        const f = fnValue;
-        super(th, f, className);
+        super(th, fnValue, className);
     }
 }
 
@@ -96,7 +93,6 @@ const SUMMARY_COLS = {
 class ObsDetailUI extends UI {
     #taxon_id;
     #f1;
-    #extraParams;
     #taxon_data = { id: "", rank: "" };
     /** @type {Results} */
     #results = {
@@ -110,16 +106,14 @@ class ObsDetailUI extends UI {
 
     /**
      * @param {Params.SpeciesFilter} f1
-     * @param {ExtraParams} extraParams
      */
-    constructor(f1, extraParams = []) {
+    constructor(f1) {
         super();
         if (f1.taxon_id === undefined) {
             throw new Error();
         }
         this.#taxon_id = f1.taxon_id;
         this.#f1 = new SpeciesFilter(f1);
-        this.#extraParams = extraParams;
     }
 
     clearResults() {
@@ -128,24 +122,12 @@ class ObsDetailUI extends UI {
         return eResults;
     }
 
-    #getAllFilterParams() {
-        const params = this.#f1.getParams();
-        for (const param of this.#extraParams) {
-            switch (param[0]) {
-                case "quality_grade":
-                    params.quality_grade = param[1];
-                    break;
-            }
-        }
-        return params;
-    }
-
     static async getInstance() {
         /** @type {Params.PageObsDetail} */
         const initArgs = JSON.parse(
             decodeURIComponent(document.location.hash).substring(1)
         );
-        const ui = new ObsDetailUI(initArgs.f1, initArgs.fp);
+        const ui = new ObsDetailUI(initArgs.f1);
         await ui.initInstance(initArgs.sel);
         return ui;
     }
@@ -166,7 +148,7 @@ class ObsDetailUI extends UI {
      * @param {number} count
      */
     getObserverINatLink(login, count) {
-        const params = this.#getAllFilterParams();
+        const params = this.#f1.getParams();
         params.user_id = login;
         const filter = new SpeciesFilter(params);
         const url = new URL(
@@ -296,7 +278,7 @@ class ObsDetailUI extends UI {
         }
 
         // Show filter description.
-        const filter = new SpeciesFilter(this.#getAllFilterParams());
+        const filter = new SpeciesFilter(this.#f1.getParams());
         DOMUtils.getRequiredElement("filterdesc").appendChild(
             document.createTextNode(await filter.getDescription(api))
         );
@@ -524,28 +506,6 @@ class ObsDetailUI extends UI {
      * @returns {Promise<Results>}
      */
     async summarizeResults(rawResults) {
-        /**
-         * @param {import("../lib/dataretriever.js").RawObservation} result
-         * @param {ExtraParams} fp
-         */
-        function resultMatchesFilter(result, fp) {
-            for (const param of fp) {
-                switch (param[0]) {
-                    case "quality_grade":
-                        if (param[1] === "research") {
-                            if (result.quality_grade !== "research") {
-                                return false;
-                            }
-                        } else {
-                            if (result.quality_grade === "research") {
-                                return false;
-                            }
-                        }
-                }
-            }
-            return true;
-        }
-
         const taxon_data = this.#getTaxonData();
         const taxonSummary = {
             taxon_id: taxon_data.id,
@@ -560,10 +520,6 @@ class ObsDetailUI extends UI {
 
         for (const rawResult of rawResults) {
             if (rawResult.taxon.id !== this.#taxon_id) {
-                continue;
-            }
-
-            if (!resultMatchesFilter(rawResult, this.#extraParams)) {
                 continue;
             }
 
@@ -595,7 +551,7 @@ class ObsDetailUI extends UI {
          */
         function getURL(ui) {
             function showAll() {
-                const params = ui.#getAllFilterParams();
+                const params = ui.#f1.getParams();
                 const filter = new SpeciesFilter(params);
                 const url = filter.getURL(
                     "https://www.inaturalist.org/observations"
@@ -611,7 +567,7 @@ class ObsDetailUI extends UI {
                 case "public,trusted,obscured":
                     return showAll();
                 case "public": {
-                    const params = ui.#getAllFilterParams();
+                    const params = ui.#f1.getParams();
                     const filter = new SpeciesFilter(params);
                     const url = filter.getURL(
                         "https://www.inaturalist.org/observations"

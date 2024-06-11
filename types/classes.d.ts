@@ -10,7 +10,6 @@ declare namespace Params {
     export interface PageObsDetail {
         f1: Params.SpeciesFilter;
         sel?: ("public" | "obscured" | "trusted")[];
-        fp?: [string, string][];
     }
     export interface SpeciesFilter {
         month?: number;

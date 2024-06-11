@@ -32,7 +32,7 @@ const COLUMNS = {
                 entry,
                 entry[1].countResearchGrade,
                 undefined,
-                [["quality_grade", "research"]]
+                { quality_grade: "research" }
             );
         },
         "c-num"
@@ -44,7 +44,7 @@ const COLUMNS = {
                 entry,
                 entry[1].count - entry[1].countResearchGrade,
                 undefined,
-                [["quality_grade", "needs_id"]]
+                { quality_grade: "needs_id" }
             );
         },
         "c-num"
@@ -128,26 +128,24 @@ class ObsUI extends SearchUI {
      * @param {[string,SummaryEntry]} entry
      * @param {number} num
      * @param {("public"|"trusted"|"obscured")[]} [selected=["public", "trusted", "obscured"]]
-     * @param {[string,string][]} [extraParams=[]]
+     * @param {{quality_grade?:"research"|"needs_id"}} [extraParams={}]
      */
     getDetailLink(
         entry,
         num,
         selected = ["public", "trusted", "obscured"],
-        extraParams = []
+        extraParams = {}
     ) {
         if (num === 0) {
             return "0";
         }
         const data = entry[1];
 
-        const filter = this.#f1.getParams();
-        filter.taxon_id = data.taxon_id;
+        const fp = this.#f1.getParams();
+        fp.taxon_id = data.taxon_id;
+        Object.assign(fp, extraParams);
         /** @type {Params.PageObsDetail} */
-        const args = { f1: filter, sel: selected };
-        if (extraParams.length > 0) {
-            args.fp = extraParams;
-        }
+        const args = { f1: fp, sel: selected };
         const url = new URL(
             this.getPathPrefix() + "obsdetail.html",
             document.location.origin
@@ -169,6 +167,9 @@ class ObsUI extends SearchUI {
         await ui.init();
     }
 
+    /**
+     * @param {SummaryEntry[]} results
+     */
     async #getSummaryDOM(results) {
         const descrip = DOMUtils.createElement("div");
         descrip.appendChild(
