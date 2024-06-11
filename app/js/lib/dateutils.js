@@ -37,6 +37,27 @@ class DateUtils {
     }
 
     /**
+     * @param {number} dayOfYear
+     * @param {boolean} isLeapYear
+     */
+    static getMonthAndDay(dayOfYear, isLeapYear) {
+        for (let index = 0; index < cumulativeDays.length - 1; index++) {
+            const adjust = isLeapYear && index > 0 ? 1 : 0;
+            if (cumulativeDays[index + 1] + adjust > dayOfYear) {
+                return {
+                    month: index + 1,
+                    day:
+                        dayOfYear -
+                        cumulativeDays[index] +
+                        1 -
+                        (isLeapYear && index > 1 ? 1 : 0),
+                };
+            }
+        }
+        return { month: 12, day: dayOfYear - (isLeapYear ? 334 : 333) };
+    }
+
+    /**
      * @param {number} year
      * @returns {boolean}
      */

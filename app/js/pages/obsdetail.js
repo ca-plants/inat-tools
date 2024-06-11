@@ -1,6 +1,7 @@
 import { ColDef } from "../lib/coldef.js";
 import { DataRetriever } from "../lib/dataretriever.js";
 import { DOMUtils } from "../lib/domutils.js";
+import { Histogram } from "../lib/histogram.js";
 import { INatObservationX as INatObservation } from "../lib/inatobservationx.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { UI } from "../lib/ui.js";
@@ -318,6 +319,9 @@ class ObsDetailUI extends UI {
         });
         addDisplayOption("details", "Details", () => this.showDetails());
         addDisplayOption("geojson", "GeoJSON", () => this.showGeoJSON());
+        addDisplayOption("datehisto", "Date Histogram", () =>
+            this.showDateHistogram()
+        );
         addDisplayOption("usersumm", "Summary by Observer", () =>
             this.showUserSumm()
         );
@@ -337,6 +341,11 @@ class ObsDetailUI extends UI {
 
         this.#updateViewInINaturalistLink();
         DOMUtils.clickElement("disp-details");
+    }
+
+    showDateHistogram() {
+        const eResults = this.clearResults();
+        eResults.appendChild(Histogram.createSVG(this.#results.observations));
     }
 
     showDetails() {

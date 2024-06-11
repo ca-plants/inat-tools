@@ -35,6 +35,10 @@ class INatObservationX {
         return this.#rawObservation.id;
     }
 
+    getObsDate() {
+        return new Date(this.#rawObservation.observed_on_details.date);
+    }
+
     getObsDateString() {
         return this.#rawObservation.observed_on_details.date.replaceAll(
             "-",
