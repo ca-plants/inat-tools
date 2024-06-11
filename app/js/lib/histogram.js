@@ -1,30 +1,38 @@
 import * as Plot from "https://cdn.jsdelivr.net/npm/@observablehq/plot/+esm";
 import { DateUtils } from "./dateutils.js";
-// eslint-disable-next-line no-unused-vars
-import { INatObservationX as INatObservation } from "../lib/inatobservationx.js";
 
 class Histogram {
     /**
      * @param {INatObservation[]} observations
+     * @param {SpeciesFilter} filter
      */
-    static createSVG(observations) {
+    static createSVG(observations, filter) {
+        /**
+         * @param {number} doy
+         */
+        function formatDate(doy) {
+            const md = DateUtils.getMonthAndDay(doy, true);
+            return md.month.toString() + "/" + md.day.toString();
+        }
+
         const plot = Plot.barY(this.#summarizeObservations(observations), {
             x: "date",
             y: "count",
+            tip: { format: { x: (d) => formatDate(d) } },
         }).plot({
             x: {
                 label: "Date",
                 interval: 1,
-                tickFormat: (t) => {
-                    const md = DateUtils.getMonthAndDay(t, true);
-                    return md.month.toString() + "/" + md.day.toString();
-                },
+                tickFormat: (t) => formatDate(t),
             },
             y: {
                 label: "Observations",
                 interval: 1,
                 tickFormat: (t) => parseInt(t).toString(),
             },
+        });
+        plot.addEventListener("click", (event) => {
+            this.#viewInINat(event, plot.value, filter);
         });
         return plot;
     }
@@ -36,7 +44,7 @@ class Histogram {
         /** @type {number[]} */
         const rawSummary = [];
         for (const obs of observations) {
-            const dayOfYear = DateUtils.getDayOfYear(obs.getObsDate());
+            const dayOfYear = DateUtils.getDayOfYear(obs.getObsDate(), true);
             if (rawSummary[dayOfYear]) {
                 rawSummary[dayOfYear] = rawSummary[dayOfYear] + 1;
             } else {
@@ -56,6 +64,23 @@ class Histogram {
         }
 
         return summary;
+    }
+
+    /**
+     * @param {Event} event
+     * @param {{date:number,count:number}} value
+     * @param {SpeciesFilter} filter
+     */
+    static #viewInINat(event, value, filter) {
+        event.preventDefault();
+        const url = filter.getURL();
+        if (!value || !value.count) {
+            return;
+        }
+        const md = DateUtils.getMonthAndDay(value.date, true);
+        url.searchParams.set("month", md.month.toString());
+        url.searchParams.set("day", md.day.toString());
+        window.open(url, "_blank");
     }
 }
 

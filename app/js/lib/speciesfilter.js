@@ -28,11 +28,11 @@ const MONTH_NAMES = [
 ];
 
 class SpeciesFilter {
-    /** @type {import("../../../types/types.js").SpeciesFilterParams} */
+    /** @type {Params.SpeciesFilter} */
     #params = {};
 
     /**
-     * @param {import("../../../types/types.js").SpeciesFilterParams} params
+     * @param {Params.SpeciesFilter} params
      */
     constructor(params) {
         for (const name of Object.values(FP)) {
@@ -100,11 +100,17 @@ class SpeciesFilter {
         return structuredClone(this.#params);
     }
 
+    /**
+     * @param {"project_id"} name
+     */
     getParamValue(name) {
         return this.#params[name];
     }
 
-    getURL(urlStr) {
+    /**
+     * @param {string|URL} [urlStr]
+     */
+    getURL(urlStr = "https://www.inaturalist.org/observations") {
         const url = new URL(urlStr);
         for (const [k, v] of Object.entries(this.#params)) {
             switch (k) {

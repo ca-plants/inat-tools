@@ -109,14 +109,15 @@ class ObsDetailUI extends UI {
     #project_members = {};
 
     /**
-     *
-     * @param {string} taxon_id
-     * @param {import("../../../types/types.js").SpeciesFilterParams} f1
+     * @param {Params.SpeciesFilter} f1
      * @param {ExtraParams} extraParams
      */
-    constructor(taxon_id, f1, extraParams = []) {
+    constructor(f1, extraParams = []) {
         super();
-        this.#taxon_id = taxon_id;
+        if (f1.taxon_id === undefined) {
+            throw new Error();
+        }
+        this.#taxon_id = f1.taxon_id;
         this.#f1 = new SpeciesFilter(f1);
         this.#extraParams = extraParams;
     }
@@ -129,7 +130,6 @@ class ObsDetailUI extends UI {
 
     #getAllFilterParams() {
         const params = this.#f1.getParams();
-        params.taxon_id = this.#taxon_id;
         for (const param of this.#extraParams) {
             switch (param[0]) {
                 case "quality_grade":
@@ -141,15 +141,11 @@ class ObsDetailUI extends UI {
     }
 
     static async getInstance() {
-        let initArgs;
-        try {
-            initArgs = JSON.parse(
-                decodeURIComponent(document.location.hash).substring(1)
-            );
-        } catch (error) {
-            initArgs = {};
-        }
-        const ui = new ObsDetailUI(initArgs.taxon_id, initArgs.f1, initArgs.fp);
+        /** @type {Params.PageObsDetail} */
+        const initArgs = JSON.parse(
+            decodeURIComponent(document.location.hash).substring(1)
+        );
+        const ui = new ObsDetailUI(initArgs.f1, initArgs.fp);
         await ui.initInstance(initArgs.sel);
         return ui;
     }
@@ -218,13 +214,13 @@ class ObsDetailUI extends UI {
     }
 
     /**
-     * @param {string[]} selArray
+     * @param {("public"|"obscured"|"trusted")[]} selArray
      */
-    async initInstance(selArray) {
+    async initInstance(selArray = []) {
         /**
          * @param {Element} container
          * @param {number} count
-         * @param {string} label
+         * @param {"public"|"obscured"|"trusted"} label
          * @param {ObsDetailUI} ui
          */
         function addBucket(container, count, label, ui) {
@@ -345,7 +341,9 @@ class ObsDetailUI extends UI {
 
     showDateHistogram() {
         const eResults = this.clearResults();
-        eResults.appendChild(Histogram.createSVG(this.#results.observations));
+        eResults.appendChild(
+            Histogram.createSVG(this.#results.observations, this.#f1)
+        );
     }
 
     showDetails() {

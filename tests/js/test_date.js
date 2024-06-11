@@ -79,6 +79,7 @@ test(dayOfYear, "2024-02-29", 59);
 test(dayOfYear, "2023-03-01", 59);
 test(dayOfYear, "2023-03-01", 60, true);
 test(dayOfYear, "2024-03-01", 60);
+test(dayOfYear, "2023-09-01", 244, true);
 test(dayOfYear, "2023-12-31", 364);
 test(dayOfYear, "2024-12-31", 365);
 
@@ -87,6 +88,7 @@ test(getMonthAndDay, 33, true, [2, 3]);
 test(getMonthAndDay, 59, false, [3, 1]);
 test(getMonthAndDay, 59, true, [2, 29]);
 test(getMonthAndDay, 60, true, [3, 1]);
+test(getMonthAndDay, 244, true, [9, 1]);
 test(getMonthAndDay, 364, false, [12, 31]);
 test(getMonthAndDay, 365, true, [12, 31]);
 

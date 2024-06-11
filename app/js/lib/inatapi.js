@@ -135,7 +135,7 @@ class INatAPI {
     }
 
     /**
-     * @param {string} taxonID
+     * @param {number} taxonID
      * @returns {Promise<import("../../../types/types.js").TaxonData>}
      */
     async getTaxonData(taxonID) {

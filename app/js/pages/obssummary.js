@@ -3,151 +3,234 @@ import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { DOMUtils } from "../lib/domutils.js";
 import { DataRetriever } from "../lib/dataretriever.js";
 import { INatAPI } from "../lib/inatapi.js";
-import { INatObservation } from "../lib/inatobservation.js";
+import { INatObservationX as INatObservation } from "../lib/inatobservationx.js";
 import { ColDef } from "../lib/coldef.js";
 
+/**
+ * @typedef {{taxon_id:number,displayName:string,rank:string,count:number,countObscured:number,countPublic:number,countResearchGrade:number}} SummaryEntry
+ */
+
 const COLUMNS = {
-    SCI_NAME: new ColDef( "Taxon", ( entry ) => { return entry[ 1 ].displayName; }, "c-sn" ),
+    SCI_NAME: new ColDef(
+        "Taxon",
+        (entry) => {
+            return entry[1].displayName;
+        },
+        "c-sn"
+    ),
     NUM_OBS: new ColDef(
         "#",
-        ( entry, ui ) => { return ui.getDetailLink( entry, entry[ 1 ].count ); },
+        (entry, ui) => {
+            return ui.getDetailLink(entry, entry[1].count);
+        },
         "c-num"
     ),
     NUM_RG: new ColDef(
         "Res. Grd.",
-        ( entry, ui ) => { return ui.getDetailLink( entry, entry[ 1 ].countResearchGrade, undefined, [ [ "quality_grade", "research" ] ] ); },
+        (entry, ui) => {
+            return ui.getDetailLink(
+                entry,
+                entry[1].countResearchGrade,
+                undefined,
+                [["quality_grade", "research"]]
+            );
+        },
         "c-num"
     ),
     NUM_NOT_RG: new ColDef(
         "Not Res. Grd.",
-        ( entry, ui ) => {
-            return ui.getDetailLink( entry, entry[ 1 ].count - entry[ 1 ].countResearchGrade, undefined, [ [ "quality_grade", "needs_id" ] ] );
+        (entry, ui) => {
+            return ui.getDetailLink(
+                entry,
+                entry[1].count - entry[1].countResearchGrade,
+                undefined,
+                [["quality_grade", "needs_id"]]
+            );
         },
         "c-num"
     ),
-    PCT_RG: new ColDef( "% Res. Grd.", ( entry ) => { return ( entry[ 1 ].countResearchGrade * 100 / entry[ 1 ].count ).toFixed( 2 ); }, "c-num" ),
+    PCT_RG: new ColDef(
+        "% Res. Grd.",
+        (entry) => {
+            return (
+                (entry[1].countResearchGrade * 100) /
+                entry[1].count
+            ).toFixed(2);
+        },
+        "c-num"
+    ),
     NUM_OBSCURED: new ColDef(
         "Obscured",
-        ( entry, ui ) => { return ui.getDetailLink( entry, entry[ 1 ].countObscured, [ "obscured" ] ); },
+        (entry, ui) => {
+            return ui.getDetailLink(entry, entry[1].countObscured, [
+                "obscured",
+            ]);
+        },
         "c-num"
     ),
     NUM_NOT_OBSCURED: new ColDef(
         "Not Obscured",
-        ( entry, ui ) => { return ui.getDetailLink( entry, entry[ 1 ].count - entry[ 1 ].countObscured, [ "public", "trusted" ] ); },
+        (entry, ui) => {
+            return ui.getDetailLink(
+                entry,
+                entry[1].count - entry[1].countObscured,
+                ["public", "trusted"]
+            );
+        },
         "c-num"
     ),
 };
 
 class ObsUI extends SearchUI {
-
     #f1;
     #results;
 
-    constructor( f1 = {} ) {
+    constructor(f1 = {}) {
         super();
-        this.#f1 = new SpeciesFilter( f1 );
+        this.#f1 = new SpeciesFilter(f1);
     }
 
-    getResultsTable( results, cols ) {
-
-        function getRow( name, data, cols, ui ) {
-
-            function getCol( content, className ) {
-                const td = DOMUtils.createElement( "td", className );
-                if ( content instanceof Node ) {
-                    td.appendChild( content );
+    getResultsTable(results, cols) {
+        function getRow(name, data, cols, ui) {
+            function getCol(content, className) {
+                const td = DOMUtils.createElement("td", className);
+                if (content instanceof Node) {
+                    td.appendChild(content);
                 } else {
-                    td.appendChild( document.createTextNode( content ) );
+                    td.appendChild(document.createTextNode(content));
                 }
-                tr.appendChild( td );
+                tr.appendChild(td);
             }
 
-            const tr = DOMUtils.createElement( "tr" );
-            for ( const col of cols ) {
-                getCol( col.getValue( [ name, data ], ui ), col.getClass() );
+            const tr = DOMUtils.createElement("tr");
+            for (const col of cols) {
+                getCol(col.getValue([name, data], ui), col.getClass());
             }
 
             return tr;
-
         }
 
-        const table = ColDef.createTable( cols );
+        const table = ColDef.createTable(cols);
 
-        const tbody = DOMUtils.createElement( "tbody" );
-        table.appendChild( tbody );
+        const tbody = DOMUtils.createElement("tbody");
+        table.appendChild(tbody);
 
-        for ( const name of Object.keys( results ).sort() ) {
-            tbody.appendChild( getRow( name, results[ name ], cols, this ) );
+        for (const name of Object.keys(results).sort()) {
+            tbody.appendChild(getRow(name, results[name], cols, this));
         }
 
-        const section = DOMUtils.createElement( "div", "section" );
-        section.appendChild( table );
+        const section = DOMUtils.createElement("div", "section");
+        section.appendChild(table);
         return section;
     }
 
-    getDetailLink( entry, num, selected = [ "public", "trusted", "obscured" ], extraParams = [] ) {
-        if ( num === 0 ) {
+    /**
+     * @param {[string,SummaryEntry]} entry
+     * @param {number} num
+     * @param {("public"|"trusted"|"obscured")[]} [selected=["public", "trusted", "obscured"]]
+     * @param {[string,string][]} [extraParams=[]]
+     */
+    getDetailLink(
+        entry,
+        num,
+        selected = ["public", "trusted", "obscured"],
+        extraParams = []
+    ) {
+        if (num === 0) {
             return "0";
         }
-        const data = entry[ 1 ];
+        const data = entry[1];
 
-        const args = { taxon_id: data.taxon_id, f1: this.#f1, sel: selected };
-        if ( extraParams.length > 0 ) {
+        const filter = this.#f1.getParams();
+        filter.taxon_id = data.taxon_id;
+        /** @type {Params.PageObsDetail} */
+        const args = { f1: filter, sel: selected };
+        if (extraParams.length > 0) {
             args.fp = extraParams;
         }
-        const url = new URL( this.getPathPrefix() + "obsdetail.html", document.location.origin );
-        url.hash = JSON.stringify( args );
-        return DOMUtils.createLinkElement( url, num, { target: "_blank" } );
+        const url = new URL(
+            this.getPathPrefix() + "obsdetail.html",
+            document.location.origin
+        );
+        url.hash = JSON.stringify(args);
+        return DOMUtils.createLinkElement(url, num, { target: "_blank" });
     }
 
     static async getInstance() {
-
         let initArgs;
         try {
-            initArgs = JSON.parse( decodeURIComponent( document.location.hash ).substring( 1 ) );
-        } catch ( error ) {
+            initArgs = JSON.parse(
+                decodeURIComponent(document.location.hash).substring(1)
+            );
+        } catch (error) {
             initArgs = {};
         }
-        const ui = new ObsUI( initArgs.f1 );
+        const ui = new ObsUI(initArgs.f1);
         await ui.init();
-
     }
 
-    async #getSummaryDOM( results ) {
+    async #getSummaryDOM(results) {
+        const descrip = DOMUtils.createElement("div");
+        descrip.appendChild(
+            document.createTextNode(
+                await this.#f1.getDescription(this.getAPI())
+            )
+        );
 
-        const descrip = DOMUtils.createElement( "div" );
-        descrip.appendChild( document.createTextNode( await this.#f1.getDescription( this.getAPI() ) ) );
+        const taxaCount = DOMUtils.createElement("div");
+        taxaCount.appendChild(
+            document.createTextNode(Object.entries(results).length + " taxa")
+        );
 
-        const taxaCount = DOMUtils.createElement( "div" );
-        taxaCount.appendChild( document.createTextNode( Object.entries( results ).length + " taxa" ) );
+        const obsCountNode = DOMUtils.createElement("div");
+        const obsCount = Object.values(results).reduce(
+            (numObs, value) => numObs + value.count,
+            0
+        );
+        obsCountNode.appendChild(
+            document.createTextNode(obsCount + " observations")
+        );
 
-        const obsCountNode = DOMUtils.createElement( "div" );
-        const obsCount = Object.values( results ).reduce( ( numObs, value ) => numObs + value.count, 0 );
-        obsCountNode.appendChild( document.createTextNode( obsCount + " observations" ) );
+        const button = DOMUtils.createElement("input", {
+            type: "button",
+            value: "Change Filter",
+            style: "width:100%;",
+        });
+        button.addEventListener("click", (e) => this.changeFilter(e));
 
-        const button = DOMUtils.createElement( "input", { type: "button", value: "Change Filter", style: "width:100%;" } );
-        button.addEventListener( "click", ( e ) => this.changeFilter( e ) );
+        const summaryDesc = DOMUtils.createElement("div", {
+            class: "flex-fullwidth",
+        });
+        summaryDesc.appendChild(descrip);
+        summaryDesc.appendChild(taxaCount);
+        summaryDesc.appendChild(obsCountNode);
 
-        const summaryDesc = DOMUtils.createElement( "div", { class: "flex-fullwidth" } );
-        summaryDesc.appendChild( descrip );
-        summaryDesc.appendChild( taxaCount );
-        summaryDesc.appendChild( obsCountNode );
+        if (!this.#f1.isResearchGradeOnly()) {
+            const rgCountNode = DOMUtils.createElement("div");
+            const rgCount = Object.values(results).reduce(
+                (numObs, value) => numObs + value.countResearchGrade,
+                0
+            );
+            rgCountNode.appendChild(
+                document.createTextNode(rgCount + " research grade")
+            );
 
-        if ( !this.#f1.isResearchGradeOnly() ) {
-            const rgCountNode = DOMUtils.createElement( "div" );
-            const rgCount = Object.values( results ).reduce( ( numObs, value ) => numObs + value.countResearchGrade, 0 );
-            rgCountNode.appendChild( document.createTextNode( rgCount + " research grade" ) );
+            const rgPctNode = DOMUtils.createElement("div");
+            rgPctNode.appendChild(
+                document.createTextNode(
+                    ((rgCount * 100) / obsCount).toFixed(2) + "% research grade"
+                )
+            );
 
-            const rgPctNode = DOMUtils.createElement( "div" );
-            rgPctNode.appendChild( document.createTextNode( ( rgCount * 100 / obsCount ).toFixed( 2 ) + "% research grade" ) );
-
-            summaryDesc.appendChild( rgCountNode );
-            summaryDesc.appendChild( rgPctNode );
+            summaryDesc.appendChild(rgCountNode);
+            summaryDesc.appendChild(rgPctNode);
         }
 
-        const summary = DOMUtils.createElement( "div", { class: "section summary" } );
-        summary.appendChild( summaryDesc );
-        summary.appendChild( button );
+        const summary = DOMUtils.createElement("div", {
+            class: "section summary",
+        });
+        summary.appendChild(summaryDesc);
+        summary.appendChild(button);
 
         return summary;
     }
@@ -156,59 +239,68 @@ class ObsUI extends SearchUI {
         await super.init();
 
         // Add handlers for form.
-        DOMUtils.getRequiredElement( "form" ).addEventListener( "submit", ( e ) => this.onSubmit( e ) );
+        DOMUtils.getRequiredElement("form").addEventListener("submit", (e) =>
+            this.onSubmit(e)
+        );
 
-        this.initEventListeners( "f1" );
-        await this.initForm( "f1", this.#f1 );
+        this.initEventListeners("f1");
+        await this.initForm("f1", this.#f1);
 
-        DOMUtils.setFocusTo( "f1-proj-name" );
+        DOMUtils.setFocusTo("f1-proj-name");
     }
 
     /**
-     * @param {Event} e 
+     * @param {Event} e
      */
-    async onSubmit( e ) {
-
+    async onSubmit(e) {
         e.preventDefault();
 
-        const filter = this.initFilterFromForm( "f1" );
-        if ( !filter ) {
+        const filter = this.initFilterFromForm("f1");
+        if (!filter) {
             return;
         }
         this.#f1 = filter;
 
         const params = { f1: this.#f1 };
 
-        document.location.hash = JSON.stringify( params );
+        document.location.hash = JSON.stringify(params);
         await this.showResults();
     }
 
-    summarizeResults( rawResults ) {
+    /**
+     * @param {import("../lib/dataretriever.js").RawObservation[]} rawResults
+     */
+    summarizeResults(rawResults) {
+        /** @type {Object<string,SummaryEntry>} */
         const summary = {};
 
-        for ( const result of rawResults ) {
-            const name = INatAPI.getTaxonName( result.taxon );
-            let taxonSummary = summary[ name ];
-            if ( !taxonSummary ) {
+        for (const result of rawResults) {
+            const name = INatAPI.getTaxonName(result.taxon);
+            const obs = new INatObservation(result);
+            let taxonSummary = summary[name];
+            if (!taxonSummary) {
                 taxonSummary = {
                     taxon_id: result.taxon.id,
-                    displayName: this.getAPI().getTaxonFormName( result.taxon, false ),
+                    displayName: this.getAPI().getTaxonFormName(
+                        result.taxon,
+                        false
+                    ),
                     rank: result.taxon.rank,
                     count: 0,
                     countObscured: 0,
                     countPublic: 0,
                     countResearchGrade: 0,
                 };
-                summary[ name ] = taxonSummary;
+                summary[name] = taxonSummary;
             }
             taxonSummary.count++;
-            if ( result.quality_grade === "research" ) {
+            if (result.quality_grade === "research") {
                 taxonSummary.countResearchGrade++;
             }
-            if ( INatObservation.isObscured( result ) ) {
+            if (obs.isObscured()) {
                 taxonSummary.countObscured++;
             }
-            if ( INatObservation.coordsArePublic( result ) ) {
+            if (obs.coordsArePublic()) {
                 taxonSummary.countPublic++;
             }
         }
@@ -217,33 +309,34 @@ class ObsUI extends SearchUI {
     }
 
     async showResults() {
+        const divResults = DOMUtils.getRequiredElement("results");
+        DOMUtils.removeChildren(divResults);
 
-        const divResults = DOMUtils.getRequiredElement( "results" );
-        DOMUtils.removeChildren( divResults );
-
-        this.#results = await DataRetriever.getObservationData( this.getAPI(), this.#f1, this.getProgressReporter() );
-        if ( !this.#results ) {
+        this.#results = await DataRetriever.getObservationData(
+            this.getAPI(),
+            this.#f1,
+            this.getProgressReporter()
+        );
+        if (!this.#results) {
             return;
         }
-        const results = this.summarizeResults( this.#results );
+        const results = this.summarizeResults(this.#results);
 
         // Show summary.
-        divResults.appendChild( await this.#getSummaryDOM( results ) );
+        divResults.appendChild(await this.#getSummaryDOM(results));
 
-        const cols = [ COLUMNS.SCI_NAME, COLUMNS.NUM_OBS ];
-        if ( !this.#f1.isResearchGradeOnly() ) {
-            cols.push( COLUMNS.NUM_RG, COLUMNS.NUM_NOT_RG, COLUMNS.PCT_RG );
+        const cols = [COLUMNS.SCI_NAME, COLUMNS.NUM_OBS];
+        if (!this.#f1.isResearchGradeOnly()) {
+            cols.push(COLUMNS.NUM_RG, COLUMNS.NUM_NOT_RG, COLUMNS.PCT_RG);
         }
-        cols.push( COLUMNS.NUM_OBSCURED, COLUMNS.NUM_NOT_OBSCURED );
+        cols.push(COLUMNS.NUM_OBSCURED, COLUMNS.NUM_NOT_OBSCURED);
 
         // Show taxa.
-        divResults.appendChild( this.getResultsTable( results, cols ) );
+        divResults.appendChild(this.getResultsTable(results, cols));
 
         // Hide filter form.
-        DOMUtils.showElement( "search-crit", false );
-
+        DOMUtils.showElement("search-crit", false);
     }
-
 }
 
 await ObsUI.getInstance();

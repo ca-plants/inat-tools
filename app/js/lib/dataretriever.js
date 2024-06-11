@@ -7,7 +7,7 @@ import { ProgressReporter } from "./progressreporter.js";
 // eslint-disable-next-line no-unused-vars
 import { SpeciesFilter } from "./speciesfilter.js";
 
-/** @typedef {{id:string,name:string,preferred_common_name:string,rank:string,rank_level:number}} RawTaxon */
+/** @typedef {{id:number,name:string,preferred_common_name:string,rank:string,rank_level:number}} RawTaxon */
 /** @typedef {{geoprivacy:string,id:string,location:string,observed_on_details:{date:string},place_guess:string,private_location:string,private_place_guess:string,quality_grade:"research",taxon:RawTaxon,taxon_geoprivacy:string,user:{id:string,login:string,name:string}}} RawObservation */
 /** @typedef {{count:number,taxon:RawTaxon}} TaxonResult */
 
