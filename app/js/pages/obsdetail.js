@@ -197,7 +197,7 @@ class ObsDetailUI extends UI {
             decodeURIComponent(document.location.hash).substring(1)
         );
         const ui = new ObsDetailUI(initArgs.f1);
-        await ui.initInstance(initArgs.sel);
+        await ui.initInstance(initArgs.coords, initArgs.view);
         return ui;
     }
 
@@ -253,9 +253,11 @@ class ObsDetailUI extends UI {
     }
 
     getSelectedTypes() {
+        /** @type {("public" | "obscured" | "trusted")[]} */
         const types = [];
         for (const type of ["public", "trusted", "obscured"]) {
             if (DOMUtils.isChecked("sel-" + type)) {
+                // @ts-ignore
                 types.push(type);
             }
         }
@@ -309,28 +311,11 @@ class ObsDetailUI extends UI {
         return this.#userSummary;
     }
 
-    handleCoordinateChange() {
-        const elem = DOMUtils.getFormElement("form", "displayopt");
-        switch (DOMUtils.getFormElementValue(elem)) {
-            case "geojson":
-                this.showGeoJSON();
-                break;
-            case "usersumm":
-                this.showUserSumm();
-                break;
-            default:
-                this.showDetails();
-                break;
-        }
-
-        // Update view in iNaturalist target.
-        this.#updateViewInINaturalistLink();
-    }
-
     /**
      * @param {("public"|"obscured"|"trusted")[]} selArray
+     * @param {string|undefined} view
      */
-    async initInstance(selArray = []) {
+    async initInstance(selArray = [], view) {
         /**
          * @param {Element} container
          * @param {number} count
@@ -348,7 +333,7 @@ class ObsDetailUI extends UI {
                 id: id,
             });
             cb.checked = selArray.includes(label);
-            cb.addEventListener("click", () => ui.handleCoordinateChange());
+            cb.addEventListener("click", () => ui.updateDisplay());
             const lbl = DOMUtils.createElement("label", { for: id });
             lbl.appendChild(document.createTextNode(count + " " + label));
             div.appendChild(cb);
@@ -357,12 +342,11 @@ class ObsDetailUI extends UI {
         }
 
         /**
-         *
          * @param {string} value
          * @param {string} label
-         * @param {function():void} onclick
+         * @param {ObsDetailUI} ui
          */
-        function addDisplayOption(value, label, onclick) {
+        function addDisplayOption(value, label, ui) {
             const id = "disp-" + value;
             const div = DOMUtils.createElement("div");
             const rb = DOMUtils.createInputElement({
@@ -371,7 +355,7 @@ class ObsDetailUI extends UI {
                 value: value,
                 name: "displayopt",
             });
-            rb.addEventListener("click", onclick);
+            rb.addEventListener("click", () => ui.updateDisplay());
             const lbl = DOMUtils.createElement("label", { for: id });
             lbl.appendChild(document.createTextNode(label));
             div.appendChild(rb);
@@ -427,14 +411,10 @@ class ObsDetailUI extends UI {
         const radios = DOMUtils.createElement("div", {
             class: "displayoptions",
         });
-        addDisplayOption("details", "Details", () => this.showDetails());
-        addDisplayOption("geojson", "GeoJSON", () => this.showGeoJSON());
-        addDisplayOption("datehisto", "Date Histogram", () =>
-            this.showDateHistogram()
-        );
-        addDisplayOption("usersumm", "Summary by Observer", () =>
-            this.showUserSumm()
-        );
+        addDisplayOption("details", "Details", this);
+        addDisplayOption("geojson", "GeoJSON", this);
+        addDisplayOption("datehisto", "Date Histogram", this);
+        addDisplayOption("usersumm", "Summary by Observer", this);
 
         const iNatDiv = DOMUtils.createElement("div");
         iNatDiv.appendChild(
@@ -450,13 +430,23 @@ class ObsDetailUI extends UI {
         form.appendChild(optionDiv);
 
         this.#updateViewInINaturalistLink();
-        DOMUtils.clickElement("disp-details");
+
+        // Select initial view.
+        const initialView = DOMUtils.getElement("disp-" + view);
+        DOMUtils.clickElement(initialView ?? "disp-details");
     }
 
     showDateHistogram() {
         const eResults = this.clearResults();
+        const coordTypes = this.getSelectedTypes();
+
         eResults.appendChild(
-            Histogram.createSVG(this.#results.observations, this.#f1)
+            Histogram.createSVG(
+                this.#results.observations.filter((obs) =>
+                    coordTypes.includes(obs.getCoordType())
+                ),
+                this.#f1
+            )
         );
     }
 
@@ -661,6 +651,43 @@ class ObsDetailUI extends UI {
         }
 
         return taxonSummary;
+    }
+
+    updateDisplay() {
+        const elem = DOMUtils.getFormElement("form", "displayopt");
+        switch (DOMUtils.getFormElementValue(elem)) {
+            case "datehisto":
+                this.showDateHistogram();
+                break;
+            case "geojson":
+                this.showGeoJSON();
+                break;
+            case "usersumm":
+                this.showUserSumm();
+                break;
+            default:
+                this.showDetails();
+                break;
+        }
+
+        // Update view in iNaturalist target.
+        this.#updateViewInINaturalistLink();
+
+        // Save current settings for bookmark.
+        this.#updateHash();
+    }
+
+    #updateHash() {
+        /** @type {Params.PageObsDetail} */
+        const params = {
+            f1: this.#f1.getParams(),
+            coords: this.getSelectedTypes(),
+            // @ts-ignore
+            view: DOMUtils.getFormElementValue(
+                DOMUtils.getFormElement("form", "displayopt")
+            ),
+        };
+        document.location.hash = JSON.stringify(params);
     }
 
     #updateViewInINaturalistLink() {

@@ -145,7 +145,7 @@ class ObsUI extends SearchUI {
         fp.taxon_id = data.taxon_id;
         Object.assign(fp, extraParams);
         /** @type {Params.PageObsDetail} */
-        const args = { f1: fp, sel: selected };
+        const args = { f1: fp, coords: selected };
         const url = new URL(
             this.getPathPrefix() + "obsdetail.html",
             document.location.origin

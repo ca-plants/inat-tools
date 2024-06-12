@@ -9,7 +9,8 @@ declare class SpeciesFilter {
 declare namespace Params {
     export interface PageObsDetail {
         f1: Params.SpeciesFilter;
-        sel?: ("public" | "obscured" | "trusted")[];
+        coords?: ("public" | "obscured" | "trusted")[];
+        view?: "datehisto" | "details" | "geojson" | "usersumm";
     }
     export interface SpeciesFilter {
         month?: number;
