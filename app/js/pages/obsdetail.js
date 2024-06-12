@@ -8,7 +8,7 @@ import { UI } from "../lib/ui.js";
 
 /** @typedef {{role:string}} ProjectMember */
 /** @typedef {{countObscured:number,countPublic:number,countTrusted:number,observations:INatObservation[]}} Results */
-/** @typedef {{count:number,count_public:number,count_trusted:number,count_obscured:number,id:string,login:string,display_name:string}} UserSummary */
+/** @typedef {{id:string,login:string,display_name:string,results:Results}} UserSummary */
 
 class DetailColDef extends ColDef {
     /**
@@ -74,16 +74,22 @@ const SUMMARY_COLS = {
         );
     }),
     NUM_OBS: new SummaryColDef("Total", (summ, ui) => {
-        return ui.getObserverINatLink(summ.login, summ.count);
+        return ui.getObserverINatLink(summ, summ.results.observations.length);
     }),
-    NUM_PUBLIC: new SummaryColDef("Public", (summ) => {
-        return summ.count_public.toString();
+    NUM_PUBLIC: new SummaryColDef("Public", (summ, ui) => {
+        return ui.getObserverINatLink(summ, summ.results.countPublic, [
+            "public",
+        ]);
     }),
-    NUM_TRUSTED: new SummaryColDef("Trusted", (summ) => {
-        return summ.count_trusted.toString();
+    NUM_TRUSTED: new SummaryColDef("Trusted", (summ, ui) => {
+        return ui.getObserverINatLink(summ, summ.results.countTrusted, [
+            "trusted",
+        ]);
     }),
-    NUM_OBSCURED: new SummaryColDef("Obscured", (summ) => {
-        return summ.count_obscured.toString();
+    NUM_OBSCURED: new SummaryColDef("Obscured", (summ, ui) => {
+        return ui.getObserverINatLink(summ, summ.results.countObscured, [
+            "obscured",
+        ]);
     }),
     PROJECT: new SummaryColDef("Proj Mem", (summ, ui) => {
         return ui.getMembershipStatus(summ.id);
@@ -103,6 +109,8 @@ class ObsDetailUI extends UI {
     };
     /** @type {Object<string,ProjectMember>} */
     #project_members = {};
+    /** @type {Object<string,UserSummary>|undefined} */
+    #userSummary;
 
     /**
      * @param {Params.SpeciesFilter} f1
@@ -120,6 +128,67 @@ class ObsDetailUI extends UI {
         const eResults = DOMUtils.getRequiredElement("results");
         DOMUtils.removeChildren(eResults);
         return eResults;
+    }
+
+    /**
+     * @param {Params.SpeciesFilter} params
+     * @param {Results} results
+     * @param {string[]} [selectedTypes]
+     */
+    getINatObservationURL(params, results, selectedTypes) {
+        /**
+         * @param {ObsDetailUI} ui
+         */
+        function showAll(ui) {
+            const filter = new SpeciesFilter(params);
+            const url = filter.getURL(
+                "https://www.inaturalist.org/observations"
+            );
+            url.searchParams.set("lrank", ui.#getTaxonData().rank);
+            return url;
+        }
+
+        if (selectedTypes === undefined) {
+            selectedTypes = this.getSelectedTypes();
+        }
+        const count = ObsDetailUI.#getObsCount(results, selectedTypes);
+
+        if (count === results.observations.length) {
+            return showAll(this);
+        }
+
+        // Figure out whether we can get the list using a query string or if we need a list of IDs.
+        switch (selectedTypes.join(",")) {
+            case "public": {
+                const filter = new SpeciesFilter(params);
+                const url = filter.getURL(
+                    "https://www.inaturalist.org/observations"
+                );
+                url.searchParams.set("lrank", this.#getTaxonData().rank);
+                url.searchParams.set("taxon_geoprivacy", "open");
+                url.searchParams.set("geoprivacy", "open");
+                return url;
+            }
+            case "public,trusted":
+            case "trusted":
+            case "obscured": {
+                const selectedIDs = [];
+                for (const obs of results.observations) {
+                    if (selectedTypes.includes(obs.getCoordType())) {
+                        selectedIDs.push(obs.getID());
+                    }
+                }
+                const url = new URL("https://www.inaturalist.org/observations");
+                const idList = selectedIDs.join(",");
+                if (idList.length >= 10813) {
+                    return "";
+                }
+                url.searchParams.set("id", idList);
+                return url;
+            }
+            default:
+                return "";
+        }
     }
 
     static async getInstance() {
@@ -144,18 +213,41 @@ class ObsDetailUI extends UI {
     }
 
     /**
-     * @param {string} login
-     * @param {number} count
+     * @param {Results} results
+     * @param {string[]} selectedTypes
      */
-    getObserverINatLink(login, count) {
+    static #getObsCount(results, selectedTypes) {
+        return selectedTypes.reduce((c, t) => {
+            switch (t) {
+                case "public":
+                    return c + results.countPublic;
+                case "obscured":
+                    return c + results.countObscured;
+            }
+            return c + results.countTrusted;
+        }, 0);
+    }
+
+    /**
+     * @param {UserSummary} userSumm
+     * @param {number} count
+     * @param {string[]} [selectedTypes]
+     */
+    getObserverINatLink(userSumm, count, selectedTypes) {
+        if (count === 0) {
+            return "0";
+        }
         const params = this.#f1.getParams();
-        params.user_id = login;
-        const filter = new SpeciesFilter(params);
-        const url = new URL(
-            "https://www.inaturalist.org/observations?subview=grid"
+        params.user_id = userSumm.login;
+        const url = this.getINatObservationURL(
+            params,
+            userSumm.results,
+            selectedTypes
         );
-        url.searchParams.set("lrank", this.#taxon_data.rank);
-        return DOMUtils.createLinkElement(filter.getURL(url), count, {
+        if (url === "") {
+            return count.toString();
+        }
+        return DOMUtils.createLinkElement(url, count, {
             target: "_blank",
         });
     }
@@ -175,6 +267,46 @@ class ObsDetailUI extends UI {
             throw new Error();
         }
         return this.#taxon_data;
+    }
+
+    /**
+     * @returns {Object<string,UserSummary>}
+     */
+    #getUserSummary() {
+        if (!this.#userSummary) {
+            this.#userSummary = {};
+            for (const obs of this.#results.observations) {
+                const id = obs.getUserID();
+                let userSumm = this.#userSummary[id];
+                if (!userSumm) {
+                    userSumm = {
+                        id: id,
+                        login: obs.getUserLogin(),
+                        display_name: obs.getUserDisplayName(),
+                        results: {
+                            countPublic: 0,
+                            countObscured: 0,
+                            countTrusted: 0,
+                            observations: [],
+                        },
+                    };
+                    this.#userSummary[id] = userSumm;
+                }
+                switch (obs.getCoordType()) {
+                    case "public":
+                        userSumm.results.countPublic++;
+                        break;
+                    case "trusted":
+                        userSumm.results.countTrusted++;
+                        break;
+                    case "obscured":
+                        userSumm.results.countObscured++;
+                        break;
+                }
+                userSumm.results.observations.push(obs);
+            }
+        }
+        return this.#userSummary;
     }
 
     handleCoordinateChange() {
@@ -443,47 +575,21 @@ class ObsDetailUI extends UI {
         const selectedTypes = this.getSelectedTypes();
 
         // Summarize results.
-        /** @type {Object<string,UserSummary>} */
-        const summary = {};
-        for (const obs of this.#results.observations) {
-            if (!selectedTypes.includes(obs.getCoordType())) {
-                continue;
-            }
-            const id = obs.getUserID();
-            let userSumm = summary[id];
-            if (!userSumm) {
-                userSumm = {
-                    id: id,
-                    login: obs.getUserLogin(),
-                    display_name: obs.getUserDisplayName(),
-                    count: 0,
-                    count_public: 0,
-                    count_trusted: 0,
-                    count_obscured: 0,
-                };
-                summary[id] = userSumm;
-            }
-            switch (obs.getCoordType()) {
-                case "public":
-                    userSumm.count_public++;
-                    break;
-                case "trusted":
-                    userSumm.count_trusted++;
-                    break;
-                case "obscured":
-                    userSumm.count_obscured++;
-                    break;
-            }
-            userSumm.count++;
-        }
+        const summary = this.#getUserSummary();
 
-        const cols = [
-            SUMMARY_COLS.OBSERVER,
-            SUMMARY_COLS.NUM_OBS,
-            SUMMARY_COLS.NUM_PUBLIC,
-            SUMMARY_COLS.NUM_TRUSTED,
-            SUMMARY_COLS.NUM_OBSCURED,
-        ];
+        const cols = [SUMMARY_COLS.OBSERVER];
+        if (selectedTypes.length > 1) {
+            cols.push(SUMMARY_COLS.NUM_OBS);
+        }
+        if (selectedTypes.includes("public")) {
+            cols.push(SUMMARY_COLS.NUM_PUBLIC);
+        }
+        if (selectedTypes.includes("trusted")) {
+            cols.push(SUMMARY_COLS.NUM_TRUSTED);
+        }
+        if (selectedTypes.includes("obscured")) {
+            cols.push(SUMMARY_COLS.NUM_OBSCURED);
+        }
         if (this.#project_members) {
             cols.push(SUMMARY_COLS.PROJECT);
         }
@@ -493,9 +599,21 @@ class ObsDetailUI extends UI {
         eTable.appendChild(tbody);
 
         for (const userSumm of Object.values(summary).sort(
-            (a, b) => b.count - a.count
+            (a, b) =>
+                ObsDetailUI.#getObsCount(b.results, selectedTypes) -
+                ObsDetailUI.#getObsCount(a.results, selectedTypes)
         )) {
-            tbody.appendChild(getRow(userSumm, cols, this));
+            // Only show rows with something to display.
+            if (
+                (selectedTypes.includes("public") &&
+                    userSumm.results.countPublic) ||
+                (selectedTypes.includes("obscured") &&
+                    userSumm.results.countObscured) ||
+                (selectedTypes.includes("trusted") &&
+                    userSumm.results.countTrusted)
+            ) {
+                tbody.appendChild(getRow(userSumm, cols, this));
+            }
         }
 
         this.wrapResults(eResults, eTable);
@@ -546,72 +664,10 @@ class ObsDetailUI extends UI {
     }
 
     #updateViewInINaturalistLink() {
-        /**
-         * @param {ObsDetailUI} ui
-         */
-        function getURL(ui) {
-            function showAll() {
-                const params = ui.#f1.getParams();
-                const filter = new SpeciesFilter(params);
-                const url = filter.getURL(
-                    "https://www.inaturalist.org/observations"
-                );
-                url.searchParams.set("lrank", ui.#getTaxonData().rank);
-                return url;
-            }
-
-            const selectedTypes = ui.getSelectedTypes();
-
-            // Figure out whether we can get the list using a query string or if we need a list of IDs.
-            switch (selectedTypes.join(",")) {
-                case "public,trusted,obscured":
-                    return showAll();
-                case "public": {
-                    const params = ui.#f1.getParams();
-                    const filter = new SpeciesFilter(params);
-                    const url = filter.getURL(
-                        "https://www.inaturalist.org/observations"
-                    );
-                    url.searchParams.set("lrank", ui.#getTaxonData().rank);
-                    url.searchParams.set("taxon_geoprivacy", "open");
-                    url.searchParams.set("geoprivacy", "open");
-                    return url;
-                }
-                case "public,trusted":
-                case "trusted":
-                case "obscured": {
-                    const selectedIDs = [];
-                    for (const obs of ui.#results.observations) {
-                        if (selectedTypes.includes(obs.getCoordType())) {
-                            selectedIDs.push(obs.getID());
-                        }
-                    }
-                    const url = new URL(
-                        "https://www.inaturalist.org/observations"
-                    );
-                    const idList = selectedIDs.join(",");
-                    if (idList.length >= 10813) {
-                        return "";
-                    }
-                    url.searchParams.set("id", idList);
-                    return url;
-                }
-                default:
-                    // If one of the checkboxes is not present, the other 2 may include all observations.
-                    if (selectedTypes.length == 2) {
-                        if (
-                            ui.#results.countPublic === 0 ||
-                            ui.#results.countTrusted === 0 ||
-                            ui.#results.countObscured === 0
-                        ) {
-                            return showAll();
-                        }
-                    }
-                    return "";
-            }
-        }
-
-        const url = getURL(this);
+        const url = this.getINatObservationURL(
+            this.#f1.getParams(),
+            this.#results
+        );
         const link = DOMUtils.getRequiredElement("viewininat");
         if (link instanceof HTMLAnchorElement) {
             link.inert = url === "";
