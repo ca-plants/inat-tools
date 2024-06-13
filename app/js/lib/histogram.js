@@ -34,6 +34,9 @@ class Histogram {
         plot.addEventListener("click", (event) => {
             this.#viewInINat(event, plot.value, filter);
         });
+
+        plot.removeAttribute("width");
+        plot.removeAttribute("height");
         return plot;
     }
 

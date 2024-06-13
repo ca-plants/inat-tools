@@ -183,6 +183,11 @@ div.flex-fullwidth {
     justify-content: space-between;
 }
 
+#svg-datehisto {
+    margin: auto;
+    min-height: 400px;
+}
+
 @media (min-width: 600px) {
 
     table {

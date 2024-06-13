@@ -431,23 +431,36 @@ class ObsDetailUI extends UI {
 
         this.#updateViewInINaturalistLink();
 
+        window.onresize = this.onResize;
+
         // Select initial view.
         const initialView = DOMUtils.getElement("disp-" + view);
         DOMUtils.clickElement(initialView ?? "disp-details");
+    }
+
+    onResize() {
+        const svg = document.getElementById("svg-datehisto");
+        if (!svg) {
+            return;
+        }
+        const height = window.innerHeight - svg.getBoundingClientRect().top;
+        svg.setAttribute("style", `height:${height}px;`);
     }
 
     showDateHistogram() {
         const eResults = this.clearResults();
         const coordTypes = this.getSelectedTypes();
 
-        eResults.appendChild(
-            Histogram.createSVG(
-                this.#results.observations.filter((obs) =>
-                    coordTypes.includes(obs.getCoordType())
-                ),
-                this.#f1
-            )
+        const svg = Histogram.createSVG(
+            this.#results.observations.filter((obs) =>
+                coordTypes.includes(obs.getCoordType())
+            ),
+            this.#f1
         );
+
+        svg.setAttribute("id", "svg-datehisto");
+        eResults.appendChild(svg);
+        this.onResize();
     }
 
     showDetails() {
