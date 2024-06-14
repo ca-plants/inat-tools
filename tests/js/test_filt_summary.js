@@ -23,6 +23,7 @@ class MockAPI extends INatAPI {
                     rank: "class",
                     rank_level: 20,
                     name: "Insecta",
+                    preferred_common_name: "",
                 };
             case 56932:
                 return {
@@ -30,6 +31,7 @@ class MockAPI extends INatAPI {
                     rank: "genus",
                     rank_level: 20,
                     name: "Cuscuta",
+                    preferred_common_name: "",
                 };
         }
         throw new Error();

@@ -8,6 +8,7 @@
         "newLine": "lf",
         "outDir": "output",
         "rootDir": ".",
+        "skipLibCheck": true,
         "strict": true
     },
     "include": ["app", "tests", "types"]

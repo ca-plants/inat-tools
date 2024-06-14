@@ -9,7 +9,6 @@ import { SpeciesFilter } from "./speciesfilter.js";
 
 /** @typedef {{id:number,name:string,preferred_common_name:string,rank:string,rank_level:number}} RawTaxon */
 /** @typedef {{geoprivacy:string|null,id:string,location:string,observed_on_details:{date:string},place_guess:string,private_location:string,private_place_guess:string,quality_grade:string,taxon:RawTaxon,taxon_geoprivacy:string,user:{id:string,login:string,name:string}}} RawObservation */
-/** @typedef {{count:number,taxon:RawTaxon}} TaxonResult */
 
 const INPROP = {
     COMMON_NAME: "preferred_common_name",
@@ -25,7 +24,7 @@ class DataRetriever {
      * @param {SpeciesFilter} filtInclude
      * @param {SpeciesFilter|undefined} filtExclude
      * @param {ProgressReporter} progressReporter
-     * @returns {Promise<TaxonResult[]>}
+     * @returns {Promise<INatData.TaxonObsSummary[]>}
      */
     static async getSpeciesData(
         api,

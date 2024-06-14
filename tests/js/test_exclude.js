@@ -2,9 +2,11 @@ import test from "ava";
 import { DataRetriever } from "../../app/js/lib/dataretriever.js";
 
 const RES_BROMUS = {
+    count: 0,
     taxon: {
         ancestry: "48460/47126/211194/47125/47163/47162/47434/514989/602023",
         name: "Bromus",
+        preferred_common_name: "",
         id: "52701",
         ancestor_ids: [
             48460, 47126, 211194, 47125, 47163, 47162, 47434, 514989, 602023,
@@ -15,10 +17,12 @@ const RES_BROMUS = {
 };
 
 const RES_BROMUS_DIANDRUS = {
+    count: 0,
     taxon: {
         ancestry:
             "48460/47126/211194/47125/47163/47162/47434/514989/602023/52701/1089683",
         name: "Bromus diandrus",
+        preferred_common_name: "",
         id: "52702",
         ancestor_ids: [
             48460, 47126, 211194, 47125, 47163, 47162, 47434, 514989, 602023,

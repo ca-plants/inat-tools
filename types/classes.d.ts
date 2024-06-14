@@ -9,10 +9,13 @@ declare class SpeciesFilter {
 declare namespace INatData {
     export interface TaxonData {
         id: string;
+        name: string;
+        preferred_common_name: string;
         rank: string;
         rank_level: number;
     }
     export interface TaxonObsSummary {
+        count: number;
         taxon: TaxonData;
     }
 }

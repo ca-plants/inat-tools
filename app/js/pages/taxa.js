@@ -4,9 +4,7 @@ import { DataRetriever } from "../lib/dataretriever.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { SearchUI } from "../lib/searchui.js";
 
-/** @typedef {{count:number,taxon:{id:string,name:string,preferred_common_name:string,rank:string,rank_level:number}}} TaxonResult */
-
-/** @type {{label:string,value:function(TaxonResult):string}[]} */
+/** @type {{label:string,value:function(INatData.TaxonObsSummary):string}[]} */
 const COLUMNS = [
     {
         label: "Name",
@@ -50,7 +48,7 @@ const COLUMNS = [
 class UI extends SearchUI {
     #f1;
     #f2;
-    /** @type {TaxonResult[]|undefined} */
+    /** @type {INatData.TaxonObsSummary[]|undefined} */
     #results;
 
     /**
@@ -124,7 +122,7 @@ class UI extends SearchUI {
     }
 
     /**
-     * @param {TaxonResult[]} speciesData
+     * @param {INatData.TaxonObsSummary[]} speciesData
      */
     async #getSummaryDOM(speciesData) {
         const descrip = DOMUtils.createElement("div");
@@ -175,11 +173,11 @@ class UI extends SearchUI {
 
     /**
      * @param {SpeciesFilter} filter
-     * @param {TaxonResult[]} results
+     * @param {INatData.TaxonObsSummary[]} results
      */
     getTaxaSummaryTable(filter, results) {
         /**
-         * @param {TaxonResult} result
+         * @param {INatData.TaxonObsSummary} result
          */
         function getTaxonSummary(result) {
             /**
