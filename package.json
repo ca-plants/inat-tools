@@ -12,6 +12,7 @@
         "command-line-args": "^5.2.1",
         "jstransformer-marked": "^1.4.0",
         "jstransformer-nunjucks": "^1.2.0",
-        "metalsmith": "^2.6.1"
+        "metalsmith": "^2.6.1",
+        "typescript": "^5.4.5"
     }
 }

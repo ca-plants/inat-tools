@@ -102,15 +102,16 @@ class INatAPI {
             token = this.#token;
         }
 
-        const headers = token
-            ? {
-                  headers: {
-                      "Content-Type": "application/json",
-                      Accept: "application/json",
-                      Authorization: token,
-                  },
-              }
-            : undefined;
+        let headers;
+        if (token) {
+            headers = {
+                headers: {
+                    "Content-Type": "application/json",
+                    Accept: "application/json",
+                    Authorization: token,
+                },
+            };
+        }
 
         await this.delay();
         this.checkForCancel();
