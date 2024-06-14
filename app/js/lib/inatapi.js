@@ -104,6 +104,7 @@ class INatAPI {
         if (!token) {
             token = this.#token;
         }
+        console.log(token);
 
         let headers;
         if (token) {

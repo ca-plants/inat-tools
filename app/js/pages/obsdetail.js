@@ -623,7 +623,7 @@ class ObsDetailUI extends UI {
     }
 
     /**
-     * @param {import("../lib/dataretriever.js").RawObservation[]} rawResults
+     * @param {INatData.Observation[]} rawResults
      * @returns {Promise<Results>}
      */
     async summarizeResults(rawResults) {
