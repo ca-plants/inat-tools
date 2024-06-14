@@ -55,12 +55,26 @@ class Histogram {
                 Plot.barY(data, {
                     x: "date",
                     y: "count",
-                    tip: {
-                        format: {
-                            x: (d) => formatDate(d),
-                        },
-                    },
                 }),
+                Plot.tip(
+                    data,
+                    Plot.pointerX({
+                        x: {
+                            value: (d) => (d.count ? d.date : undefined),
+                            label: "",
+                        },
+                        y: { value: "count", label: "" },
+                        format: {
+                            x: (d) => {
+                                return formatDate(d);
+                            },
+                            y: (d) =>
+                                d > 1
+                                    ? `${d} observations`
+                                    : `${d} observation`,
+                        },
+                    })
+                ),
                 Plot.frame(),
             ],
         });
