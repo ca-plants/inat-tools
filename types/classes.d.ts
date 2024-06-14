@@ -12,6 +12,9 @@ declare namespace INatData {
         rank: string;
         rank_level: number;
     }
+    export interface TaxonObsSummary {
+        taxon: TaxonData;
+    }
 }
 
 declare namespace Params {
