@@ -13,11 +13,11 @@ class MockAPI extends INatAPI {
     }
 
     /**
-     * @param {number} id
+     * @param {string} id
      */
     async getTaxonData(id) {
         switch (id) {
-            case 47158:
+            case "47158":
                 return {
                     id: "",
                     rank: "class",
@@ -25,7 +25,7 @@ class MockAPI extends INatAPI {
                     name: "Insecta",
                     preferred_common_name: "",
                 };
-            case 56932:
+            case "56932":
                 return {
                     id: "",
                     rank: "genus",
@@ -126,28 +126,28 @@ test(
 test(
     "taxon in place",
     descrip,
-    { place_id: "3523", taxon_id: 56932 },
+    { place_id: "3523", taxon_id: "56932" },
     undefined,
     "Genus Cuscuta observed in Tilden Regional Park, CA, US"
 );
 test(
     "insects in place",
     descrip,
-    { taxon_id: 47158, place_id: "3523" },
+    { taxon_id: "47158", place_id: "3523" },
     undefined,
     "Class Insecta observed in Tilden Regional Park, CA, US"
 );
 test(
     "insects by observer in place",
     descrip,
-    { taxon_id: 47158, place_id: "3523", user_id: "4218" },
+    { taxon_id: "47158", place_id: "3523", user_id: "4218" },
     undefined,
     "Class Insecta observed by testuser in Tilden Regional Park, CA, US"
 );
 test(
     "insects in place excluding insects by observer in place",
     descrip,
-    { taxon_id: 47158, place_id: "3523" },
-    { taxon_id: 47158, place_id: "3523", user_id: "4218" },
+    { taxon_id: "47158", place_id: "3523" },
+    { taxon_id: "47158", place_id: "3523", user_id: "4218" },
     "Class Insecta observed in Tilden Regional Park, CA, US, excluding Class Insecta observed by testuser in Tilden Regional Park, CA, US"
 );

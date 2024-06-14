@@ -145,7 +145,7 @@ class INatAPI {
     }
 
     /**
-     * @param {number} taxonID
+     * @param {string} taxonID
      * @returns {Promise<INatData.TaxonData>}
      */
     async getTaxonData(taxonID) {

@@ -7,6 +7,19 @@ declare class SpeciesFilter {
 }
 
 declare namespace INatData {
+    export interface Observation {
+        geoprivacy: string | null;
+        id: string;
+        location: string;
+        observed_on_details: { date: string };
+        place_guess: string;
+        private_location: string;
+        private_place_guess: string;
+        quality_grade: string;
+        taxon: TaxonData;
+        taxon_geoprivacy: string;
+        user: { id: string; login: string; name: string };
+    }
     export interface TaxonData {
         id: string;
         name: string;
@@ -31,7 +44,7 @@ declare namespace Params {
         place_id?: string;
         project_id?: string;
         quality_grade?: string;
-        taxon_id?: number;
+        taxon_id?: string;
         user_id?: string;
         year1?: number;
         year2?: number;

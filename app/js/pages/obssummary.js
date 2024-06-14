@@ -7,7 +7,7 @@ import { INatObservationX as INatObservation } from "../lib/inatobservationx.js"
 import { ColDef } from "../lib/coldef.js";
 
 /**
- * @typedef {{taxon_id:number,displayName:string,rank:string,count:number,countObscured:number,countPublic:number,countResearchGrade:number}} SummaryEntry
+ * @typedef {{taxon_id:string,displayName:string,rank:string,count:number,countObscured:number,countPublic:number,countResearchGrade:number}} SummaryEntry
  */
 
 const COLUMNS = {
@@ -83,6 +83,7 @@ const COLUMNS = {
 
 class ObsUI extends SearchUI {
     #f1;
+    /** @type {INatData.Observation[]|undefined} */
     #results;
 
     constructor(f1 = {}) {
@@ -90,8 +91,22 @@ class ObsUI extends SearchUI {
         this.#f1 = new SpeciesFilter(f1);
     }
 
+    /**
+     * @param {Object<string,SummaryEntry>} results
+     * @param {ColDef[]} cols
+     */
     getResultsTable(results, cols) {
+        /**
+         * @param {string} name
+         * @param {SummaryEntry} data
+         * @param {ColDef[]} cols
+         * @param {ObsUI} ui
+         */
         function getRow(name, data, cols, ui) {
+            /**
+             * @param {Node|string} content
+             * @param {string|undefined} className
+             */
             function getCol(content, className) {
                 const td = DOMUtils.createElement("td", className);
                 if (content instanceof Node) {
@@ -154,7 +169,7 @@ class ObsUI extends SearchUI {
         return DOMUtils.createLinkElement(url, num, { target: "_blank" });
     }
 
-    static async getInstance() {
+    static async getUI() {
         let initArgs;
         try {
             initArgs = JSON.parse(
@@ -168,7 +183,7 @@ class ObsUI extends SearchUI {
     }
 
     /**
-     * @param {SummaryEntry[]} results
+     * @param {Object<string,SummaryEntry>} results
      */
     async #getSummaryDOM(results) {
         const descrip = DOMUtils.createElement("div");
@@ -269,7 +284,7 @@ class ObsUI extends SearchUI {
     }
 
     /**
-     * @param {import("../lib/dataretriever.js").RawObservation[]} rawResults
+     * @param {INatData.Observation[]} rawResults
      */
     summarizeResults(rawResults) {
         /** @type {Object<string,SummaryEntry>} */
@@ -340,4 +355,4 @@ class ObsUI extends SearchUI {
     }
 }
 
-await ObsUI.getInstance();
+await ObsUI.getUI();

@@ -8,7 +8,6 @@ import { ProgressReporter } from "./progressreporter.js";
 import { SpeciesFilter } from "./speciesfilter.js";
 
 /** @typedef {{id:number,name:string,preferred_common_name:string,rank:string,rank_level:number}} RawTaxon */
-/** @typedef {{geoprivacy:string|null,id:string,location:string,observed_on_details:{date:string},place_guess:string,private_location:string,private_place_guess:string,quality_grade:string,taxon:RawTaxon,taxon_geoprivacy:string,user:{id:string,login:string,name:string}}} RawObservation */
 
 const INPROP = {
     COMMON_NAME: "preferred_common_name",
@@ -57,7 +56,7 @@ class DataRetriever {
      * @param {INatAPI} api
      * @param {SpeciesFilter} filter
      * @param {ProgressReporter} progressReporter
-     * @returns {Promise<RawObservation[]>}
+     * @returns {Promise<INatData.Observation[]>}
      */
     static async getObservationData(api, filter, progressReporter) {
         const url = filter.getURL(
