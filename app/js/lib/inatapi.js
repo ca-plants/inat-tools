@@ -12,6 +12,9 @@ class INatAPI {
         this.#token = token;
     }
 
+    /**
+     * @param {boolean} yn
+     */
     cancelQuery(yn) {
         this.#cancelQuery = yn === true;
     }
@@ -121,6 +124,9 @@ class INatAPI {
         return json;
     }
 
+    /**
+     * @param {string} placeID
+     */
     async getPlaceData(placeID) {
         return this.#getDataByID(
             placeID,
@@ -128,6 +134,9 @@ class INatAPI {
         );
     }
 
+    /**
+     * @param {string} projID
+     */
     async getProjectData(projID) {
         return this.#getDataByID(
             projID,
@@ -137,7 +146,7 @@ class INatAPI {
 
     /**
      * @param {number} taxonID
-     * @returns {Promise<import("../../../types/types.js").TaxonData>}
+     * @returns {Promise<INatData.TaxonData>}
      */
     async getTaxonData(taxonID) {
         return this.#getDataByID(
@@ -181,6 +190,9 @@ class INatAPI {
         return INatAPI.getTaxonName(taxon) + commonName;
     }
 
+    /**
+     * @param {string} id
+     */
     async getUserData(id) {
         return this.#getDataByID(id, "https://api.inaturalist.org/v1/users/");
     }
