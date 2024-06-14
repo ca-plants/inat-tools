@@ -1,6 +1,8 @@
 import * as Plot from "https://cdn.jsdelivr.net/npm/@observablehq/plot/+esm";
 import { DateUtils } from "./dateutils.js";
 
+/** @typedef {{date:number,count:number}} Summary */
+
 class Histogram {
     /**
      * @param {INatObservation[]} observations
@@ -15,21 +17,52 @@ class Histogram {
             return md.month.toString() + "/" + md.day.toString();
         }
 
-        const plot = Plot.barY(this.#summarizeObservations(observations), {
-            x: "date",
-            y: "count",
-            tip: { format: { x: (d) => formatDate(d) } },
-        }).plot({
+        /**
+         * @param {Summary[]} data
+         */
+        function getTicks(data) {
+            const start = data[0].date;
+            const end = data[data.length - 1].date;
+            const ticks = [start];
+
+            const startMonth = DateUtils.getMonthAndDay(start, true).month;
+            const endMonth = DateUtils.getMonthAndDay(end, true).month;
+
+            // Add the first of each month.
+            for (let month = startMonth + 1; month <= endMonth; month++) {
+                ticks.push(
+                    DateUtils.getDayOfYear(new Date(2024, month - 1, 1), true)
+                );
+            }
+            ticks.push(end);
+            return ticks;
+        }
+
+        const data = this.#summarizeObservations(observations);
+        const plot = Plot.plot({
             x: {
-                label: "Date",
+                label: null,
                 interval: 1,
                 tickFormat: (t) => formatDate(t),
+                ticks: getTicks(data),
             },
             y: {
-                label: "Observations",
+                label: null,
                 interval: 1,
                 tickFormat: (t) => parseInt(t).toString(),
             },
+            marks: [
+                Plot.barY(data, {
+                    x: "date",
+                    y: "count",
+                    tip: {
+                        format: {
+                            x: (d) => formatDate(d),
+                        },
+                    },
+                }),
+                Plot.frame(),
+            ],
         });
         plot.addEventListener("click", (event) => {
             this.#viewInINat(event, plot.value, filter);
@@ -42,6 +75,7 @@ class Histogram {
 
     /**
      * @param {INatObservation[]} observations
+     * @returns {Summary[]}
      */
     static #summarizeObservations(observations) {
         /** @type {number[]} */
