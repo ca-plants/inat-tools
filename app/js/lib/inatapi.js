@@ -4,6 +4,7 @@ import { Login } from "./login.js";
 class QueryCancelledException extends Error {}
 
 class INatAPI {
+    /** @type {number|undefined} */
     #lastCallTime;
     #cancelQuery = false;
     #token;
@@ -40,6 +41,9 @@ class INatAPI {
     async delay() {
         // Limit API calls to 1 per second.
 
+        /**
+         * @param {number} ms
+         */
         async function sleep(ms) {
             return new Promise((resolve) => {
                 setTimeout(resolve, ms);
@@ -79,14 +83,23 @@ class INatAPI {
         return results;
     }
 
+    /**
+     * @param {string} str
+     */
     async getAutoCompleteObserver(str) {
         return this.#getAutoComplete(str, "users", "login_exact");
     }
 
+    /**
+     * @param {string} str
+     */
     async getAutoCompletePlace(str) {
         return this.#getAutoComplete(str, "places", "display_name");
     }
 
+    /**
+     * @param {string} str
+     */
     async getAutoCompleteProject(str) {
         return this.#getAutoComplete(str, "projects", "title");
     }
@@ -98,6 +111,10 @@ class INatAPI {
         return this.#getAutoComplete(str, "taxa", this.getTaxonFormName);
     }
 
+    /**
+     * @param {string} id
+     * @param {string} url
+     */
     async #getDataByID(id, url) {
         const cache = await Cache.getInstance();
         const key = url + id;
