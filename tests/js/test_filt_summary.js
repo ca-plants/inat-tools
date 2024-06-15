@@ -52,7 +52,7 @@ const descrip = test.macro({
         const filter = new SpeciesFilter(f1);
         t.is(
             await filter.getDescription(
-                new MockAPI(),
+                new MockAPI(""),
                 f2 ? new SpeciesFilter(f2) : undefined
             ),
             expected

@@ -1,54 +1,50 @@
 import { DOMUtils } from "./domutils.js";
-// eslint-disable-next-line no-unused-vars
-import { INatAPI } from "./inatapi.js";
 
 export class ProgressReporter {
-
     #api;
 
     /**
-     * @param {INatAPI} api 
+     * @param {INatAPI} api
      */
-    constructor( api ) {
+    constructor(api) {
         this.#api = api;
     }
 
     hide() {
-        DOMUtils.showElement( "progress", false );
-        this.#api.cancelQuery( false );
+        DOMUtils.showElement("progress", false);
+        this.#api.cancelQuery(false);
     }
 
     /**
-     * @param {string} msg 
+     * @param {string} msg
      */
-    async modalAlert( msg ) {
-        alert( msg );
+    async modalAlert(msg) {
+        alert(msg);
     }
 
     /**
-     * @param {string} label 
+     * @param {string} label
      */
-    setLabel( label ) {
-        DOMUtils.setElementText( "prog-label", label );
+    setLabel(label) {
+        DOMUtils.setElementText("prog-label", label);
     }
 
     /**
-     * @param {number} numPages 
+     * @param {number} numPages
      */
-    setNumPages( numPages ) {
-        DOMUtils.showElement( "prog-page-of", numPages !== 0 );
-        DOMUtils.setElementText( "prog-page-max", numPages );
+    setNumPages(numPages) {
+        DOMUtils.showElement("prog-page-of", numPages !== 0);
+        DOMUtils.setElementText("prog-page-max", numPages.toString());
     }
 
     /**
-     * @param {string} page 
+     * @param {string} page
      */
-    setPage( page ) {
-        DOMUtils.setElementText( "prog-page", page );
+    setPage(page) {
+        DOMUtils.setElementText("prog-page", page);
     }
 
     show() {
-        DOMUtils.showElement( "progress", true );
+        DOMUtils.showElement("progress", true);
     }
-
 }

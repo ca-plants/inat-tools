@@ -8,6 +8,9 @@ class INatAPI {
     #cancelQuery = false;
     #token;
 
+    /**
+     * @param {string} [token]
+     */
     constructor(token) {
         this.#token = token;
     }
@@ -111,7 +114,7 @@ class INatAPI {
     }
 
     /**
-     * @param {URL} url
+     * @param {URL|string} url
      * @param {string} [token]
      */
     async getJSON(url, token) {
