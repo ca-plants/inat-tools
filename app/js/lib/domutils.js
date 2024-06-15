@@ -209,7 +209,7 @@ class DOMUtils {
 
     /**
      * @param {string|Element} e
-     * @param {string|undefined} value
+     * @param {string|undefined|null} value
      */
     static setFormElementValue(e, value) {
         const elem = this.getElement(e);
@@ -219,7 +219,7 @@ class DOMUtils {
         if (elem instanceof HTMLTextAreaElement) {
             elem.value = value ? value : "";
         }
-        elem.setAttribute("value", value === undefined ? "" : value);
+        elem.setAttribute("value", value ? value : "");
     }
 
     static showElement(e, show = true) {

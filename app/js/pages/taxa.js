@@ -80,7 +80,7 @@ class UI extends SearchUI {
 
         // If the exclusion filter is empty, initialize it to be the same as the inclusion filter.
         const f = this.initFilterFromForm("f2");
-        if (f.isEmpty()) {
+        if (!f || f.isEmpty()) {
             // Copy values.
             for (const idSuffix of [
                 "-observer-name",

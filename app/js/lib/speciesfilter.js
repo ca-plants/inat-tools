@@ -1,17 +1,5 @@
 import { DateUtils } from "./dateutils.js";
 
-/** @deprecated */
-const FP = {
-    MONTH: "month",
-    PLACE_ID: "place_id",
-    PROJ_ID: "project_id",
-    QUALITY_GRADE: "quality_grade",
-    TAXON_ID: "taxon_id",
-    USER_ID: "user_id",
-    YEAR1: "year1",
-    YEAR2: "year2",
-};
-
 const MONTH_NAMES = [
     "January",
     "February",
@@ -96,15 +84,32 @@ class SpeciesFilter {
         return descrip;
     }
 
+    getMonths() {
+        return { month1: this.#params.month };
+    }
+
     getParams() {
         return structuredClone(this.#params);
     }
 
     /**
-     * @param {"project_id"} name
+     * @deprecated
+     * @param {"project_id"|"quality_grade"} name
      */
     getParamValue(name) {
         return this.#params[name];
+    }
+
+    getPlaceID() {
+        return this.#params.place_id;
+    }
+
+    getProjectID() {
+        return this.#params.project_id;
+    }
+
+    getTaxonID() {
+        return this.#params.taxon_id;
     }
 
     /**
@@ -114,13 +119,13 @@ class SpeciesFilter {
         const url = new URL(urlStr);
         for (const [k, v] of Object.entries(this.#params)) {
             switch (k) {
-                case FP.YEAR1:
+                case "year1":
                     url.searchParams.set(
                         "d1",
                         DateUtils.getDateString(new Date(v, 0, 1))
                     );
                     break;
-                case FP.YEAR2:
+                case "year2":
                     url.searchParams.set(
                         "d2",
                         DateUtils.getDateString(new Date(v, 11, 31))
@@ -132,6 +137,14 @@ class SpeciesFilter {
             }
         }
         return url;
+    }
+
+    getUserID() {
+        return this.#params.user_id;
+    }
+
+    getYears() {
+        return { year1: this.#params.year1, year2: this.#params.year2 };
     }
 
     isEmpty() {
@@ -147,4 +160,4 @@ class SpeciesFilter {
     }
 }
 
-export { SpeciesFilter, FP };
+export { SpeciesFilter };

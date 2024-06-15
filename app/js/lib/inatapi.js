@@ -54,12 +54,19 @@ class INatAPI {
         this.#lastCallTime = time;
     }
 
+    /**
+     * @param {string} str
+     * @param {string} type
+     * @param {string|function(any):string} nameGen
+     * @returns {Promise<Object<string,string>>}
+     */
     async #getAutoComplete(str, type, nameGen) {
         const url = new URL(
             "https://api.inaturalist.org/v1/" + type + "/autocomplete"
         );
         url.searchParams.set("q", str);
         const json = await this.getJSON(url);
+        /** @type {Object<string,string>} */
         const results = {};
         for (const result of json.results) {
             results[
@@ -81,6 +88,9 @@ class INatAPI {
         return this.#getAutoComplete(str, "projects", "title");
     }
 
+    /**
+     * @param {string} str
+     */
     async getAutoCompleteTaxon(str) {
         return this.#getAutoComplete(str, "taxa", this.getTaxonFormName);
     }
@@ -100,11 +110,14 @@ class INatAPI {
         return data;
     }
 
+    /**
+     * @param {URL} url
+     * @param {string} [token]
+     */
     async getJSON(url, token) {
         if (!token) {
             token = this.#token;
         }
-        console.log(token);
 
         let headers;
         if (token) {
@@ -156,6 +169,9 @@ class INatAPI {
         );
     }
 
+    /**
+     * @param {INatData.TaxonData} taxon
+     */
     static getTaxonName(taxon) {
         switch (taxon.rank) {
             case "subspecies":

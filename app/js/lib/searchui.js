@@ -1,21 +1,19 @@
 import { DateUtils } from "./dateutils.js";
 import { DOMUtils } from "./domutils.js";
-import { FP, SpeciesFilter } from "./speciesfilter.js";
+import { SpeciesFilter } from "./speciesfilter.js";
 import { UI } from "./ui.js";
 
 class AutoCompleteConfig {
-
     #listID;
     #valueID;
     #fnRetrieve;
 
     /**
-     * 
-     * @param {string} listID 
-     * @param {string} valueID 
-     * @param {function (string) :xx} fnRetrieve 
+     * @param {string} listID
+     * @param {string} valueID
+     * @param {function (string) :Promise<Object<string,string>>} fnRetrieve
      */
-    constructor( listID, valueID, fnRetrieve ) {
+    constructor(listID, valueID, fnRetrieve) {
         this.#listID = listID;
         this.#valueID = valueID;
         this.#fnRetrieve = fnRetrieve;
@@ -26,356 +24,499 @@ class AutoCompleteConfig {
     }
 
     /**
-     * @param {string} value 
+     * @param {string} value
      */
-    getResults( value ) {
-        return this.#fnRetrieve( value );
+    getResults(value) {
+        return this.#fnRetrieve(value);
     }
 
     getValueID() {
         return this.#valueID;
     }
-
 }
 
 const MIN_YEAR = 2000;
 
 class SearchUI extends UI {
-
+    /** @type {number|undefined} */
     #debounceTimer;
 
-    async autoComplete( e, config ) {
+    /**
+     * @param {Event} e
+     * @param {AutoCompleteConfig} config
+     */
+    async autoComplete(e, config) {
+        const dl = DOMUtils.getRequiredElement(config.getListID());
+        DOMUtils.removeChildren(dl);
 
-        const dl = document.getElementById( config.getListID() );
-        DOMUtils.removeChildren( dl );
-
+        if (!(e.target instanceof HTMLInputElement)) {
+            return;
+        }
         const value = e.target.value;
-        if ( value.length < 3 ) {
+        if (value.length < 3) {
             return;
         }
 
-        const results = await config.getResults( value );
-        for ( const [ k, v ] of Object.entries( results ) ) {
-            dl.appendChild( DOMUtils.createElement( "option", { "value": k, "value_id": v } ) );
+        const results = await config.getResults(value);
+        for (const [k, v] of Object.entries(results)) {
+            dl.appendChild(
+                DOMUtils.createElement("option", { value: k, value_id: v })
+            );
         }
     }
 
-    changeFilter( e ) {
-        DOMUtils.showElement( "search-crit", true );
-        DOMUtils.showElement( e.target, false );
+    /**
+     * @param {Event} e
+     */
+    changeFilter(e) {
+        DOMUtils.showElement("search-crit", true);
+        DOMUtils.showElement(e.target, false);
     }
 
-    async #debounce( e, config, timeout = 500 ) {
-        if ( !e.inputType ) {
+    /**
+     * @param {Event} e
+     * @param {AutoCompleteConfig} config
+     */
+    async #debounce(e, config, timeout = 500) {
+        if (!(e instanceof InputEvent) || !e.inputType) {
             // Ignore events with no inputType (e.g., the event triggered after we set value).
             return;
         }
-        clearTimeout( this.#debounceTimer );
-        this.#debounceTimer = setTimeout( () => this.autoComplete( e, config, ), timeout );
+        clearTimeout(this.#debounceTimer);
+        this.#debounceTimer = setTimeout(
+            () => this.autoComplete(e, config),
+            timeout
+        );
     }
 
-    handleAutoCompleteField( e, config ) {
-        switch ( e.type ) {
-            case "change": {
-                // Clear ID.
-                DOMUtils.setFormElementValue( config.getValueID(), "" );
-                const value = e.target.value;
-                const options = document.getElementById( config.getListID() ).childNodes;
-                for ( const option of options ) {
-                    if ( option.value === value ) {
-                        DOMUtils.setFormElementValue( config.getValueID(), option.getAttribute( "value_id" ) );
-                        return;
+    /**
+     * @param {Event} e
+     * @param {AutoCompleteConfig} config
+     */
+    handleAutoCompleteField(e, config) {
+        const target = e.target;
+        if (!(target instanceof HTMLInputElement)) {
+            throw new Error();
+        }
+        switch (e.type) {
+            case "change":
+                {
+                    // Clear ID.
+                    DOMUtils.setFormElementValue(config.getValueID(), "");
+                    const value = target.value;
+                    const list = DOMUtils.getRequiredElement(
+                        config.getListID()
+                    );
+                    if (!(list instanceof HTMLDataListElement)) {
+                        throw new Error();
+                    }
+                    const options = list.childNodes;
+                    for (const option of options) {
+                        if (!(option instanceof HTMLOptionElement)) {
+                            throw new Error();
+                        }
+                        if (option.value === value) {
+                            DOMUtils.setFormElementValue(
+                                config.getValueID(),
+                                option.getAttribute("value_id")
+                            );
+                            return;
+                        }
                     }
                 }
-            }
                 break;
             case "focus":
-                e.target.select();
+                target.select();
                 break;
             case "input":
                 // Clear ID.
-                DOMUtils.setFormElementValue( config.getValueID(), "" );
+                DOMUtils.setFormElementValue(config.getValueID(), "");
                 // Clear any errors.
-                e.target.setCustomValidity( "" );
-                this.#debounce( e, config );
+                target.setCustomValidity("");
+                this.#debounce(e, config);
                 break;
         }
     }
 
     async init() {
         await super.init();
-        const e = document.getElementById( "cancel-query" );
-        if ( e ) {
-            e.addEventListener( "click", () => { this.getAPI().cancelQuery( true ); } );
+        const e = document.getElementById("cancel-query");
+        if (e) {
+            e.addEventListener("click", () => {
+                this.getAPI().cancelQuery(true);
+            });
         }
-    }
-
-    initEventListeners( prefix ) {
-
-        /**
-         * @param {Element} e 
-         */
-        function handleYearChange( e ) {
-            const prefix = e.id.substring( 0, e.id.length - 1 );
-            SearchUI.setYearMinMax( prefix );
-            SearchUI.setYearMode( prefix );
-        }
-
-        /**
-         * @param {Element} e 
-         */
-        function handleYearModeChange( e ) {
-
-            /**
-             * @param {string|number} year 
-             */
-            function setValues( year ) {
-                DOMUtils.setFormElementValue( e.id + "1", year.toString() );
-                DOMUtils.setFormElementValue( e.id + "2", year.toString() );
-                SearchUI.setYearMinMax( e.id );
-            }
-
-            switch ( DOMUtils.getFormElementValue( e ) ) {
-                case "Any":
-                    setValues( "" );
-                    break;
-                case "This":
-                    setValues( DateUtils.getCurrentYear() );
-                    break;
-                case "Last":
-                    setValues( DateUtils.getCurrentYear() - 1 );
-                    break;
-            }
-
-        }
-
-        function initField( ui, id, config ) {
-            const input = document.getElementById( id );
-            if ( !input ) {
-                return;
-            }
-            input.addEventListener( "change", ( e ) => ui.handleAutoCompleteField( e, config ) );
-            input.addEventListener( "focus", ( e ) => ui.handleAutoCompleteField( e, config ) );
-            input.addEventListener( "input", ( e ) => ui.handleAutoCompleteField( e, config ) );
-        }
-
-        const fields = [
-            { name: "observer", fn: ( v ) => this.getAPI().getAutoCompleteObserver( v ) },
-            { name: "place", fn: ( v ) => this.getAPI().getAutoCompletePlace( v ) },
-            { name: "proj", fn: ( v ) => this.getAPI().getAutoCompleteProject( v ) },
-            { name: "taxon", fn: ( v ) => this.getAPI().getAutoCompleteTaxon( v ) },
-        ];
-
-        for ( const field of fields ) {
-            initField(
-                this,
-                prefix + "-" + field.name + "-name",
-                new AutoCompleteConfig( prefix + "-" + field.name + "-name-list", prefix + "-" + field.name + "-id", field.fn )
-            );
-        }
-
-        const eSelect = document.getElementById( prefix + "-year" );
-        if ( eSelect ) {
-            eSelect.addEventListener( "change", ( e ) => handleYearModeChange( e.target ) );
-            document.getElementById( prefix + "-year1" ).addEventListener( "change", ( e ) => handleYearChange( e.target ) );
-            document.getElementById( prefix + "-year2" ).addEventListener( "change", ( e ) => handleYearChange( e.target ) );
-        }
-
     }
 
     /**
-     * 
-     * @param {string} prefix 
-     * @returns {SpeciesFilter}
+     * @param {string} prefix
      */
-    initFilterFromForm( prefix ) {
+    initEventListeners(prefix) {
+        /**
+         * @param {EventTarget|null} e
+         */
+        function handleYearChange(e) {
+            if (!(e instanceof HTMLElement)) {
+                throw new Error();
+            }
+            const prefix = e.id.substring(0, e.id.length - 1);
+            SearchUI.setYearMinMax(prefix);
+            SearchUI.setYearMode(prefix);
+        }
 
-        const FILT_AUTOCOMPLETE_FIELDS = [
-            { name: "proj", query_param: FP.PROJ_ID, label: "project" },
-            { name: "place", query_param: FP.PLACE_ID, label: "place" },
-            { name: "observer", query_param: FP.USER_ID, label: "observer" },
-            { name: "taxon", query_param: FP.TAXON_ID, label: "taxon" },
+        /**
+         * @param {EventTarget|null} e
+         */
+        function handleYearModeChange(e) {
+            /**
+             * @param {HTMLElement} e
+             * @param {string|number} year
+             */
+            function setValues(e, year) {
+                DOMUtils.setFormElementValue(e.id + "1", year.toString());
+                DOMUtils.setFormElementValue(e.id + "2", year.toString());
+                SearchUI.setYearMinMax(e.id);
+            }
+
+            if (!(e instanceof HTMLElement)) {
+                throw new Error();
+            }
+
+            switch (DOMUtils.getFormElementValue(e)) {
+                case "Any":
+                    setValues(e, "");
+                    break;
+                case "This":
+                    setValues(e, DateUtils.getCurrentYear());
+                    break;
+                case "Last":
+                    setValues(e, DateUtils.getCurrentYear() - 1);
+                    break;
+            }
+        }
+
+        /**
+         * @param {SearchUI} ui
+         * @param {string} id
+         * @param {AutoCompleteConfig} config
+         */
+        function initField(ui, id, config) {
+            const input = document.getElementById(id);
+            if (!input) {
+                return;
+            }
+            input.addEventListener("change", (e) =>
+                ui.handleAutoCompleteField(e, config)
+            );
+            input.addEventListener("focus", (e) =>
+                ui.handleAutoCompleteField(e, config)
+            );
+            input.addEventListener("input", (e) =>
+                ui.handleAutoCompleteField(e, config)
+            );
+        }
+
+        /** @type{{name:string,fn:function(string):Promise<Object<string,string>>}[]} */
+        const fields = [
+            {
+                name: "observer",
+                fn: (v) => this.getAPI().getAutoCompleteObserver(v),
+            },
+            { name: "place", fn: (v) => this.getAPI().getAutoCompletePlace(v) },
+            {
+                name: "proj",
+                fn: (v) => this.getAPI().getAutoCompleteProject(v),
+            },
+            { name: "taxon", fn: (v) => this.getAPI().getAutoCompleteTaxon(v) },
         ];
 
+        for (const field of fields) {
+            initField(
+                this,
+                prefix + "-" + field.name + "-name",
+                new AutoCompleteConfig(
+                    prefix + "-" + field.name + "-name-list",
+                    prefix + "-" + field.name + "-id",
+                    field.fn
+                )
+            );
+        }
+
+        const eSelect = document.getElementById(prefix + "-year");
+        if (eSelect) {
+            eSelect.addEventListener("change", (e) =>
+                handleYearModeChange(e.target)
+            );
+            DOMUtils.addEventListener(prefix + "-year1", "change", (e) =>
+                handleYearChange(e.target)
+            );
+            DOMUtils.addEventListener(prefix + "-year2", "change", (e) =>
+                handleYearChange(e.target)
+            );
+        }
+    }
+
+    /**
+     * @param {string} prefix
+     */
+    initFilterFromForm(prefix) {
+        /**
+         * @type {{name:string,setQueryParam:function (Params.SpeciesFilter,string):void,label:string}[]}
+         */
+        const FILT_AUTOCOMPLETE_FIELDS = [
+            {
+                name: "proj",
+                setQueryParam: (p, id) => (p.project_id = id),
+                label: "project",
+            },
+            {
+                name: "place",
+                setQueryParam: (p, id) => (p.place_id = id),
+                label: "place",
+            },
+            {
+                name: "observer",
+                setQueryParam: (p, id) => (p.user_id = id),
+                label: "observer",
+            },
+            {
+                name: "taxon",
+                setQueryParam: (p, id) => (p.taxon_id = id),
+                label: "taxon",
+            },
+        ];
+
+        /** @type {Params.SpeciesFilter} */
         const filterArgs = {};
 
         let hasErrors = false;
 
-        for ( const field of FILT_AUTOCOMPLETE_FIELDS ) {
-            const id = DOMUtils.getFormElementValue( prefix + "-" + field.name + "-id" );
-            const input = DOMUtils.getElement( prefix + "-" + field.name + "-name" );
-            if ( id ) {
-                filterArgs[ field.query_param ] = id;
+        for (const field of FILT_AUTOCOMPLETE_FIELDS) {
+            const id = DOMUtils.getFormElementValue(
+                prefix + "-" + field.name + "-id"
+            );
+            const input = DOMUtils.getElement(
+                prefix + "-" + field.name + "-name"
+            );
+            if (id) {
+                field.setQueryParam(filterArgs, id);
             } else {
                 // Make sure the associated text input is blank.
-                if ( input instanceof HTMLInputElement ) {
-                    if ( input.value ) {
-                        input.setCustomValidity( "Invalid " + field.label + "." );
-                        DOMUtils.setFocusTo( input );
+                if (input instanceof HTMLInputElement) {
+                    if (input.value) {
+                        input.setCustomValidity("Invalid " + field.label + ".");
+                        DOMUtils.setFocusTo(input);
                         hasErrors = true;
                     } else {
-                        input.setCustomValidity( "" );
+                        input.setCustomValidity("");
                     }
                 }
             }
         }
 
-        const month1 = DOMUtils.getFormElementValue( prefix + "-month1" );
-        if ( month1 ) {
-            filterArgs[ FP.MONTH ] = month1;
+        const month1 = DOMUtils.getFormElementValue(prefix + "-month1");
+        if (month1) {
+            filterArgs.month = parseInt(month1);
         }
 
-        const year1 = DOMUtils.getFormElementValue( prefix + "-year1" );
-        const year2 = DOMUtils.getFormElementValue( prefix + "-year2" );
-        if ( year1 ) {
-            filterArgs[ FP.YEAR1 ] = year1;
+        const year1 = DOMUtils.getFormElementValue(prefix + "-year1");
+        const year2 = DOMUtils.getFormElementValue(prefix + "-year2");
+        if (year1) {
+            filterArgs.year1 = parseInt(year1);
         }
-        if ( year2 ) {
-            filterArgs[ FP.YEAR2 ] = year2;
-        }
-
-        if ( document.getElementById( prefix + "-researchgrade" ).checked ) {
-            filterArgs[ FP.QUALITY_GRADE ] = "research";
+        if (year2) {
+            filterArgs.year2 = parseInt(year2);
         }
 
-        document.getElementById( "form" ).reportValidity();
-        if ( hasErrors ) {
+        if (DOMUtils.isChecked(prefix + "-researchgrade")) {
+            filterArgs.quality_grade = "research";
+        }
+
+        const form = document.getElementById("form");
+        if (!(form instanceof HTMLFormElement)) {
+            throw new Error();
+        }
+        form.reportValidity();
+        if (hasErrors) {
             return;
         }
-        return new SpeciesFilter( filterArgs );
+        return new SpeciesFilter(filterArgs);
     }
 
-    async initForm( prefix, filter = new SpeciesFilter( {} ) ) {
-
-        function initMonth( filter ) {
-            const month = filter.getParamValue( FP.MONTH );
-            if ( !month ) {
+    /**
+     * @param {string} prefix
+     * @param {SpeciesFilter} filter
+     */
+    async initForm(prefix, filter = new SpeciesFilter({})) {
+        /**
+         * @param {SpeciesFilter} filter
+         */
+        function initMonth(filter) {
+            const month = filter.getMonths().month1;
+            if (!month) {
                 return;
             }
-            DOMUtils.setFormElementValue( prefix + "-month1", month );
+            DOMUtils.setFormElementValue(prefix + "-month1", month.toString());
         }
 
-        function initYear( filter ) {
-            const year1 = filter.getParamValue( FP.YEAR1 );
-            const year2 = filter.getParamValue( FP.YEAR2 );
-            DOMUtils.setFormElementValue( prefix + "-year1", year1 ? year1 : "" );
-            DOMUtils.setFormElementValue( prefix + "-year2", year2 ? year2 : "" );
-            SearchUI.setYearMinMax( prefix + "-year" );
-            SearchUI.setYearMode( prefix + "-year" );
+        /**
+         * @param {SpeciesFilter} filter
+         */
+        function initYear(filter) {
+            const years = filter.getYears();
+            const year1 = years.year1;
+            const year2 = years.year2;
+            DOMUtils.setFormElementValue(
+                prefix + "-year1",
+                year1 ? year1.toString() : ""
+            );
+            DOMUtils.setFormElementValue(
+                prefix + "-year2",
+                year2 ? year2.toString() : ""
+            );
+            SearchUI.setYearMinMax(prefix + "-year");
+            SearchUI.setYearMode(prefix + "-year");
         }
 
-        async function initObserver( api, filter ) {
-            const id = filter.getParamValue( FP.USER_ID );
-            DOMUtils.setFormElementValue( prefix + "-observer-id", id );
-            if ( !id ) {
+        /**
+         * @param {INatAPI} api
+         * @param {SpeciesFilter} filter
+         */
+        async function initObserver(api, filter) {
+            const id = filter.getUserID();
+            DOMUtils.setFormElementValue(prefix + "-observer-id", id);
+            if (!id) {
                 return;
             }
             // Look up name based on ID.
-            const data = await api.getUserData( id );
-            if ( !data ) {
+            const data = await api.getUserData(id);
+            if (!data) {
                 return;
             }
-            DOMUtils.setFormElementValue( prefix + "-observer-name", data.login );
+            DOMUtils.setFormElementValue(prefix + "-observer-name", data.login);
         }
 
-        async function initPlace( api, filter ) {
+        /**
+         * @param {INatAPI} api
+         * @param {SpeciesFilter} filter
+         */
+        async function initPlace(api, filter) {
             // Check for place.
-            const placeID = filter.getParamValue( FP.PLACE_ID );
-            DOMUtils.setFormElementValue( prefix + "-place-id", placeID );
-            if ( !placeID ) {
+            const placeID = filter.getPlaceID();
+            DOMUtils.setFormElementValue(prefix + "-place-id", placeID);
+            if (!placeID) {
                 return;
             }
             // Look up name based on ID.
-            const placeData = await api.getPlaceData( placeID );
-            if ( !placeData ) {
+            const placeData = await api.getPlaceData(placeID);
+            if (!placeData) {
                 return;
             }
-            DOMUtils.setFormElementValue( prefix + "-place-name", placeData.display_name );
+            DOMUtils.setFormElementValue(
+                prefix + "-place-name",
+                placeData.display_name
+            );
         }
 
-        async function initProject( api, filter ) {
+        /**
+         * @param {INatAPI} api
+         * @param {SpeciesFilter} filter
+         */
+        async function initProject(api, filter) {
             // Check for project.
-            const projID = filter.getParamValue( FP.PROJ_ID );
-            DOMUtils.setFormElementValue( prefix + "-proj-id", projID );
-            if ( !projID ) {
+            const projID = filter.getProjectID();
+            DOMUtils.setFormElementValue(prefix + "-proj-id", projID);
+            if (!projID) {
                 return;
             }
             // Look up name based on ID.
-            const projectData = await api.getProjectData( projID );
-            if ( !projectData ) {
+            const projectData = await api.getProjectData(projID);
+            if (!projectData) {
                 return;
             }
-            DOMUtils.setFormElementValue( prefix + "-proj-name", projectData.title );
+            DOMUtils.setFormElementValue(
+                prefix + "-proj-name",
+                projectData.title
+            );
         }
 
-        async function initTaxon( api, filter ) {
+        /**
+         * @param {INatAPI} api
+         * @param {SpeciesFilter} filter
+         */
+        async function initTaxon(api, filter) {
             // Check for taxon.
-            const taxonID = filter.getParamValue( FP.TAXON_ID );
-            DOMUtils.setFormElementValue( prefix + "-taxon-id", taxonID );
-            if ( !taxonID ) {
+            const taxonID = filter.getTaxonID();
+            DOMUtils.setFormElementValue(prefix + "-taxon-id", taxonID);
+            if (!taxonID) {
                 return;
             }
             // Look up name based on ID.
-            const taxonData = await api.getTaxonData( taxonID );
-            if ( !taxonData ) {
+            const taxonData = await api.getTaxonData(taxonID);
+            if (!taxonData) {
                 return;
             }
-            DOMUtils.setFormElementValue( prefix + "-taxon-name", api.getTaxonFormName( taxonData ) );
+            DOMUtils.setFormElementValue(
+                prefix + "-taxon-name",
+                api.getTaxonFormName(taxonData)
+            );
         }
 
-        await initProject( this.getAPI(), filter );
-        await initPlace( this.getAPI(), filter );
-        await initObserver( this.getAPI(), filter );
-        await initTaxon( this.getAPI(), filter );
-        initMonth( filter );
-        initYear( filter );
+        await initProject(this.getAPI(), filter);
+        await initPlace(this.getAPI(), filter);
+        await initObserver(this.getAPI(), filter);
+        await initTaxon(this.getAPI(), filter);
+        initMonth(filter);
+        initYear(filter);
 
-        const qualityGrade = filter.getParamValue( FP.QUALITY_GRADE );
-        DOMUtils.enableCheckBox( prefix + "-researchgrade", qualityGrade === "research" );
-
+        const qualityGrade = filter.getParamValue("quality_grade");
+        DOMUtils.enableCheckBox(
+            prefix + "-researchgrade",
+            qualityGrade === "research"
+        );
     }
 
     /**
-     * @param {string} prefix 
+     * @param {string} prefix
      */
-    static setYearMinMax( prefix ) {
-        const d1 = document.getElementById( prefix + "1" );
-        const d2 = document.getElementById( prefix + "2" );
-        if ( d1 && d2 ) {
-            const d1Val = DOMUtils.getFormElementValue( d1 );
-            const d2Val = DOMUtils.getFormElementValue( d2 );
-            d1.setAttribute( "max", d2Val ? d2Val : DateUtils.getCurrentYear().toString() );
-            d2.setAttribute( "min", d1Val ? d1Val : MIN_YEAR.toString() );
-            d2.setAttribute( "max", DateUtils.getCurrentYear().toString() );
+    static setYearMinMax(prefix) {
+        const d1 = document.getElementById(prefix + "1");
+        const d2 = document.getElementById(prefix + "2");
+        if (d1 && d2) {
+            const d1Val = DOMUtils.getFormElementValue(d1);
+            const d2Val = DOMUtils.getFormElementValue(d2);
+            d1.setAttribute(
+                "max",
+                d2Val ? d2Val : DateUtils.getCurrentYear().toString()
+            );
+            d2.setAttribute("min", d1Val ? d1Val : MIN_YEAR.toString());
+            d2.setAttribute("max", DateUtils.getCurrentYear().toString());
         }
     }
 
     /**
-     * @param {string} prefix 
+     * @param {string} prefix
      */
-    static setYearMode( prefix ) {
-
+    static setYearMode(prefix) {
         function getMode() {
-            const d1 = DOMUtils.getFormElementValue( prefix + "1" );
-            const d2 = DOMUtils.getFormElementValue( prefix + "2" );
-            if ( d1 === d2 && d1 !== undefined ) {
-                if ( d1 === "" ) {
+            const d1 = DOMUtils.getFormElementValue(prefix + "1");
+            const d2 = DOMUtils.getFormElementValue(prefix + "2");
+            if (d1 === d2 && d1 !== undefined) {
+                if (d1 === "") {
                     return "Any";
                 }
-                if ( parseInt( d1 ) === DateUtils.getCurrentYear() ) {
+                if (parseInt(d1) === DateUtils.getCurrentYear()) {
                     return "This";
                 }
-                if ( parseInt( d1 ) === DateUtils.getCurrentYear() - 1 ) {
+                if (parseInt(d1) === DateUtils.getCurrentYear() - 1) {
                     return "Last";
                 }
             }
             return "Range";
         }
 
-        DOMUtils.setFormElementValue( prefix, getMode() );
-
+        DOMUtils.setFormElementValue(prefix, getMode());
     }
-
 }
 
 export { AutoCompleteConfig, SearchUI };
