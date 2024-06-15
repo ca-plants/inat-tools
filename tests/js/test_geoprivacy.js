@@ -1,5 +1,5 @@
 import test from "ava";
-import { INatObservationX as INatObservation } from "../../app/js/lib/inatobservationx.js";
+import { INatObservation } from "../../app/js/lib/inatobservation.js";
 
 /**
  * @param {string} taxon_geoprivacy
@@ -19,7 +19,7 @@ function makeObservation(taxon_geoprivacy, geoprivacy, private_location) {
         private_place_guess: "",
         quality_grade: "research",
         taxon: {
-            id: 0,
+            id: "",
             name: "",
             preferred_common_name: "",
             rank: "",

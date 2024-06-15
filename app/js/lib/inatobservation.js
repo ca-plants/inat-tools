@@ -1,70 +1,89 @@
-/** @deprecated */
 class INatObservation {
-    static coordsArePublic(obs) {
-        return !this.#isObservationObscured(obs) && !this.#isTaxonObscured(obs);
+    #rawObservation;
+
+    /**
+     * @param {INatData.Observation} rawObservation
+     */
+    constructor(rawObservation) {
+        this.#rawObservation = rawObservation;
     }
 
-    static getCoordinatesString(obs) {
-        if (obs.private_location) {
-            return obs.private_location;
-        }
-        return obs.location;
+    coordsArePublic() {
+        return !this.#isObservationObscured() && !this.#isTaxonObscured();
     }
 
-    static getCoordinatesGeoJSON(obs) {
-        const coords = this.getCoordinatesString(obs).split(",");
+    getCoordinatesGeoJSON() {
+        const coords = this.getCoordinatesString().split(",");
         return [parseFloat(coords[1]), parseFloat(coords[0])];
     }
 
-    static getCoordType(obs) {
-        if (this.coordsArePublic(obs)) {
-            return "public";
+    getCoordinatesString() {
+        if (this.#rawObservation.private_location) {
+            return this.#rawObservation.private_location;
         }
-        return this.isObscured(obs) ? "obscured" : "trusted";
+        return this.#rawObservation.location;
     }
 
-    static getObsDateString(obs) {
-        return obs.observed_on_details.date.replaceAll(
+    getCoordType() {
+        if (this.coordsArePublic()) {
+            return "public";
+        }
+        return this.isObscured() ? "obscured" : "trusted";
+    }
+
+    getID() {
+        return this.#rawObservation.id;
+    }
+
+    getObsDate() {
+        return new Date(this.#rawObservation.observed_on_details.date);
+    }
+
+    getObsDateString() {
+        return this.#rawObservation.observed_on_details.date.replaceAll(
             "-",
             String.fromCharCode(8209)
         );
     }
 
-    static getPlaceGuess(obs) {
-        if (obs.private_place_guess) {
-            return obs.private_place_guess;
+    getPlaceGuess() {
+        if (this.#rawObservation.private_place_guess) {
+            return this.#rawObservation.private_place_guess;
         }
-        if (obs.place_guess) {
-            return obs.place_guess;
+        if (this.#rawObservation.place_guess) {
+            return this.#rawObservation.place_guess;
         }
-        if (obs.private_location) {
+        if (this.#rawObservation.private_location) {
             // For geoprivacy: "private", we can see the coordinates of trusted users, but there is no place_guess.
-            return obs.private_location;
+            return this.#rawObservation.private_location;
         }
         return "unknown";
     }
 
-    static getURL(obs) {
-        return "https://www.inaturalist.org/observations/" + obs.id;
+    getURL() {
+        return (
+            "https://www.inaturalist.org/observations/" +
+            this.#rawObservation.id
+        );
     }
 
-    static getUserDisplayName(obs) {
-        if (obs.user.name) {
-            return obs.user.name;
+    getUserDisplayName() {
+        if (this.#rawObservation.user.name) {
+            return this.#rawObservation.user.name;
         }
-        return obs.user.login;
+        return this.#rawObservation.user.login;
     }
 
-    static getUserID(obs) {
-        return obs.user.id;
+    getUserID() {
+        return this.#rawObservation.user.id;
     }
 
-    static getUserLogin(obs) {
-        return obs.user.login;
+    getUserLogin() {
+        return this.#rawObservation.user.login;
     }
 
-    static #isObservationObscured(obs) {
-        switch (obs.geoprivacy) {
+    #isObservationObscured() {
+        switch (this.#rawObservation.geoprivacy) {
             case null:
             case "open":
                 return false;
@@ -72,25 +91,27 @@ class INatObservation {
             case "private":
                 return true;
         }
-        console.error("unknown geoprivacy: " + obs.geoprivacy);
+        console.error("unknown geoprivacy: " + this.#rawObservation.geoprivacy);
     }
 
-    static isObscured(obs) {
-        if (!this.#isObservationObscured(obs) && !this.#isTaxonObscured(obs)) {
+    isObscured() {
+        if (!this.#isObservationObscured() && !this.#isTaxonObscured()) {
             return false;
         }
-        return obs.private_location ? false : true;
+        return this.#rawObservation.private_location ? false : true;
     }
 
-    static #isTaxonObscured(obs) {
-        switch (obs.taxon_geoprivacy) {
+    #isTaxonObscured() {
+        switch (this.#rawObservation.taxon_geoprivacy) {
             case null:
             case "open":
                 return false;
             case "obscured":
                 return true;
         }
-        console.error("unknown taxon_geoprivacy: " + obs.taxon_geoprivacy);
+        console.error(
+            "unknown taxon_geoprivacy: " + this.#rawObservation.taxon_geoprivacy
+        );
     }
 }
 

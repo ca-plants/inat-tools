@@ -2,7 +2,7 @@ import { ColDef } from "../lib/coldef.js";
 import { DataRetriever } from "../lib/dataretriever.js";
 import { DOMUtils } from "../lib/domutils.js";
 import { Histogram } from "../lib/histogram.js";
-import { INatObservationX as INatObservation } from "../lib/inatobservationx.js";
+import { INatObservation } from "../lib/inatobservation.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { UI } from "../lib/ui.js";
 

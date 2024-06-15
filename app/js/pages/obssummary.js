@@ -3,7 +3,7 @@ import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { DOMUtils } from "../lib/domutils.js";
 import { DataRetriever } from "../lib/dataretriever.js";
 import { INatAPI } from "../lib/inatapi.js";
-import { INatObservationX as INatObservation } from "../lib/inatobservationx.js";
+import { INatObservation } from "../lib/inatobservation.js";
 import { ColDef } from "../lib/coldef.js";
 
 /**
