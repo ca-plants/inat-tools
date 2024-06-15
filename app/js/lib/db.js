@@ -2,6 +2,13 @@ class DB {
     #db;
 
     /**
+     * @param {IDBDatabase} db
+     */
+    constructor(db) {
+        this.#db = db;
+    }
+
+    /**
      * @param {string} store
      */
     async clear(store) {
@@ -12,8 +19,8 @@ class DB {
             request.onerror = (event) => {
                 reject(event);
             };
-            request.onsuccess = () => {
-                resolve();
+            request.onsuccess = (event) => {
+                resolve(event);
             };
         });
     }
@@ -54,6 +61,9 @@ class DB {
         });
     }
 
+    /**
+     * @param {string} store
+     */
     async getAllKeys(store) {
         const transaction = this.#db.transaction(store);
         const objectStore = transaction.objectStore(store);
@@ -68,12 +78,19 @@ class DB {
         });
     }
 
+    /**
+     * @param {string} dbName
+     * @param {string} store
+     */
     static async getInstance(dbName, store) {
-        const db = new DB();
-        db.#db = await this.#init(dbName, store);
-        return db;
+        const idb = await this.#init(dbName, store);
+        return new DB(idb);
     }
 
+    /**
+     * @param {string} dbName
+     * @param {string} store
+     */
     static async #init(dbName, store) {
         return new Promise((resolve, reject) => {
             const request = window.indexedDB.open(dbName);
@@ -81,15 +98,20 @@ class DB {
                 console.error(event);
                 reject(event);
             };
-            request.onsuccess = (event) => {
-                resolve(event.target.result);
+            request.onsuccess = () => {
+                resolve(request.result);
             };
-            request.onupgradeneeded = (event) => {
-                event.target.result.createObjectStore(store);
+            request.onupgradeneeded = () => {
+                request.result.createObjectStore(store);
             };
         });
     }
 
+    /**
+     * @param {string} store
+     * @param {string} key
+     * @param {*} data
+     */
     async put(store, key, data) {
         const transaction = this.#db.transaction(store, "readwrite");
         const objectStore = transaction.objectStore(store);
@@ -98,8 +120,8 @@ class DB {
             request.onerror = (event) => {
                 reject(event);
             };
-            request.onsuccess = () => {
-                resolve();
+            request.onsuccess = (event) => {
+                resolve(event);
             };
         });
     }

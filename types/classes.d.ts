@@ -15,6 +15,15 @@ declare class INatObservation {
     getObsDate(): Date;
 }
 
+declare class ProgressReporter {
+    hide(): void;
+    modalAlert(message: string): Promise;
+    setLabel(label: string): void;
+    setNumPages(np: number): void;
+    setPage(p: string): void;
+    show(): void;
+}
+
 declare class SpeciesFilter {
     getURL(url?: string | URL): URL;
 }
@@ -34,11 +43,12 @@ declare namespace INatData {
         user: UserData;
     }
     export interface TaxonData {
-        id: string;
+        id: number;
         name: string;
         preferred_common_name: string;
         rank: string;
         rank_level: number;
+        ancestor_ids: number[];
     }
     export interface TaxonObsSummary {
         count: number;

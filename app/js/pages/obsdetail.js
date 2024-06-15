@@ -99,7 +99,8 @@ const SUMMARY_COLS = {
 class ObsDetailUI extends UI {
     #taxon_id;
     #f1;
-    #taxon_data = { id: "", rank: "" };
+    /** @type {INatData.TaxonData|undefined} */
+    #taxon_data;
     /** @type {Results} */
     #results = {
         countObscured: 0,
@@ -120,7 +121,7 @@ class ObsDetailUI extends UI {
         if (f1.taxon_id === undefined) {
             throw new Error();
         }
-        this.#taxon_id = f1.taxon_id;
+        this.#taxon_id = parseInt(f1.taxon_id);
         this.#f1 = new SpeciesFilter(f1);
     }
 
@@ -367,7 +368,7 @@ class ObsDetailUI extends UI {
 
         const api = this.getAPI();
 
-        this.#taxon_data = await api.getTaxonData(this.#taxon_id);
+        this.#taxon_data = await api.getTaxonData(this.#taxon_id.toString());
 
         const results = await DataRetriever.getObservationData(
             api,

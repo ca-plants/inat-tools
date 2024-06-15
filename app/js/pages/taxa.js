@@ -199,7 +199,7 @@ class UI extends SearchUI {
             getCol(COLUMNS[0].value(result), "c-sn");
             getCol(COLUMNS[1].value(result), "c-cn");
 
-            obsURL.searchParams.set("taxon_id", result.taxon.id);
+            obsURL.searchParams.set("taxon_id", result.taxon.id.toString());
             const eLinkText = DOMUtils.createElement("span");
             eLinkText.appendChild(
                 document.createTextNode(COLUMNS[2].value(result))

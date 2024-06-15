@@ -7,7 +7,7 @@ import { INatObservation } from "../lib/inatobservation.js";
 import { ColDef } from "../lib/coldef.js";
 
 /**
- * @typedef {{taxon_id:string,displayName:string,rank:string,count:number,countObscured:number,countPublic:number,countResearchGrade:number}} SummaryEntry
+ * @typedef {{taxon_id:number,displayName:string,rank:string,count:number,countObscured:number,countPublic:number,countResearchGrade:number}} SummaryEntry
  */
 
 const COLUMNS = {
@@ -157,7 +157,7 @@ class ObsUI extends SearchUI {
         const data = entry[1];
 
         const fp = this.#f1.getParams();
-        fp.taxon_id = data.taxon_id;
+        fp.taxon_id = data.taxon_id.toString();
         Object.assign(fp, extraParams);
         /** @type {Params.PageObsDetail} */
         const args = { f1: fp, coords: selected };

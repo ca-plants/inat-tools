@@ -19,11 +19,12 @@ function makeObservation(taxon_geoprivacy, geoprivacy, private_location) {
         private_place_guess: "",
         quality_grade: "research",
         taxon: {
-            id: "",
+            id: 0,
             name: "",
             preferred_common_name: "",
             rank: "",
             rank_level: 0,
+            ancestor_ids: [],
         },
         user: { id: "", login: "", name: "" },
     };

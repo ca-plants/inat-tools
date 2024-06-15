@@ -1,13 +1,5 @@
 import { Cache } from "./cache.js";
 import { QueryCancelledException } from "./inatapi.js";
-// eslint-disable-next-line no-unused-vars
-import { INatAPI } from "./inatapi.js";
-// eslint-disable-next-line no-unused-vars
-import { ProgressReporter } from "./progressreporter.js";
-// eslint-disable-next-line no-unused-vars
-import { SpeciesFilter } from "./speciesfilter.js";
-
-/** @typedef {{id:number,name:string,preferred_common_name:string,rank:string,rank_level:number}} RawTaxon */
 
 const INPROP = {
     COMMON_NAME: "preferred_common_name",
@@ -73,6 +65,7 @@ class DataRetriever {
     /**
      * @param {INatAPI} api
      * @param {string} id
+     * @param {ProgressReporter} progressReporter
      */
     static async getProjectMembers(api, id, progressReporter) {
         const url = new URL(
@@ -86,7 +79,12 @@ class DataRetriever {
         );
     }
 
+    /**
+     * @param {INatData.TaxonObsSummary[]} include
+     * @param {INatData.TaxonObsSummary[]} exclude
+     */
     static removeExclusions(include, exclude) {
+        /** @type {Object<string,boolean>} */
         const exclusions = {};
         for (const result of exclude) {
             // Walk backwards through ancestors to exclude this taxon and all of its parents.
@@ -134,7 +132,7 @@ class DataRetriever {
 
         progressReporter.setLabel(label);
         progressReporter.setNumPages(0);
-        progressReporter.setPage(1);
+        progressReporter.setPage("1");
 
         const maxResults = 10000;
         const maxPages = 50;
@@ -167,7 +165,7 @@ class DataRetriever {
             progressReporter.setNumPages(numPages);
 
             for (let page = 2; page <= numPages; page++) {
-                progressReporter.setPage(page);
+                progressReporter.setPage(page.toString());
                 const json = await getPage(page);
                 results.push(...json[INPROP.RESULTS]);
             }

@@ -179,14 +179,11 @@ class INatAPI {
     }
 
     /**
-     * @param {string} taxonID
+     * @param {string} id
      * @returns {Promise<INatData.TaxonData>}
      */
-    async getTaxonData(taxonID) {
-        return this.#getDataByID(
-            taxonID,
-            "https://api.inaturalist.org/v1/taxa/"
-        );
+    async getTaxonData(id) {
+        return this.#getDataByID(id, "https://api.inaturalist.org/v1/taxa/");
     }
 
     /**

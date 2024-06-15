@@ -16,22 +16,25 @@ class MockAPI extends INatAPI {
      * @param {string} id
      */
     async getTaxonData(id) {
-        switch (id) {
-            case "47158":
+        const intID = parseInt(id);
+        switch (intID) {
+            case 47158:
                 return {
-                    id: "",
+                    id: intID,
                     rank: "class",
                     rank_level: 20,
                     name: "Insecta",
                     preferred_common_name: "",
+                    ancestor_ids: [],
                 };
-            case "56932":
+            case 56932:
                 return {
-                    id: "",
+                    id: intID,
                     rank: "genus",
                     rank_level: 20,
                     name: "Cuscuta",
                     preferred_common_name: "",
+                    ancestor_ids: [],
                 };
         }
         throw new Error();
@@ -52,7 +55,7 @@ const descrip = test.macro({
         const filter = new SpeciesFilter(f1);
         t.is(
             await filter.getDescription(
-                new MockAPI(""),
+                new MockAPI(),
                 f2 ? new SpeciesFilter(f2) : undefined
             ),
             expected
