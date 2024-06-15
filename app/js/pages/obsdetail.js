@@ -435,7 +435,9 @@ class ObsDetailUI extends UI {
 
         // Select initial view.
         const initialView = DOMUtils.getElement("disp-" + view);
-        DOMUtils.clickElement(initialView ?? "disp-details");
+        DOMUtils.clickElement(
+            initialView instanceof HTMLElement ? initialView : "disp-details"
+        );
     }
 
     onResize() {

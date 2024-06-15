@@ -18,7 +18,7 @@ class DOMUtils {
      */
     static addEventListener(e, type, fn) {
         const elem = this.getElement(e);
-        if (elem) {
+        if (elem instanceof Element) {
             elem.addEventListener(type, fn);
         }
     }
@@ -98,8 +98,8 @@ class DOMUtils {
     }
 
     /**
-     * @param {string|Element} e
-     * @returns {Element|null}
+     * @param {string|Element|EventTarget|RadioNodeList|null|undefined} e
+     * @returns {Element|EventTarget|RadioNodeList|null|undefined}
      */
     static getElement(e) {
         if (typeof e === "string") {
@@ -126,7 +126,7 @@ class DOMUtils {
      */
     static getRequiredElement(e) {
         const elem = this.getElement(e);
-        if (!elem) {
+        if (!(elem instanceof Element)) {
             throw new Error(JSON.stringify(e));
         }
         return elem;
@@ -137,16 +137,13 @@ class DOMUtils {
      * @returns {string|undefined}
      */
     static getFormElementValue(e) {
-        if (typeof e === "string") {
-            // Assume it's an id.
-            return this.getFormElementValue(this.getElement(e));
-        }
+        const elem = this.getElement(e);
         if (
-            e instanceof HTMLInputElement ||
-            e instanceof HTMLSelectElement ||
-            e instanceof RadioNodeList
+            elem instanceof HTMLInputElement ||
+            elem instanceof HTMLSelectElement ||
+            elem instanceof RadioNodeList
         ) {
-            return e.value;
+            return elem.value;
         }
     }
 
@@ -161,9 +158,16 @@ class DOMUtils {
         return elem.checked;
     }
 
+    /**
+     * @param {string|Element} e
+     */
     static removeChildren(e) {
-        while (e.firstChild) {
-            e.firstChild.remove();
+        const elem = this.getElement(e);
+        if (!(elem instanceof Element)) {
+            return;
+        }
+        while (elem.firstChild) {
+            elem.firstChild.remove();
         }
     }
 
@@ -173,7 +177,7 @@ class DOMUtils {
      */
     static removeClass(e, className) {
         const elem = this.getElement(e);
-        if (elem) {
+        if (elem instanceof Element) {
             elem.classList.remove(className);
         }
     }
@@ -184,7 +188,7 @@ class DOMUtils {
      */
     static setElementText(e, text) {
         const elem = this.getElement(e);
-        if (!elem) {
+        if (!(elem instanceof HTMLElement)) {
             return;
         }
         this.removeChildren(elem);
@@ -216,18 +220,26 @@ class DOMUtils {
         if (!elem) {
             return;
         }
-        if (elem instanceof HTMLTextAreaElement) {
+        if (
+            elem instanceof HTMLTextAreaElement ||
+            elem instanceof HTMLSelectElement
+        ) {
             elem.value = value ? value : "";
+        } else if (elem instanceof HTMLElement) {
+            elem.setAttribute("value", value ? value : "");
         }
-        elem.setAttribute("value", value ? value : "");
     }
 
+    /**
+     * @param {string|Element|EventTarget|null} e
+     * @param {boolean} [show]
+     */
     static showElement(e, show = true) {
-        if (typeof e === "string") {
-            // Assume it's an id.
-            return this.showElement(document.getElementById(e), show);
+        const elem = this.getElement(e);
+        if (!elem || !(elem instanceof HTMLElement)) {
+            return;
         }
-        e.style.display = show ? "" : "none";
+        elem.style.display = show ? "" : "none";
     }
 }
 
