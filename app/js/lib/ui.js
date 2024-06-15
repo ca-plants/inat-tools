@@ -6,10 +6,13 @@ import { Login } from "./login.js";
 const NAV_LOGIN_ID = "nav-login";
 
 class UI {
-    /** @type INatAPI */
+    /** @type {INatAPI|undefined} */
     #api;
 
     getAPI() {
+        if (!this.#api) {
+            throw new Error();
+        }
         return this.#api;
     }
 
@@ -24,7 +27,8 @@ class UI {
         if (!homeLink) {
             return "";
         }
-        return new URL(homeLink["href"]).pathname;
+        const href = homeLink.getAttribute("href");
+        return href;
     }
 
     getProgressReporter() {
@@ -55,9 +59,9 @@ class UI {
             this.getPathPrefix() + "login.html",
             document.location.origin
         );
-        url.searchParams.set("url", document.location);
-        const eLogin = document.getElementById(NAV_LOGIN_ID);
-        eLogin.setAttribute("href", url);
+        url.searchParams.set("url", document.location.toString());
+        const eLogin = DOMUtils.getRequiredElement(NAV_LOGIN_ID);
+        eLogin.setAttribute("href", url.toString());
     }
 }
 
