@@ -38,7 +38,7 @@ class MockAPI extends INatAPI {
     }
 
     async getUserData() {
-        return { login: "testuser" };
+        return { id: "", login: "testuser", name: "" };
     }
 }
 

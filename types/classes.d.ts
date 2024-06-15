@@ -1,3 +1,14 @@
+declare class INatAPI {
+    async getPlaceData(id: string): Promise<INatData.PlaceData>;
+    async getProjectData(id: string): Promise<INatData.ProjectData>;
+    async getTaxonData(id: string): Promise<INatData.TaxonData>;
+    getTaxonFormName(
+        taxon: INatData.TaxonData,
+        addCommonName?: boolean
+    ): string;
+    async getUserData(id: string): Promise<INatData.UserData>;
+}
+
 declare class INatObservation {
     getObsDate(): Date;
 }
@@ -18,7 +29,7 @@ declare namespace INatData {
         quality_grade: string;
         taxon: TaxonData;
         taxon_geoprivacy: string;
-        user: { id: string; login: string; name: string };
+        user: UserData;
     }
     export interface TaxonData {
         id: string;
@@ -30,6 +41,11 @@ declare namespace INatData {
     export interface TaxonObsSummary {
         count: number;
         taxon: TaxonData;
+    }
+    export interface UserData {
+        id: string;
+        login: string;
+        name: string;
     }
 }
 

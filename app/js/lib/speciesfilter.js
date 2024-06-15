@@ -35,38 +35,38 @@ class SpeciesFilter {
      * @param {Params.SpeciesFilter} params
      */
     constructor(params) {
-        for (const name of Object.values(FP)) {
-            if (params[name]) {
-                this.#params[name] = params[name];
-            }
-        }
+        Object.assign(this.#params, params);
     }
 
+    /**
+     * @param {INatAPI} api
+     * @param {SpeciesFilter} [exclusions]
+     */
     async getDescription(api, exclusions) {
         let descrip = "Species";
 
-        if (this.#params[FP.TAXON_ID]) {
-            const taxon = await api.getTaxonData(this.#params[FP.TAXON_ID]);
+        if (this.#params.taxon_id) {
+            const taxon = await api.getTaxonData(this.#params.taxon_id);
             descrip = api.getTaxonFormName(taxon, false);
         }
         descrip += " observed";
-        if (this.#params[FP.USER_ID]) {
-            const user = await api.getUserData(this.#params[FP.USER_ID]);
+        if (this.#params.user_id) {
+            const user = await api.getUserData(this.#params.user_id);
             descrip += " by " + user.login;
         }
-        if (this.#params[FP.PROJ_ID]) {
-            const proj = await api.getProjectData(this.#params[FP.PROJ_ID]);
+        if (this.#params.project_id) {
+            const proj = await api.getProjectData(this.#params.project_id);
             descrip += ' in project "' + proj.title + '"';
         }
-        if (this.#params[FP.PLACE_ID]) {
-            const place = await api.getPlaceData(this.#params[FP.PLACE_ID]);
+        if (this.#params.place_id) {
+            const place = await api.getPlaceData(this.#params.place_id);
             descrip += " in " + place.display_name;
         }
         if (this.#params.month) {
             descrip += " in " + MONTH_NAMES[this.#params.month - 1];
         }
-        const year1 = this.#params[FP.YEAR1];
-        const year2 = this.#params[FP.YEAR2];
+        const year1 = this.#params.year1;
+        const year2 = this.#params.year2;
         if (year1) {
             if (year2) {
                 if (year1 === year2) {
@@ -82,7 +82,7 @@ class SpeciesFilter {
                 descrip += " in " + year2 + " or earlier";
             }
         }
-        switch (this.#params[FP.QUALITY_GRADE]) {
+        switch (this.#params.quality_grade) {
             case "needs_id":
                 descrip += " (needs ID only)";
                 break;
@@ -139,7 +139,7 @@ class SpeciesFilter {
     }
 
     isResearchGradeOnly() {
-        return this.#params[FP.QUALITY_GRADE] === "research";
+        return this.#params.quality_grade === "research";
     }
 
     toJSON() {

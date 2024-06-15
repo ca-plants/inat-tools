@@ -173,6 +173,11 @@ class INatAPI {
         }
     }
 
+    /**
+     * @param {INatData.TaxonData} taxon
+     * @param {boolean} [addCommonName]
+     * @returns {string}
+     */
     getTaxonFormName(taxon, addCommonName = true) {
         let commonName = addCommonName
             ? taxon["preferred_common_name"]
@@ -193,6 +198,7 @@ class INatAPI {
 
     /**
      * @param {string} id
+     * @returns {Promise<INatData.UserData>}
      */
     async getUserData(id) {
         return this.#getDataByID(id, "https://api.inaturalist.org/v1/users/");
