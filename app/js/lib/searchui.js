@@ -7,16 +7,19 @@ class AutoCompleteConfig {
     #listID;
     #valueID;
     #fnRetrieve;
+    #fnHandleChange;
 
     /**
      * @param {string} listID
      * @param {string} valueID
      * @param {function (string) :Promise<Object<string,string>>} fnRetrieve
+     * @param {function (string):void|undefined} [fnHandleChange]
      */
-    constructor(listID, valueID, fnRetrieve) {
+    constructor(listID, valueID, fnRetrieve, fnHandleChange) {
         this.#listID = listID;
         this.#valueID = valueID;
         this.#fnRetrieve = fnRetrieve;
+        this.#fnHandleChange = fnHandleChange;
     }
 
     getListID() {
@@ -32,6 +35,12 @@ class AutoCompleteConfig {
 
     getValueID() {
         return this.#valueID;
+    }
+
+    handleChange() {
+        if (this.#fnHandleChange) {
+            this.#fnHandleChange(this.#valueID);
+        }
     }
 }
 
@@ -94,6 +103,15 @@ class SearchUI extends UI {
      * @param {AutoCompleteConfig} config
      */
     handleAutoCompleteField(e, config) {
+        /**
+         * @param {AutoCompleteConfig} config
+         * @param {string|null} value
+         */
+        function setValue(config, value) {
+            DOMUtils.setFormElementValue(config.getValueID(), value);
+            config.handleChange();
+        }
+
         const target = e.target;
         if (!(target instanceof HTMLInputElement)) {
             throw new Error();
@@ -102,7 +120,7 @@ class SearchUI extends UI {
             case "change":
                 {
                     // Clear ID.
-                    DOMUtils.setFormElementValue(config.getValueID(), "");
+                    setValue(config, "");
                     const value = target.value;
                     const list = DOMUtils.getRequiredElement(
                         config.getListID()
@@ -116,10 +134,7 @@ class SearchUI extends UI {
                             throw new Error();
                         }
                         if (option.value === value) {
-                            DOMUtils.setFormElementValue(
-                                config.getValueID(),
-                                option.getAttribute("value_id")
-                            );
+                            setValue(config, option.getAttribute("value_id"));
                             return;
                         }
                     }
@@ -130,12 +145,19 @@ class SearchUI extends UI {
                 break;
             case "input":
                 // Clear ID.
-                DOMUtils.setFormElementValue(config.getValueID(), "");
+                setValue(config, "");
                 // Clear any errors.
                 target.setCustomValidity("");
                 this.#debounce(e, config);
                 break;
         }
+    }
+
+    /**
+     * @param {string} valueID
+     */
+    handleTaxonChange(valueID) {
+        console.log(DOMUtils.getFormElementValue(valueID));
     }
 
     async init() {
@@ -216,18 +238,25 @@ class SearchUI extends UI {
             );
         }
 
-        /** @type{{name:string,fn:function(string):Promise<Object<string,string>>}[]} */
+        /** @type{{name:string,fnRetrieve:function(string):Promise<Object<string,string>>,fnHandleChange?:function(string):void}[]} */
         const fields = [
             {
                 name: "observer",
-                fn: (v) => this.getAPI().getAutoCompleteObserver(v),
+                fnRetrieve: (v) => this.getAPI().getAutoCompleteObserver(v),
             },
-            { name: "place", fn: (v) => this.getAPI().getAutoCompletePlace(v) },
+            {
+                name: "place",
+                fnRetrieve: (v) => this.getAPI().getAutoCompletePlace(v),
+            },
             {
                 name: "proj",
-                fn: (v) => this.getAPI().getAutoCompleteProject(v),
+                fnRetrieve: (v) => this.getAPI().getAutoCompleteProject(v),
             },
-            { name: "taxon", fn: (v) => this.getAPI().getAutoCompleteTaxon(v) },
+            {
+                name: "taxon",
+                fnRetrieve: (v) => this.getAPI().getAutoCompleteTaxon(v),
+                fnHandleChange: (valueID) => this.handleTaxonChange(valueID),
+            },
         ];
 
         for (const field of fields) {
@@ -237,7 +266,8 @@ class SearchUI extends UI {
                 new AutoCompleteConfig(
                     prefix + "-" + field.name + "-name-list",
                     prefix + "-" + field.name + "-id",
-                    field.fn
+                    field.fnRetrieve,
+                    field.fnHandleChange
                 )
             );
         }
