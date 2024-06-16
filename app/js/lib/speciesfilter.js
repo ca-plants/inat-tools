@@ -115,7 +115,7 @@ class SpeciesFilter {
     /**
      * @param {string|URL} [urlStr]
      */
-    getURL(urlStr = "https://www.inaturalist.org/observations") {
+    getURL(urlStr = "https://www.inaturalist.org/observations?subview=grid") {
         const url = new URL(urlStr);
         for (const [k, v] of Object.entries(this.#params)) {
             switch (k) {

@@ -142,9 +142,7 @@ class ObsDetailUI extends UI {
          */
         function showAll(ui) {
             const filter = new SpeciesFilter(params);
-            const url = filter.getURL(
-                "https://www.inaturalist.org/observations"
-            );
+            const url = filter.getURL();
             url.searchParams.set("lrank", ui.#getTaxonData().rank);
             return url;
         }
@@ -162,9 +160,7 @@ class ObsDetailUI extends UI {
         switch (selectedTypes.join(",")) {
             case "public": {
                 const filter = new SpeciesFilter(params);
-                const url = filter.getURL(
-                    "https://www.inaturalist.org/observations"
-                );
+                const url = filter.getURL();
                 url.searchParams.set("lrank", this.#getTaxonData().rank);
                 url.searchParams.set("taxon_geoprivacy", "open");
                 url.searchParams.set("geoprivacy", "open");
@@ -179,7 +175,9 @@ class ObsDetailUI extends UI {
                         selectedIDs.push(obs.getID());
                     }
                 }
-                const url = new URL("https://www.inaturalist.org/observations");
+                const url = new URL(
+                    "https://www.inaturalist.org/observations?subview=grid"
+                );
                 const idList = selectedIDs.join(",");
                 if (idList.length >= 10813) {
                     return "";

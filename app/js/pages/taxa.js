@@ -230,9 +230,7 @@ class UI extends SearchUI {
         const tbody = DOMUtils.createElement("tbody");
         table.appendChild(tbody);
 
-        const obsURL = filter.getURL(
-            "https://www.inaturalist.org/observations?subview=grid"
-        );
+        const obsURL = filter.getURL();
         for (const result of results) {
             tbody.appendChild(getTaxonSummary(result));
         }
