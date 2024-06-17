@@ -99,6 +99,23 @@ class SearchUI extends UI {
     }
 
     /**
+     * @param {number} taxonID
+     * @param {INatAPI} api
+     */
+    static async getAnnotationsForTaxon(taxonID, api) {
+        const terms = await api.getControlledTerms();
+        const taxon = await api.getTaxonData(taxonID.toString());
+        const ancestors = [...taxon.ancestor_ids, taxonID];
+        const annotations = [];
+        for (const result of terms) {
+            if (result.taxon_ids.some((id) => ancestors.includes(id))) {
+                annotations.push(result.id);
+            }
+        }
+        return annotations;
+    }
+
+    /**
      * @param {Event} e
      * @param {AutoCompleteConfig} config
      */
@@ -154,10 +171,12 @@ class SearchUI extends UI {
     }
 
     /**
-     * @param {string} valueID
+     * @param {string} valueElementID
      */
-    handleTaxonChange(valueID) {
-        console.log(DOMUtils.getFormElementValue(valueID));
+    async handleTaxonChange(valueElementID) {
+        await this.updateAnnotationsFields(
+            DOMUtils.getFormElementValue(valueElementID)
+        );
     }
 
     async init() {
@@ -496,6 +515,7 @@ class SearchUI extends UI {
         await initPlace(this.getAPI(), filter);
         await initObserver(this.getAPI(), filter);
         await initTaxon(this.getAPI(), filter);
+        await this.updateAnnotationsFields(filter.getTaxonID());
         initMonth(filter);
         initYear(filter);
 
@@ -546,6 +566,22 @@ class SearchUI extends UI {
         }
 
         DOMUtils.setFormElementValue(prefix, getMode());
+    }
+
+    /**
+     * @param {string|undefined} taxonID
+     */
+    async updateAnnotationsFields(taxonID) {
+        const fieldSetID = "f1-annotation-filter";
+        if (!taxonID) {
+            DOMUtils.showElement(fieldSetID, false);
+            return;
+        }
+        const annotations = await SearchUI.getAnnotationsForTaxon(
+            parseInt(taxonID),
+            this.getAPI()
+        );
+        DOMUtils.showElement(fieldSetID, annotations.length > 0);
     }
 }
 

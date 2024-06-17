@@ -112,6 +112,24 @@ class INatAPI {
     }
 
     /**
+     * @returns {Promise<INatData.ControlledTerm[]>}
+     */
+    async getControlledTerms() {
+        const key = "https://api.inaturalist.org/v1/controlled_terms";
+        const cache = await Cache.getInstance();
+        // Check cache first.
+        let data = await cache.get(key);
+        if (data) {
+            return data;
+        }
+        const json = await this.getJSON(new URL(key));
+        data = json.results;
+        // Add to cache.
+        await cache.put(key, data);
+        return data;
+    }
+
+    /**
      * @param {string} id
      * @param {string} url
      */

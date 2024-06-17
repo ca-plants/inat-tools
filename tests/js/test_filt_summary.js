@@ -1,49 +1,7 @@
 import test from "ava";
 
-import { INatAPI } from "../../app/js/lib/inatapi.js";
+import { MockAPI } from "./mockapi.js";
 import { SpeciesFilter } from "../../app/js/lib/speciesfilter.js";
-
-class MockAPI extends INatAPI {
-    async getPlaceData() {
-        return { display_name: "Tilden Regional Park, CA, US" };
-    }
-
-    async getProjectData() {
-        return { title: "projname" };
-    }
-
-    /**
-     * @param {string} id
-     */
-    async getTaxonData(id) {
-        const intID = parseInt(id);
-        switch (intID) {
-            case 47158:
-                return {
-                    id: intID,
-                    rank: "class",
-                    rank_level: 20,
-                    name: "Insecta",
-                    preferred_common_name: "",
-                    ancestor_ids: [],
-                };
-            case 56932:
-                return {
-                    id: intID,
-                    rank: "genus",
-                    rank_level: 20,
-                    name: "Cuscuta",
-                    preferred_common_name: "",
-                    ancestor_ids: [],
-                };
-        }
-        throw new Error();
-    }
-
-    async getUserData() {
-        return { id: "", login: "testuser", name: "" };
-    }
-}
 
 const descrip = test.macro({
     /**

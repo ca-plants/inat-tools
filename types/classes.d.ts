@@ -1,5 +1,6 @@
 declare class INatAPI {
     cancelQuery(yn: boolean): void;
+    async getControlledTerms(): Promise<INatData.ControlledTerm[]>;
     async getJSON(url: URL | string, token?: string): Promise<any>;
     async getPlaceData(id: string): Promise<INatData.PlaceData>;
     async getProjectData(id: string): Promise<INatData.ProjectData>;
@@ -29,6 +30,10 @@ declare class SpeciesFilter {
 }
 
 declare namespace INatData {
+    export interface ControlledTerm {
+        id: number;
+        taxon_ids: number[];
+    }
     export interface Observation {
         geoprivacy: string | null;
         id: string;
