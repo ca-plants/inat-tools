@@ -379,7 +379,7 @@ class ObsDetailUI extends UI {
         this.#results = await this.summarizeResults(results);
 
         // If a project is in the filter, retrieve project members.
-        const projectID = this.#f1.getParamValue("project_id");
+        const projectID = this.#f1.getProjectID();
         if (projectID) {
             const members = await DataRetriever.getProjectMembers(
                 api,

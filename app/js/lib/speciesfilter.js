@@ -115,20 +115,16 @@ class SpeciesFilter {
         return structuredClone(this.#params);
     }
 
-    /**
-     * @deprecated
-     * @param {"project_id"|"quality_grade"} name
-     */
-    getParamValue(name) {
-        return this.#params[name];
-    }
-
     getPlaceID() {
         return this.#params.place_id;
     }
 
     getProjectID() {
         return this.#params.project_id;
+    }
+
+    getQualityGrade() {
+        return this.#params.quality_grade;
     }
 
     getTaxonID() {

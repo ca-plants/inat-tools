@@ -175,7 +175,9 @@ class SearchUI extends UI {
      * @param {string} valueElementID
      */
     async handleTaxonChange(valueElementID) {
+        const prefix = valueElementID.split("-")[0];
         await this.updateAnnotationsFields(
+            prefix,
             DOMUtils.getFormElementValue(valueElementID)
         );
     }
@@ -545,11 +547,11 @@ class SearchUI extends UI {
         await initPlace(this.getAPI(), filter);
         await initObserver(this.getAPI(), filter);
         await initTaxon(this.getAPI(), filter);
-        await this.updateAnnotationsFields(filter.getTaxonID());
+        await this.updateAnnotationsFields(prefix, filter.getTaxonID());
         initMonth(filter);
         initYear(filter);
 
-        const qualityGrade = filter.getParamValue("quality_grade");
+        const qualityGrade = filter.getQualityGrade();
         DOMUtils.enableCheckBox(
             prefix + "-researchgrade",
             qualityGrade === "research"
@@ -599,10 +601,10 @@ class SearchUI extends UI {
     }
 
     /**
+     * @param {string} prefix
      * @param {string|undefined} taxonID
      */
-    async updateAnnotationsFields(taxonID) {
-        const prefix = "f1";
+    async updateAnnotationsFields(prefix, taxonID) {
         const fieldSetID = prefix + "-annotation-filter";
         if (!taxonID) {
             DOMUtils.showElement(fieldSetID, false);
