@@ -103,14 +103,14 @@ class SearchUI extends UI {
      * @param {INatAPI} api
      */
     static async getAnnotationsForTaxon(taxonID, api) {
-        const terms = await api.getControlledTerms();
         const taxon = await api.getTaxonData(taxonID.toString());
         const ancestors = [...taxon.ancestor_ids, taxonID];
         const annotations = [];
-        for (const result of terms) {
-            if (result.taxon_ids.some((id) => ancestors.includes(id))) {
-                annotations.push(result.id);
-            }
+        if (ancestors.includes(47125)) {
+            annotations.push("plants");
+        }
+        if (ancestors.includes(1) && !ancestors.includes(43583)) {
+            annotations.push("alive");
         }
         return annotations;
     }
@@ -572,7 +572,8 @@ class SearchUI extends UI {
      * @param {string|undefined} taxonID
      */
     async updateAnnotationsFields(taxonID) {
-        const fieldSetID = "f1-annotation-filter";
+        const prefix = "f1";
+        const fieldSetID = prefix + "-annotation-filter";
         if (!taxonID) {
             DOMUtils.showElement(fieldSetID, false);
             return;
@@ -582,6 +583,14 @@ class SearchUI extends UI {
             this.getAPI()
         );
         DOMUtils.showElement(fieldSetID, annotations.length > 0);
+
+        // Show only the relevant annotation options.
+        for (const type of ["alive", "plants"]) {
+            DOMUtils.showElement(
+                prefix + "-ann-type-" + type,
+                annotations.includes(type)
+            );
+        }
     }
 }
 

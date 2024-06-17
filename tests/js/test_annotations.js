@@ -6,7 +6,7 @@ import { SearchUI } from "../../app/js/lib/searchui.js";
 const annotations = test.macro({
     /**
      * @param {number} taxonID
-     * @param {number[]} expected
+     * @param {string[]} expected
      */
     async exec(t, taxonID, expected) {
         const result = await SearchUI.getAnnotationsForTaxon(
@@ -24,4 +24,7 @@ const annotations = test.macro({
     },
 });
 
-test(annotations, MockTaxa.Cuscuta, [12]);
+test(annotations, MockTaxa.Cuscuta, ["plants"]);
+test(annotations, MockTaxa.Insecta, ["alive"]);
+test(annotations, MockTaxa.Homo_sapiens, []);
+test(annotations, MockTaxa.Pinus, []);
