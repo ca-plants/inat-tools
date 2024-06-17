@@ -26,6 +26,10 @@ class SpeciesFilter {
         Object.assign(this.#params, params);
     }
 
+    getAnnotations() {
+        return this.#params.annotations;
+    }
+
     /**
      * @param {INatAPI} api
      * @param {SpeciesFilter} [exclusions]
@@ -38,6 +42,25 @@ class SpeciesFilter {
             descrip = api.getTaxonFormName(taxon, false);
         }
         descrip += " observed";
+        if (this.#params.annotations) {
+            for (const annotation of this.#params.annotations) {
+                switch (annotation.type) {
+                    case "plants":
+                        switch (annotation.value) {
+                            case "Flowering":
+                                descrip += " when plant has flowers";
+                                break;
+                            case "Flower Buds":
+                                descrip += " when plant has flower buds";
+                                break;
+                            case "Not Flowering":
+                                descrip +=
+                                    " when plant has no evidence of flowering";
+                                break;
+                        }
+                }
+            }
+        }
         if (this.#params.user_id) {
             const user = await api.getUserData(this.#params.user_id);
             descrip += " by " + user.login;
@@ -116,9 +139,43 @@ class SpeciesFilter {
      * @param {string|URL} [urlStr]
      */
     getURL(urlStr = "https://www.inaturalist.org/observations?subview=grid") {
+        /**
+         *
+         * @param {URL} url
+         * @param {{ type: string; value: string }[]} annotations
+         */
+        function setAnnotationParameters(url, annotations) {
+            for (const annotation of annotations) {
+                switch (annotation.type) {
+                    case "plants":
+                        switch (annotation.value) {
+                            case "Flowering":
+                                url.searchParams.set("term_id", "12");
+                                url.searchParams.set("term_value_id", "13");
+                                break;
+                            case "Flower Buds":
+                                url.searchParams.set("term_id", "12");
+                                url.searchParams.set("term_value_id", "15");
+                                break;
+                            case "Not Flowering":
+                                url.searchParams.set("term_id", "12");
+                                url.searchParams.set(
+                                    "without_term_value_id",
+                                    "13"
+                                );
+                                break;
+                        }
+                        break;
+                }
+            }
+        }
+
         const url = new URL(urlStr);
         for (const [k, v] of Object.entries(this.#params)) {
             switch (k) {
+                case "annotations":
+                    setAnnotationParameters(url, v);
+                    break;
                 case "year1":
                     url.searchParams.set(
                         "d1",

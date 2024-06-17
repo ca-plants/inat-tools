@@ -159,6 +159,17 @@ class DOMUtils {
     }
 
     /**
+     * @param {string|Element|EventTarget|null} e
+     */
+    static isVisible(e) {
+        const elem = this.getElement(e);
+        if (!elem || !(elem instanceof HTMLElement)) {
+            return false;
+        }
+        return elem.style.display !== "none";
+    }
+
+    /**
      * @param {string|Element} e
      */
     static removeChildren(e) {

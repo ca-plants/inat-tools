@@ -44,6 +44,7 @@ class AutoCompleteConfig {
     }
 }
 
+const ANNOTATION_TYPES = ["plants"];
 const MIN_YEAR = 2000;
 
 class SearchUI extends UI {
@@ -109,9 +110,9 @@ class SearchUI extends UI {
         if (ancestors.includes(47125)) {
             annotations.push("plants");
         }
-        if (ancestors.includes(1) && !ancestors.includes(43583)) {
-            annotations.push("alive");
-        }
+        // if (ancestors.includes(1) && !ancestors.includes(43583)) {
+        //     annotations.push("alive");
+        // }
         return annotations;
     }
 
@@ -368,6 +369,24 @@ class SearchUI extends UI {
             filterArgs.month = parseInt(month1);
         }
 
+        // If annotation fields are visible, include them.
+        if (DOMUtils.isVisible(prefix + "-annotation-filter")) {
+            const annotations = [];
+            for (const type of ANNOTATION_TYPES) {
+                if (DOMUtils.isVisible(prefix + "-ann-type-" + type)) {
+                    const value = DOMUtils.getFormElementValue(
+                        prefix + "-ann-" + type
+                    );
+                    if (value !== "Any" && value !== undefined) {
+                        annotations.push({ type: type, value: value });
+                    }
+                }
+            }
+            if (annotations.length) {
+                filterArgs.annotations = annotations;
+            }
+        }
+
         const year1 = DOMUtils.getFormElementValue(prefix + "-year1");
         const year2 = DOMUtils.getFormElementValue(prefix + "-year2");
         if (year1) {
@@ -509,6 +528,17 @@ class SearchUI extends UI {
                 prefix + "-taxon-name",
                 api.getTaxonFormName(taxonData)
             );
+
+            // Set value of any annotations.
+            const annotations = filter.getAnnotations();
+            if (annotations !== undefined) {
+                for (const annotation of annotations) {
+                    DOMUtils.setFormElementValue(
+                        prefix + "-ann-" + annotation.type,
+                        annotation.value
+                    );
+                }
+            }
         }
 
         await initProject(this.getAPI(), filter);
@@ -585,7 +615,7 @@ class SearchUI extends UI {
         DOMUtils.showElement(fieldSetID, annotations.length > 0);
 
         // Show only the relevant annotation options.
-        for (const type of ["alive", "plants"]) {
+        for (const type of ANNOTATION_TYPES) {
             DOMUtils.showElement(
                 prefix + "-ann-type-" + type,
                 annotations.includes(type)

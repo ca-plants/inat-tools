@@ -92,6 +92,36 @@ test(
     "Genus Cuscuta observed in Tilden Regional Park, CA, US"
 );
 test(
+    "flowering plants",
+    descrip,
+    {
+        taxon_id: "56932",
+        annotations: [{ type: "plants", value: "Flowering" }],
+    },
+    undefined,
+    "Genus Cuscuta observed when plant has flowers"
+);
+test(
+    "budding plants",
+    descrip,
+    {
+        taxon_id: "56932",
+        annotations: [{ type: "plants", value: "Flower Buds" }],
+    },
+    undefined,
+    "Genus Cuscuta observed when plant has flower buds"
+);
+test(
+    "plants not flowering",
+    descrip,
+    {
+        taxon_id: "56932",
+        annotations: [{ type: "plants", value: "Not Flowering" }],
+    },
+    undefined,
+    "Genus Cuscuta observed when plant has no evidence of flowering"
+);
+test(
     "insects in place",
     descrip,
     { taxon_id: "47158", place_id: "3523" },

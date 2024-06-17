@@ -25,6 +25,6 @@ const annotations = test.macro({
 });
 
 test(annotations, MockTaxa.Cuscuta, ["plants"]);
-test(annotations, MockTaxa.Insecta, ["alive"]);
+// test(annotations, MockTaxa.Insecta, ["alive"]);
 test(annotations, MockTaxa.Homo_sapiens, []);
 test(annotations, MockTaxa.Pinus, []);
