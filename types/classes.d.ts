@@ -81,6 +81,6 @@ declare namespace Params {
         user_id?: string;
         year1?: number;
         year2?: number;
-        annotations?: { type: string; value: string }[];
+        annotations?: { type: "ev-mammal" | "plants"; value: string }[];
     }
 }

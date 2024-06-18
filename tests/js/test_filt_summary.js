@@ -1,6 +1,6 @@
 import test from "ava";
 
-import { MockAPI } from "./mockapi.js";
+import { MockAPI, MockTaxa } from "./mockapi.js";
 import { SpeciesFilter } from "../../app/js/lib/speciesfilter.js";
 
 const descrip = test.macro({
@@ -120,6 +120,16 @@ test(
     },
     undefined,
     "Genus Cuscuta observed when plant has no evidence of flowering"
+);
+test(
+    "pig organism",
+    descrip,
+    {
+        taxon_id: MockTaxa.Sus_scrofa.toString(),
+        annotations: [{ type: "ev-mammal", value: "Organism" }],
+    },
+    undefined,
+    "Species Sus scrofa observed when organism is present"
 );
 test(
     "insects in place",

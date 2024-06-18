@@ -45,6 +45,13 @@ class SpeciesFilter {
         if (this.#params.annotations) {
             for (const annotation of this.#params.annotations) {
                 switch (annotation.type) {
+                    case "ev-mammal":
+                        switch (annotation.value) {
+                            case "Organism":
+                                descrip += " when organism is present";
+                                break;
+                        }
+                        break;
                     case "plants":
                         switch (annotation.value) {
                             case "Flowering":
@@ -58,6 +65,7 @@ class SpeciesFilter {
                                     " when plant has no evidence of flowering";
                                 break;
                         }
+                        break;
                 }
             }
         }
@@ -136,13 +144,23 @@ class SpeciesFilter {
      */
     getURL(urlStr = "https://www.inaturalist.org/observations?subview=grid") {
         /**
-         *
          * @param {URL} url
          * @param {{ type: string; value: string }[]} annotations
          */
         function setAnnotationParameters(url, annotations) {
+            if (!annotations) {
+                return;
+            }
             for (const annotation of annotations) {
                 switch (annotation.type) {
+                    case "ev-mammal":
+                        switch (annotation.value) {
+                            case "Organism":
+                                url.searchParams.set("term_id", "22");
+                                url.searchParams.set("term_value_id", "24");
+                                break;
+                        }
+                        break;
                     case "plants":
                         switch (annotation.value) {
                             case "Flowering":

@@ -362,6 +362,32 @@ class ObsDetailUI extends UI {
             radios.appendChild(div);
         }
 
+        /**
+         * @param {SpeciesFilter} filter
+         * @param {string} termID
+         * @param {string} descrip
+         */
+        function getAttributeLink(filter, termID, descrip) {
+            const params = filter.getParams();
+            delete params.annotations;
+            delete params.quality_grade;
+            const url = new URL(
+                "https://www.inaturalist.org/observations/identify?&quality_grade=needs_id%2Cresearch&without_term_id=22"
+            );
+            url.searchParams.set("reviewed", "any");
+            url.searchParams.set("quality_grade", "needs_id,research");
+            url.searchParams.set("without_term_id", termID);
+            filter = new SpeciesFilter(params);
+            const link = DOMUtils.createLinkElement(
+                filter.getURL(url),
+                `Observations with no ${descrip} annotation`,
+                { target: "_blank" }
+            );
+            const div = DOMUtils.createElement("div");
+            div.appendChild(link);
+            return div;
+        }
+
         await super.init();
 
         const api = this.getAPI();
@@ -422,6 +448,27 @@ class ObsDetailUI extends UI {
                 id: "viewininat",
             })
         );
+        const annotations = filter.getAnnotations();
+        if (annotations) {
+            for (const annotation of annotations) {
+                switch (annotation.type) {
+                    case "ev-mammal":
+                        iNatDiv.appendChild(
+                            getAttributeLink(
+                                filter,
+                                "22",
+                                "evidence of presence"
+                            )
+                        );
+                        break;
+                    case "plants":
+                        iNatDiv.appendChild(
+                            getAttributeLink(filter, "12", "plant phenology")
+                        );
+                        break;
+                }
+            }
+        }
 
         const optionDiv = DOMUtils.createElement("div", { class: "options" });
         optionDiv.appendChild(radios);

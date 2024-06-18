@@ -44,7 +44,8 @@ class AutoCompleteConfig {
     }
 }
 
-const ANNOTATION_TYPES = ["plants"];
+/** @type {( "ev-mammal" | "plants")[]} */
+const ANNOTATION_TYPES = ["ev-mammal", "plants"];
 const MIN_YEAR = 2000;
 
 class SearchUI extends UI {
@@ -110,9 +111,9 @@ class SearchUI extends UI {
         if (ancestors.includes(47125)) {
             annotations.push("plants");
         }
-        // if (ancestors.includes(1) && !ancestors.includes(43583)) {
-        //     annotations.push("alive");
-        // }
+        if (ancestors.includes(40151) && !ancestors.includes(43583)) {
+            annotations.push("ev-mammal");
+        }
         return annotations;
     }
 
@@ -373,6 +374,7 @@ class SearchUI extends UI {
 
         // If annotation fields are visible, include them.
         if (DOMUtils.isVisible(prefix + "-annotation-filter")) {
+            /** @type {{ type: "ev-mammal" | "plants"; value: string }[]} */
             const annotations = [];
             for (const type of ANNOTATION_TYPES) {
                 if (DOMUtils.isVisible(prefix + "-ann-type-" + type)) {
