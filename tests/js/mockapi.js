@@ -9,18 +9,6 @@ const MockTaxa = {
 };
 
 class MockAPI extends INatAPI {
-    /**
-     * @returns {Promise<INatData.ControlledTerm[]>}
-     */
-    async getControlledTerms() {
-        return [
-            {
-                id: 12,
-                taxon_ids: [47126],
-            },
-        ];
-    }
-
     async getPlaceData() {
         return { display_name: "Tilden Regional Park, CA, US" };
     }

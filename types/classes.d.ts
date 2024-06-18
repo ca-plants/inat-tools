@@ -1,6 +1,5 @@
 declare class INatAPI {
     cancelQuery(yn: boolean): void;
-    async getControlledTerms(): Promise<INatData.ControlledTerm[]>;
     async getJSON(url: URL | string, token?: string): Promise<any>;
     async getPlaceData(id: string): Promise<INatData.PlaceData>;
     async getProjectData(id: string): Promise<INatData.ProjectData>;
