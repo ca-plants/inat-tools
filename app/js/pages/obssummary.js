@@ -232,11 +232,14 @@ class ObsUI extends SearchUI {
             );
 
             const rgPctNode = DOMUtils.createElement("div");
-            rgPctNode.appendChild(
-                document.createTextNode(
-                    ((rgCount * 100) / obsCount).toFixed(2) + "% research grade"
-                )
-            );
+            if (obsCount) {
+                rgPctNode.appendChild(
+                    document.createTextNode(
+                        ((rgCount * 100) / obsCount).toFixed(2) +
+                            "% research grade"
+                    )
+                );
+            }
 
             summaryDesc.appendChild(rgCountNode);
             summaryDesc.appendChild(rgPctNode);
