@@ -372,7 +372,7 @@ class ObsDetailUI extends UI {
             delete params.annotations;
             delete params.quality_grade;
             const url = new URL(
-                "https://www.inaturalist.org/observations/identify?&quality_grade=needs_id%2Cresearch&without_term_id=22"
+                "https://www.inaturalist.org/observations/identify"
             );
             url.searchParams.set("reviewed", "any");
             url.searchParams.set("quality_grade", "needs_id,research");

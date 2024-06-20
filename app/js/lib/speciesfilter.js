@@ -191,16 +191,31 @@ class SpeciesFilter {
                     setAnnotationParameters(url, v);
                     break;
                 case "year1":
-                    url.searchParams.set(
-                        "d1",
-                        DateUtils.getDateString(new Date(v, 0, 1))
-                    );
+                    if (this.#params.month) {
+                        // Only specific months are included; use year range list.
+                        const years = [];
+                        for (
+                            let year = v;
+                            year <= (this.#params.year2 ?? v);
+                            year++
+                        ) {
+                            years.push(year);
+                        }
+                        url.searchParams.set("year", years.join());
+                    } else {
+                        url.searchParams.set(
+                            "d1",
+                            DateUtils.getDateString(new Date(v, 0, 1))
+                        );
+                    }
                     break;
                 case "year2":
-                    url.searchParams.set(
-                        "d2",
-                        DateUtils.getDateString(new Date(v, 11, 31))
-                    );
+                    if (!this.#params.month) {
+                        url.searchParams.set(
+                            "d2",
+                            DateUtils.getDateString(new Date(v, 11, 31))
+                        );
+                    }
                     break;
                 default:
                     url.searchParams.set(k, v);
