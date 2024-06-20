@@ -83,12 +83,22 @@ class UI extends SearchUI {
         if (!f || f.isEmpty()) {
             // Copy values.
             for (const idSuffix of [
+                "-ann-ev-mammal",
+                "-ann-plants",
+                "-ann-type-ev-mammal",
+                "-ann-type-plants",
+                "-month1",
                 "-observer-name",
                 "-observer-id",
                 "-place-name",
                 "-place-id",
+                "-proj-name",
+                "-proj-id",
                 "-taxon-name",
                 "-taxon-id",
+                "-year",
+                "-year1",
+                "-year2",
             ]) {
                 const val = DOMUtils.getFormElementValue("f1" + idSuffix);
                 DOMUtils.setFormElementValue("f2" + idSuffix, val);
@@ -96,6 +106,11 @@ class UI extends SearchUI {
             // Copy checked state.
             copyChecks(["-researchgrade"]);
         }
+
+        this.updateAnnotationsFields(
+            "f2",
+            DOMUtils.getFormElementValue("f2-taxon-id")
+        );
     }
 
     /**

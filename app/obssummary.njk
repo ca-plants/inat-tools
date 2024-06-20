@@ -13,12 +13,7 @@ js: obssummary
 
             <div id="f1" class="filter section">
 
-                {{ searchform.inp_proj("f1") }}
-                {{ searchform.inp_place("f1") }}
-                {{ searchform.inp_taxon("f1") }}
-
-                <input type="checkbox" id="f1-researchgrade">
-                <label for="f1-researchgrade">Research Grade</label>
+                {{ searchform.create_search_form("f1") }}
 
                 <div class="buttons section">
                     <input type="submit" id="filter-submit">
