@@ -232,6 +232,7 @@ class DOMUtils {
             return;
         }
         if (
+            elem instanceof HTMLInputElement ||
             elem instanceof HTMLTextAreaElement ||
             elem instanceof HTMLSelectElement
         ) {
