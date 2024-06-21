@@ -1,7 +1,8 @@
 import { Cache } from "../lib/cache.js";
 import { DOMUtils } from "../lib/domutils.js";
+import { UI } from "../lib/ui.js";
 
-class CacheUI {
+class CacheUI extends UI {
     async clearAll() {
         const cache = await Cache.getInstance();
         await cache.clear();
@@ -98,7 +99,7 @@ class CacheUI {
             getCol(formatDateTime(data.expires));
 
             const copy = DOMUtils.createElement("img", {
-                src: "/img/icon/clipboard.svg",
+                src: ui.getPathPrefix() + "img/icon/clipboard.svg",
                 title: "Copy to clipboard",
             });
             copy.addEventListener("click", async (e) => {
@@ -106,7 +107,7 @@ class CacheUI {
             });
 
             const del = DOMUtils.createElement("img", {
-                src: "/img/icon/trash.svg",
+                src: ui.getPathPrefix() + "img/icon/trash.svg",
                 title: "Remove from cache",
             });
             del.addEventListener("click", async (e) => {
