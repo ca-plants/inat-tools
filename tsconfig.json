@@ -6,9 +6,9 @@
         "declarationMap": true,
         "module": "nodenext",
         "newLine": "lf",
-        "outDir": "output",
+        "noEmit": true,
         "rootDir": ".",
-        "skipLibCheck": true,
+        "skipLibCheck": false,
         "strict": true
     },
     "include": ["app", "tests", "types"]

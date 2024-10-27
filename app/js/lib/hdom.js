@@ -1,43 +1,46 @@
-/** @deprecated */
-class DOMUtils {
+export class hdom {
     /**
-     *
-     * @param {string} id
+     * @param {string|Element} e
      * @param {string} className
      */
-    static addClass(id, className) {
-        const e = document.getElementById(id);
-        if (e) {
-            e.classList.add(className);
-        }
+    static addClass(e, className) {
+        const elem = this.getElement(e);
+        elem.classList.add(className);
     }
 
     /**
      * @param {string|Element} e
      * @param {string} type
      * @param {function(Event):void} fn
+     * @returns {Element}
      */
     static addEventListener(e, type, fn) {
         const elem = this.getElement(e);
         if (elem instanceof Element) {
             elem.addEventListener(type, fn);
         }
+        return elem;
     }
 
     /**
-     * @param {string|Element} e
+     * @param {string} id
+     * @param {boolean} checked
+     * @returns {HTMLInputElement}
      */
-    static clickElement(e) {
-        const elem = this.getElement(e);
-        if (!(elem instanceof HTMLInputElement)) {
-            return;
+    static createCheckBox(id, checked) {
+        /** @type {Object<string,string>} */
+        const atts = {};
+        atts.type = "checkbox";
+        atts.id = id;
+        if (checked) {
+            atts.checked = "";
         }
-        elem.click();
+        return this.createInputElement(atts);
     }
 
     /**
      * @param {string} name
-     * @param {Object.<string,string|number>|string} [attributes]
+     * @param {Object<string,string|number>|string} [attributes]
      * @returns {Element}
      */
     static createElement(name, attributes) {
@@ -72,6 +75,7 @@ class DOMUtils {
      * @param {URL|string|undefined} url
      * @param {Node|string|number} eLinkText
      * @param {Object.<string,string>|string} [attributes]
+     * @returns {Element}
      */
     static createLinkElement(url, eLinkText, attributes) {
         const eLink = this.createElement("a", attributes);
@@ -87,69 +91,71 @@ class DOMUtils {
     }
 
     /**
-     * @param {string|Element} e
-     * @param {boolean} state
+     * @param {string} name
+     * @param {Object<string,string>} attributes
+     * @param {string} text
+     * @returns {Element}
      */
-    static enableCheckBox(e, state) {
-        const elem = this.getElement(e);
-        if (!(elem instanceof HTMLInputElement)) {
-            return;
-        }
-        elem.checked = state;
-    }
-
-    /**
-     * @param {string|Element|EventTarget|RadioNodeList|null|undefined} e
-     * @returns {Element|EventTarget|RadioNodeList|null|undefined}
-     */
-    static getElement(e) {
-        if (typeof e === "string") {
-            return document.getElementById(e);
-        }
-        return e;
-    }
-
-    /**
-     * @param {string|Element} e
-     * @param {string} elName
-     */
-    static getFormElement(e, elName) {
-        const form = this.getElement(e);
-        if (!(form instanceof HTMLFormElement)) {
-            return;
-        }
-        return form.elements.namedItem(elName);
+    static createTextElement(name, attributes, text) {
+        const elem = this.createElement(name, attributes);
+        this.setTextValue(elem, text);
+        return elem;
     }
 
     /**
      * @param {string|Element} e
      * @returns {Element}
      */
-    static getRequiredElement(e) {
-        const elem = this.getElement(e);
-        if (!(elem instanceof Element)) {
-            throw new Error(JSON.stringify(e));
+    static getElement(e) {
+        if (typeof e === "string") {
+            const el = document.getElementById(e);
+            if (el === null) {
+                throw new Error();
+            }
+            return el;
+        }
+        return e;
+    }
+
+    /**
+     * @param {string|Element} form
+     * @param {string} elName
+     * @returns {HTMLFormElement|RadioNodeList}
+     */
+    static getFormElement(form, elName) {
+        form = this.getElement(form);
+        if (!(form instanceof HTMLFormElement)) {
+            throw new Error();
+        }
+        const elem = form.elements.namedItem(elName);
+        if (!(elem instanceof HTMLFormElement)) {
+            if (!(elem instanceof RadioNodeList)) {
+                throw new Error();
+            }
         }
         return elem;
     }
 
     /**
-     * @param {string|Element|RadioNodeList|null|undefined} e
-     * @returns {string|undefined}
+     * @param {string|HTMLFormElement|RadioNodeList} e
+     * @returns {string}
      */
     static getFormElementValue(e) {
-        const elem = this.getElement(e);
+        const elem = typeof e === "string" ? this.getElement(e) : e;
         if (
             elem instanceof HTMLInputElement ||
             elem instanceof HTMLSelectElement ||
+            elem instanceof HTMLTextAreaElement ||
             elem instanceof RadioNodeList
         ) {
             return elem.value;
         }
+        throw new Error();
     }
 
     /**
      * @param {string|Element} e
+     * @returns {boolean}
      */
     static isChecked(e) {
         const elem = this.getElement(e);
@@ -160,27 +166,26 @@ class DOMUtils {
     }
 
     /**
-     * @param {string|Element|EventTarget|null} e
+     * @param {string|Element} e
+     * @returns {boolean}
      */
-    static isVisible(e) {
-        const elem = this.getElement(e);
-        if (!elem || !(elem instanceof HTMLElement)) {
-            return false;
+    static isElement(e) {
+        if (e instanceof Element) {
+            return true;
         }
-        return elem.style.display !== "none";
+        return document.getElementById(e) !== null;
     }
 
     /**
      * @param {string|Element} e
+     * @returns {Element}
      */
     static removeChildren(e) {
         const elem = this.getElement(e);
-        if (!(elem instanceof Element)) {
-            return;
-        }
         while (elem.firstChild) {
             elem.firstChild.remove();
         }
+        return elem;
     }
 
     /**
@@ -189,9 +194,7 @@ class DOMUtils {
      */
     static removeClass(e, className) {
         const elem = this.getElement(e);
-        if (elem instanceof Element) {
-            elem.classList.remove(className);
-        }
+        elem.classList.remove(className);
     }
 
     /**
@@ -201,21 +204,17 @@ class DOMUtils {
     static setElementText(e, text) {
         const elem = this.getElement(e);
         if (!(elem instanceof HTMLElement)) {
-            return;
+            throw new Error();
         }
         this.removeChildren(elem);
         elem.appendChild(document.createTextNode(text));
     }
 
     /**
-     * @param {string|HTMLElement} e
+     * @param {string|Element} e
      */
     static setFocusTo(e) {
         const elem = this.getElement(e);
-        if (!elem) {
-            console.warn("element " + e + " not found");
-            return;
-        }
         if (!(elem instanceof HTMLElement)) {
             console.warn(e + " is not an HTMLElement");
             return;
@@ -225,35 +224,47 @@ class DOMUtils {
 
     /**
      * @param {string|Element} e
-     * @param {string|undefined|null} value
+     * @param {string} value
      */
     static setFormElementValue(e, value) {
         const elem = this.getElement(e);
-        if (!elem) {
-            return;
-        }
         if (
             elem instanceof HTMLInputElement ||
             elem instanceof HTMLTextAreaElement ||
             elem instanceof HTMLSelectElement
         ) {
-            elem.value = value ? value : "";
+            elem.value = value;
         } else if (elem instanceof HTMLElement) {
-            elem.setAttribute("value", value ? value : "");
+            elem.setAttribute("value", value);
         }
     }
 
     /**
-     * @param {string|Element|EventTarget|null} e
-     * @param {boolean} [show]
+     * @param {string|Element} e
+     * @param {string} text
+     */
+    static setHTMLValue(e, text) {
+        const elem = this.getElement(e);
+        elem.innerHTML = text;
+    }
+
+    /**
+     * @param {string|Element} e
+     * @param {string} text
+     */
+    static setTextValue(e, text) {
+        const elem = this.getElement(e);
+        elem.textContent = text;
+    }
+
+    /**
+     * @param {string|Element} e
+     * @param {boolean} [show=true]
      */
     static showElement(e, show = true) {
         const elem = this.getElement(e);
-        if (!elem || !(elem instanceof HTMLElement)) {
-            return;
+        if (elem instanceof HTMLElement) {
+            elem.hidden = !show;
         }
-        elem.style.display = show ? "" : "none";
     }
 }
-
-export { DOMUtils };

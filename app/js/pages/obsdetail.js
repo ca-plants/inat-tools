@@ -1,10 +1,12 @@
 import { ColDef } from "../lib/coldef.js";
 import { DataRetriever } from "../lib/dataretriever.js";
 import { DOMUtils } from "../lib/domutils.js";
+import { hdom } from "../lib/hdom.js";
 import { Histogram } from "../lib/histogram.js";
 import { INatObservation } from "../lib/inatobservation.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { UI } from "../lib/ui.js";
+import { createDownloadLink } from "../lib/utils.js";
 
 /** @typedef {{role:string}} ProjectMember */
 /** @typedef {{countObscured:number,countPublic:number,countTrusted:number,observations:INatObservation[]}} Results */
@@ -129,6 +131,13 @@ class ObsDetailUI extends UI {
         const eResults = DOMUtils.getRequiredElement("results");
         DOMUtils.removeChildren(eResults);
         return eResults;
+    }
+
+    /**
+     * @returns {string}
+     */
+    #getGeoJSONData() {
+        return hdom.getFormElementValue("geojson-value");
     }
 
     /**
@@ -583,23 +592,36 @@ class ObsDetailUI extends UI {
         }
         const geoJSON = { type: "FeatureCollection", features: features };
 
-        const eButtons = DOMUtils.createElement("div", { class: "section" });
+        const eButtons = hdom.createElement("div", {
+            class: "section flex-fullwidth",
+        });
         const urlGJ = new URL("https://geojson.io");
         urlGJ.hash =
             "data=data:application/json," +
             encodeURIComponent(JSON.stringify(geoJSON));
-        const eBtnGeoJSONIO = DOMUtils.createLinkElement(urlGJ, "geojson.io", {
+        const eBtnGeoJSONIO = hdom.createLinkElement(urlGJ, "geojson.io", {
             target: "_blank",
         });
         eButtons.appendChild(eBtnGeoJSONIO);
+
+        const dlLink = createDownloadLink(
+            this,
+            "Download GeoJSON",
+            "observations.geojson",
+            this.#getGeoJSONData
+        );
+        const dlDiv = hdom.createElement("div");
+        dlDiv.appendChild(dlLink);
+        eButtons.appendChild(dlDiv);
+
         eResults.appendChild(eButtons);
 
-        const eDivText = DOMUtils.createElement("div", { class: "section" });
-        const textarea = DOMUtils.createElement("textarea", { rows: 15 });
-        DOMUtils.setFormElementValue(
-            textarea,
-            JSON.stringify(geoJSON, null, 2)
-        );
+        const eDivText = hdom.createElement("div", { class: "section" });
+        const textarea = hdom.createElement("textarea", {
+            id: "geojson-value",
+            rows: 15,
+        });
+        hdom.setFormElementValue(textarea, JSON.stringify(geoJSON, null, 2));
         eDivText.appendChild(textarea);
         eResults.appendChild(eDivText);
     }

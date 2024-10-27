@@ -3,6 +3,8 @@ import { DOMUtils } from "../lib/domutils.js";
 import { DataRetriever } from "../lib/dataretriever.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { SearchUI } from "../lib/searchui.js";
+import { hdom } from "../lib/hdom.js";
+import { createDownloadLink } from "../lib/utils.js";
 
 /** @type {{label:string,value:function(INatData.TaxonObsSummary):string}[]} */
 const COLUMNS = [
@@ -114,17 +116,17 @@ class UI extends SearchUI {
     }
 
     /**
-     * @param {Element} e
+     * @param {INatData.TaxonObsSummary[]|undefined} results
+     * @returns {string}
      */
-    #downloadCSV(e) {
-        if (!this.#results) {
-            return;
+    #getCSVData(results) {
+        if (!results) {
+            throw new Error();
         }
-
         const data = [];
         data.push(COLUMNS.map((col) => col.label));
 
-        for (const result of this.#results) {
+        for (const result of results) {
             const row = [];
             for (const col of COLUMNS) {
                 row.push(col.value(result));
@@ -132,45 +134,42 @@ class UI extends SearchUI {
             data.push(row);
         }
 
-        var file = new Blob([csvFormatRows(data)], { type: "text/plain" });
-        e.setAttribute("href", URL.createObjectURL(file));
+        return csvFormatRows(data);
     }
 
     /**
      * @param {INatData.TaxonObsSummary[]} speciesData
      */
     async #getSummaryDOM(speciesData) {
-        const descrip = DOMUtils.createElement("div");
+        const descrip = hdom.createElement("div");
         descrip.appendChild(
             document.createTextNode(
                 await this.#f1.getDescription(this.getAPI(), this.#f2)
             )
         );
 
-        const count = DOMUtils.createElement("div");
+        const count = hdom.createElement("div");
         count.appendChild(
             document.createTextNode(speciesData.length + " species")
         );
 
-        const download = DOMUtils.createElement("div");
-        const downloadLink = DOMUtils.createElement("a", {
-            download: "species.csv",
-            href: "",
-        });
-        downloadLink.addEventListener("click", () =>
-            this.#downloadCSV(downloadLink)
+        const downloadLink = createDownloadLink(
+            this,
+            "Download CSV",
+            "species.csv",
+            () => this.#getCSVData(this.#results)
         );
-        downloadLink.appendChild(document.createTextNode("Download CSV"));
+        const download = hdom.createElement("div");
         download.appendChild(downloadLink);
 
-        const button = DOMUtils.createElement("input", {
+        const button = hdom.createElement("input", {
             type: "button",
             value: "Change Filter",
             style: "width:100%;",
         });
         button.addEventListener("click", (e) => this.changeFilter(e));
 
-        const summaryDesc = DOMUtils.createElement("div", {
+        const summaryDesc = hdom.createElement("div", {
             class: "flex-fullwidth",
         });
         summaryDesc.appendChild(descrip);
