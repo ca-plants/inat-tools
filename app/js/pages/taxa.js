@@ -271,11 +271,11 @@ class UI extends SearchUI {
         await super.init();
 
         // Add handlers for form.
-        DOMUtils.addEventListener("form", "submit", (e) => this.onSubmit(e));
-        DOMUtils.addEventListener("add-exclusions", "click", () =>
+        hdom.addEventListener("form", "submit", (e) => this.onSubmit(e));
+        hdom.addEventListener("add-exclusions", "click", () =>
             this.addExclusions()
         );
-        DOMUtils.addEventListener("remove-exclusions", "click", () =>
+        hdom.addEventListener("remove-exclusions", "click", () =>
             this.removeExclusions()
         );
 
@@ -291,7 +291,7 @@ class UI extends SearchUI {
             this.removeExclusions();
         }
 
-        DOMUtils.setFocusTo("f1-proj-name");
+        hdom.setFocusTo("f1-proj-name");
     }
 
     /**
@@ -312,10 +312,9 @@ class UI extends SearchUI {
 
         e.preventDefault();
 
-        const hasExclusions =
-            !DOMUtils.getRequiredElement("search-crit").classList.contains(
-                "no-exclude"
-            );
+        const hasExclusions = !hdom
+            .getElement("search-crit")
+            .classList.contains("no-exclude");
         const f1 = this.initFilterFromForm("f1");
         if (!f1) {
             return;

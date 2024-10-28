@@ -1,5 +1,6 @@
 import { DateUtils } from "./dateutils.js";
 import { DOMUtils } from "./domutils.js";
+import { hdom } from "./hdom.js";
 import { SpeciesFilter } from "./speciesfilter.js";
 import { UI } from "./ui.js";
 
@@ -400,8 +401,15 @@ class SearchUI extends UI {
             filterArgs.year2 = parseInt(year2);
         }
 
-        if (DOMUtils.isChecked(prefix + "-researchgrade")) {
+        if (hdom.isChecked(prefix + "-researchgrade")) {
             filterArgs.quality_grade = "research";
+        }
+
+        const establishment = hdom.getFormElementValue(
+            prefix + "-establishment"
+        );
+        if (establishment === "native" || establishment === "introduced") {
+            filterArgs.establishment = establishment;
         }
 
         const form = document.getElementById("form");
@@ -544,6 +552,25 @@ class SearchUI extends UI {
                 }
             }
         }
+
+        // Add establishment select.
+        const establishment = hdom.createSelectElement(
+            prefix + "-establishment",
+            "Establishment",
+            [
+                { value: "", label: "Any" },
+                { value: "native", label: "Native" },
+                { value: "introduced", label: "Introduced" },
+            ]
+        );
+        const divEst = hdom.createElement("div", "form-input");
+        establishment.forEach((e) => divEst.appendChild(e));
+        const divForm = hdom.getElement(prefix + "-misc");
+        divForm.appendChild(divEst);
+        hdom.setFormElementValue(
+            prefix + "-establishment",
+            filter.getEstablishment() ?? ""
+        );
 
         await initProject(this.getAPI(), filter);
         await initPlace(this.getAPI(), filter);

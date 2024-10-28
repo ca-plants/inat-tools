@@ -87,5 +87,6 @@ declare namespace Params {
         year1?: number;
         year2?: number;
         annotations?: { type: "ev-mammal" | "plants"; value: string }[];
+        establishment?: "native" | "introduced";
     }
 }

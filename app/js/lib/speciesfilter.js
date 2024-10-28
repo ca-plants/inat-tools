@@ -41,6 +41,9 @@ class SpeciesFilter {
             const taxon = await api.getTaxonData(this.#params.taxon_id);
             descrip = api.getTaxonFormName(taxon, false);
         }
+        if (this.#params.establishment) {
+            descrip += " which are " + this.#params.establishment;
+        }
         descrip += " observed";
         if (this.#params.annotations) {
             for (const annotation of this.#params.annotations) {
@@ -113,6 +116,10 @@ class SpeciesFilter {
             descrip += ", excluding " + (await exclusions.getDescription(api));
         }
         return descrip;
+    }
+
+    getEstablishment() {
+        return this.#params.establishment;
     }
 
     getMonths() {
@@ -189,6 +196,13 @@ class SpeciesFilter {
             switch (k) {
                 case "annotations":
                     setAnnotationParameters(url, v);
+                    break;
+                case "establishment":
+                    if (v === "native") {
+                        url.searchParams.set("native", "true");
+                    } else if (v === "introduced") {
+                        url.searchParams.set("introduced", "true");
+                    }
                     break;
                 case "year1":
                     if (this.#params.month) {

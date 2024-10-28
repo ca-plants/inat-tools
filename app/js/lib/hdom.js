@@ -91,6 +91,26 @@ export class hdom {
     }
 
     /**
+     * @param {string} id
+     * @param {string} label
+     * @param {{value:string,label:string}[]} options
+     * @returns {Element[]}
+     */
+    static createSelectElement(id, label, options) {
+        const labelEl = this.createElement("label", { for: id });
+        this.setTextValue(labelEl, label);
+        const select = this.createElement("select", { id: id });
+        for (const option of options) {
+            const optionEl = this.createElement("option", {
+                value: option.value,
+            });
+            this.setTextValue(optionEl, option.label);
+            select.appendChild(optionEl);
+        }
+        return [labelEl, select];
+    }
+
+    /**
      * @param {string} name
      * @param {Object<string,string>} attributes
      * @param {string} text

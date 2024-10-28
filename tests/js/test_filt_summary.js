@@ -152,3 +152,10 @@ test(
     { taxon_id: "47158", place_id: "3523", user_id: "4218" },
     "Class Insecta observed in Tilden Regional Park, CA, US, excluding Class Insecta observed by testuser in Tilden Regional Park, CA, US"
 );
+test(
+    "place and establishment",
+    descrip,
+    { place_id: "3523", establishment: "native" },
+    undefined,
+    "Species which are native observed in Tilden Regional Park, CA, US"
+);
