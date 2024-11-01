@@ -50,7 +50,7 @@ const ANNOTATION_TYPES = ["ev-mammal", "plants"];
 const MIN_YEAR = 2000;
 
 class SearchUI extends UI {
-    /** @type {number|undefined} */
+    /** @type {NodeJS.Timeout|number|undefined} */
     #debounceTimer;
 
     /**
@@ -58,8 +58,8 @@ class SearchUI extends UI {
      * @param {AutoCompleteConfig} config
      */
     async autoComplete(e, config) {
-        const dl = DOMUtils.getRequiredElement(config.getListID());
-        DOMUtils.removeChildren(dl);
+        const dl = hdom.getElement(config.getListID());
+        hdom.removeChildren(dl);
 
         if (!(e.target instanceof HTMLInputElement)) {
             return;
@@ -72,7 +72,7 @@ class SearchUI extends UI {
         const results = await config.getResults(value);
         for (const [k, v] of Object.entries(results)) {
             dl.appendChild(
-                DOMUtils.createElement("option", { value: k, value_id: v })
+                hdom.createElement("option", { value: k, value_id: v })
             );
         }
     }
@@ -81,7 +81,7 @@ class SearchUI extends UI {
      * @param {Event} e
      */
     changeFilter(e) {
-        DOMUtils.showElement("search-crit", true);
+        hdom.showElement("search-crit", true);
         DOMUtils.showElement(e.target, false);
     }
 
@@ -116,6 +116,15 @@ class SearchUI extends UI {
             annotations.push("ev-mammal");
         }
         return annotations;
+    }
+
+    /**
+     * @param {string} prefix
+     * @returns {string}
+     */
+    #getLocationType(prefix) {
+        const locType = hdom.getFormElement("form", prefix + "-loc-type");
+        return hdom.getFormElementValue(locType);
     }
 
     /**
@@ -171,6 +180,39 @@ class SearchUI extends UI {
                 this.#debounce(e, config);
                 break;
         }
+    }
+
+    /**
+     * @param {Event} event
+     * @param {string} prefix
+     */
+    async handleBoundaryChange(event, prefix) {
+        const elem = event.currentTarget;
+        if (!(elem instanceof HTMLInputElement)) {
+            return;
+        }
+        const files = elem.files;
+        if (!files) {
+            return;
+        }
+        const file = files.item(0);
+        if (!file) {
+            return;
+        }
+        const str = await file.text();
+        hdom.setFormElementValue(
+            prefix + "-boundary-text",
+            JSON.stringify(JSON.parse(str))
+        );
+    }
+
+    /**
+     * @param {string} prefix
+     */
+    #handleLocationTypeClick(prefix) {
+        const type = this.#getLocationType(prefix);
+        hdom.showElement(prefix + "-locations-boundary", type === "boundary");
+        hdom.showElement(prefix + "-locations-place", type === "place");
     }
 
     /**
@@ -345,13 +387,16 @@ class SearchUI extends UI {
 
         let hasErrors = false;
 
+        const locationType = this.#getLocationType(prefix);
+
         for (const field of FILT_AUTOCOMPLETE_FIELDS) {
-            const id = DOMUtils.getFormElementValue(
+            if (field.name === "place" && locationType !== "place") {
+                continue;
+            }
+            const id = hdom.getFormElementValue(
                 prefix + "-" + field.name + "-id"
             );
-            const input = DOMUtils.getElement(
-                prefix + "-" + field.name + "-name"
-            );
+            const input = hdom.getElement(prefix + "-" + field.name + "-name");
             if (id) {
                 field.setQueryParam(filterArgs, id);
             } else {
@@ -368,7 +413,7 @@ class SearchUI extends UI {
             }
         }
 
-        const month1 = DOMUtils.getFormElementValue(prefix + "-month1");
+        const month1 = hdom.getFormElementValue(prefix + "-month1");
         if (month1) {
             filterArgs.month = parseInt(month1);
         }
@@ -392,8 +437,8 @@ class SearchUI extends UI {
             }
         }
 
-        const year1 = DOMUtils.getFormElementValue(prefix + "-year1");
-        const year2 = DOMUtils.getFormElementValue(prefix + "-year2");
+        const year1 = hdom.getFormElementValue(prefix + "-year1");
+        const year2 = hdom.getFormElementValue(prefix + "-year2");
         if (year1) {
             filterArgs.year1 = parseInt(year1);
         }
@@ -410,6 +455,12 @@ class SearchUI extends UI {
         );
         if (establishment === "native" || establishment === "introduced") {
             filterArgs.establishment = establishment;
+        }
+
+        if (locationType === "boundary") {
+            filterArgs.boundary = JSON.parse(
+                hdom.getFormElementValue(prefix + "-boundary-text")
+            );
         }
 
         const form = document.getElementById("form");
@@ -574,6 +625,78 @@ class SearchUI extends UI {
 
         await initProject(this.getAPI(), filter);
         await initPlace(this.getAPI(), filter);
+
+        // Add location options.
+        const locationsDiv = hdom.getElement(prefix + "-locations");
+
+        const boundaryDiv = hdom.createElement("div", {
+            id: prefix + "-locations-boundary",
+        });
+        const boundaryTextDiv = hdom.createElement("div", {
+            class: "form-input",
+        });
+        boundaryTextDiv.appendChild(hdom.createElement("label"));
+        boundaryTextDiv.appendChild(
+            hdom.createElement("textarea", {
+                id: prefix + "-boundary-text",
+                rows: 1,
+                readonly: "",
+            })
+        );
+        boundaryDiv.appendChild(boundaryTextDiv);
+        const boundaryFileDiv = hdom.createElement("div", {
+            class: "form-input",
+        });
+        boundaryFileDiv.appendChild(hdom.createElement("label"));
+        const boundaryUpload = hdom.createInputElement({
+            id: prefix + "-boundary-file",
+            type: "file",
+            title: "Upload GeoJSON with boundary",
+        });
+        hdom.addEventListener(
+            boundaryUpload,
+            "change",
+            async (e) => await this.handleBoundaryChange(e, prefix)
+        );
+        boundaryFileDiv.appendChild(boundaryUpload);
+        boundaryDiv.appendChild(boundaryFileDiv);
+        locationsDiv.appendChild(boundaryDiv);
+        const boundary = filter.getBoundary();
+        if (boundary) {
+            hdom.setFormElementValue(
+                prefix + "-boundary-text",
+                JSON.stringify(boundary)
+            );
+        }
+
+        const locationTypeDiv = hdom.createElement("div", "form-input");
+        locationTypeDiv.appendChild(
+            hdom
+                .createElement("label")
+                .appendChild(document.createTextNode("Location"))
+        );
+        const radioData = [
+            { type: "place", label: "Place" },
+            { type: "boundary", label: "Boundary" },
+        ];
+        for (const data of radioData) {
+            const radio = hdom.createRadioElement(
+                prefix + "-loc-type",
+                prefix + "-loc-type-" + data.type,
+                data.type,
+                data.label
+            );
+            for (const element of radio) {
+                locationTypeDiv.appendChild(element);
+                if (element instanceof HTMLInputElement) {
+                    hdom.addEventListener(element, "click", () =>
+                        this.#handleLocationTypeClick(prefix)
+                    );
+                }
+            }
+        }
+        locationsDiv.insertBefore(locationTypeDiv, locationsDiv.firstChild);
+
         await initObserver(this.getAPI(), filter);
         await initTaxon(this.getAPI(), filter);
         await this.updateAnnotationsFields(prefix, filter.getTaxonID());
@@ -585,6 +708,10 @@ class SearchUI extends UI {
             prefix + "-researchgrade",
             qualityGrade === "research"
         );
+
+        // Select location type.
+        const locType = filter.getBoundary() ? "boundary" : "place";
+        hdom.clickElement(prefix + "-loc-type-" + locType);
     }
 
     /**

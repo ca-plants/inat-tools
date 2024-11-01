@@ -24,6 +24,7 @@ jobs:
             - run: npx tsc
             - run: npx eslint app tests
             - run: npx ava tests/js/test*.js
+            - run: node --experimental-vm-modules node_modules/jest/bin/jest.js tests/jest
 
             # Generate pages.
             - run: node build.js --path "/inat-tools/"

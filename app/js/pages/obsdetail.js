@@ -356,7 +356,7 @@ class ObsDetailUI extends UI {
          */
         function addDisplayOption(value, label, ui) {
             const id = "disp-" + value;
-            const div = DOMUtils.createElement("div");
+            const div = hdom.createElement("div");
             const rb = DOMUtils.createInputElement({
                 type: "radio",
                 id: id,
@@ -364,7 +364,7 @@ class ObsDetailUI extends UI {
                 name: "displayopt",
             });
             rb.addEventListener("click", () => ui.updateDisplay());
-            const lbl = DOMUtils.createElement("label", { for: id });
+            const lbl = hdom.createElement("label", { for: id });
             lbl.appendChild(document.createTextNode(label));
             div.appendChild(rb);
             div.appendChild(lbl);
@@ -403,7 +403,7 @@ class ObsDetailUI extends UI {
 
         this.#taxon_data = await api.getTaxonData(this.#taxon_id.toString());
 
-        const results = await DataRetriever.getObservationData(
+        let results = await DataRetriever.getObservationData(
             api,
             this.#f1,
             this.getProgressReporter()
@@ -429,12 +429,12 @@ class ObsDetailUI extends UI {
 
         // Show filter description.
         const filter = new SpeciesFilter(this.#f1.getParams());
-        DOMUtils.getRequiredElement("filterdesc").appendChild(
+        hdom.getElement("filterdesc").appendChild(
             document.createTextNode(await filter.getDescription(api))
         );
 
-        const form = DOMUtils.getRequiredElement("form");
-        const checkBoxes = DOMUtils.createElement("div", {
+        const form = hdom.getElement("form");
+        const checkBoxes = hdom.createElement("div", {
             class: "coordoptions",
         });
         form.appendChild(checkBoxes);
@@ -442,15 +442,21 @@ class ObsDetailUI extends UI {
         addBucket(checkBoxes, this.#results.countTrusted, "trusted", this);
         addBucket(checkBoxes, this.#results.countObscured, "obscured", this);
 
-        const radios = DOMUtils.createElement("div", {
+        const radios = hdom.createElement("div", {
             class: "displayoptions",
         });
+        const displayOptions = [
+            { id: "details" },
+            { id: "geojson" },
+            { id: "datehisto" },
+            { id: "usersumm" },
+        ];
         addDisplayOption("details", "Details", this);
         addDisplayOption("geojson", "GeoJSON", this);
         addDisplayOption("datehisto", "Date Histogram", this);
         addDisplayOption("usersumm", "Summary by Observer", this);
 
-        const iNatDiv = DOMUtils.createElement("div");
+        const iNatDiv = hdom.createElement("div");
         iNatDiv.appendChild(
             DOMUtils.createLinkElement("", "View in iNaturalist", {
                 target: "_blank",
@@ -479,7 +485,7 @@ class ObsDetailUI extends UI {
             }
         }
 
-        const optionDiv = DOMUtils.createElement("div", { class: "options" });
+        const optionDiv = hdom.createElement("div", { class: "options" });
         optionDiv.appendChild(radios);
         optionDiv.appendChild(iNatDiv);
         form.appendChild(optionDiv);
@@ -489,8 +495,10 @@ class ObsDetailUI extends UI {
         window.onresize = this.onResize;
 
         // Select initial view.
-        const initialView = DOMUtils.getElement("disp-" + view);
-        DOMUtils.clickElement(
+        const initialView = displayOptions.some((opt) => opt.id === view)
+            ? hdom.getElement("disp-" + view)
+            : hdom.getElement("disp-details");
+        hdom.clickElement(
             initialView instanceof HTMLElement ? initialView : "disp-details"
         );
     }
@@ -553,7 +561,7 @@ class ObsDetailUI extends UI {
         }
         const eTable = DetailColDef.createTable(cols);
 
-        const tbody = DOMUtils.createElement("tbody");
+        const tbody = hdom.createElement("tbody");
         eTable.appendChild(tbody);
 
         for (const obs of this.#results.observations) {
@@ -570,7 +578,10 @@ class ObsDetailUI extends UI {
         const eResults = this.clearResults();
         const selectedTypes = this.getSelectedTypes();
 
-        const features = [];
+        // If there is a boundary, include it in the GeoJSON.
+        const params = this.#f1.getParams();
+        /** @type {GeoJSON.Feature[]} */
+        const features = params.boundary ? params.boundary.features : [];
         for (const obs of this.#results.observations) {
             if (!selectedTypes.includes(obs.getCoordType())) {
                 continue;
@@ -580,6 +591,7 @@ class ObsDetailUI extends UI {
                 date: obs.getObsDateString(),
                 observer: obs.getUserDisplayName(),
             };
+            /** @type {GeoJSON.Feature} */
             const feature = {
                 type: "Feature",
                 properties: properties,

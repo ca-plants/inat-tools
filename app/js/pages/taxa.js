@@ -63,7 +63,7 @@ class UI extends SearchUI {
         this.#f2 = f2 === undefined ? undefined : new SpeciesFilter(f2);
     }
 
-    addExclusions() {
+    async addExclusions() {
         /**
          * @param {string[]} suffixes
          */
@@ -81,7 +81,7 @@ class UI extends SearchUI {
         DOMUtils.showElement("add-exclusions", false);
 
         // If the exclusion filter is empty, initialize it to be the same as the inclusion filter.
-        const f = this.initFilterFromForm("f2");
+        const f = await this.initFilterFromForm("f2");
         if (!f || f.isEmpty()) {
             // Copy values.
             for (const idSuffix of [
@@ -272,8 +272,10 @@ class UI extends SearchUI {
 
         // Add handlers for form.
         hdom.addEventListener("form", "submit", (e) => this.onSubmit(e));
-        hdom.addEventListener("add-exclusions", "click", () =>
-            this.addExclusions()
+        hdom.addEventListener(
+            "add-exclusions",
+            "click",
+            async () => await this.addExclusions()
         );
         hdom.addEventListener("remove-exclusions", "click", () =>
             this.removeExclusions()
@@ -286,7 +288,7 @@ class UI extends SearchUI {
         await this.initForm("f2", this.#f2);
 
         if (this.#f2 !== undefined) {
-            this.addExclusions();
+            await this.addExclusions();
         } else {
             this.removeExclusions();
         }
@@ -315,12 +317,14 @@ class UI extends SearchUI {
         const hasExclusions = !hdom
             .getElement("search-crit")
             .classList.contains("no-exclude");
-        const f1 = this.initFilterFromForm("f1");
+        const f1 = await this.initFilterFromForm("f1");
         if (!f1) {
             return;
         }
         this.#f1 = f1;
-        this.#f2 = hasExclusions ? this.initFilterFromForm("f2") : undefined;
+        this.#f2 = hasExclusions
+            ? await this.initFilterFromForm("f2")
+            : undefined;
 
         const errorMsg = checkFilters(this.#f1, this.#f2);
         if (errorMsg) {

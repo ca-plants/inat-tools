@@ -274,7 +274,7 @@ class ObsUI extends SearchUI {
     async onSubmit(e) {
         e.preventDefault();
 
-        const filter = this.initFilterFromForm("f1");
+        const filter = await this.initFilterFromForm("f1");
         if (!filter) {
             return;
         }
@@ -294,6 +294,9 @@ class ObsUI extends SearchUI {
         const summary = {};
 
         for (const result of rawResults) {
+            if (!result.taxon) {
+                continue;
+            }
             const name = INatAPI.getTaxonName(result.taxon);
             const obs = new INatObservation(result);
             let taxonSummary = summary[name];

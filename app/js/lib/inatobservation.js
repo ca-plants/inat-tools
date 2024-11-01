@@ -12,6 +12,9 @@ class INatObservation {
         return !this.#isObservationObscured() && !this.#isTaxonObscured();
     }
 
+    /**
+     * @returns {[number,number]}
+     */
     getCoordinatesGeoJSON() {
         const coords = this.getCoordinatesString().split(",");
         return [parseFloat(coords[1]), parseFloat(coords[0])];

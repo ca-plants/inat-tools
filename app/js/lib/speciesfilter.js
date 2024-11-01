@@ -1,3 +1,4 @@
+import { geoBounds } from "https://cdn.skypack.dev/d3-geo";
 import { DateUtils } from "./dateutils.js";
 
 const MONTH_NAMES = [
@@ -28,6 +29,10 @@ class SpeciesFilter {
 
     getAnnotations() {
         return this.#params.annotations;
+    }
+
+    getBoundary() {
+        return this.#params.boundary;
     }
 
     /**
@@ -83,6 +88,8 @@ class SpeciesFilter {
         if (this.#params.place_id) {
             const place = await api.getPlaceData(this.#params.place_id);
             descrip += " in " + place.display_name;
+        } else if (this.#params.boundary) {
+            descrip += " in specified boundary";
         }
         if (this.#params.month) {
             descrip += " in " + MONTH_NAMES[this.#params.month - 1];
@@ -196,6 +203,15 @@ class SpeciesFilter {
             switch (k) {
                 case "annotations":
                     setAnnotationParameters(url, v);
+                    break;
+                case "boundary":
+                    {
+                        const bounds = geoBounds(v);
+                        url.searchParams.set("nelat", bounds[1][1].toString());
+                        url.searchParams.set("nelng", bounds[1][0].toString());
+                        url.searchParams.set("swlat", bounds[0][1].toString());
+                        url.searchParams.set("swlng", bounds[0][0].toString());
+                    }
                     break;
                 case "establishment":
                     if (v === "native") {

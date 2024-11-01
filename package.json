@@ -1,13 +1,26 @@
 {
     "type": "module",
+    "scripts": {
+        "ava": "ava tests/js/test*.js",
+        "lint": "eslint app tests",
+        "jest": "node --experimental-vm-modules node_modules/jest/bin/jest.js tests/jest",
+        "tsc": "tsc",
+        "test": "npm run tsc & npm run lint & npm run ava & npm run jest"
+    },
     "devDependencies": {
         "@observablehq/plot": "^0.6.14",
         "@types/d3": "^7.4.3",
         "@types/d3-dsv": "^3.0.7",
+        "@types/geojson": "^7946.0.14",
+        "@types/jest": "^29.5.14",
+        "@types/which-polygon": "^2.2.1",
         "ava": "^6.2.0",
+        "d3-geo": "^3.1.1",
         "eslint": "^9.13.0",
+        "jest": "^29.7.0",
         "pkce-challenge": "^4.1.0",
-        "typescript": "^5.6.3"
+        "typescript": "^5.6.3",
+        "which-polygon": "^2.2.1"
     },
     "dependencies": {
         "@metalsmith/in-place": "^5.0.0",

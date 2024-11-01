@@ -12,6 +12,8 @@ declare class INatAPI {
 }
 
 declare class INatObservation {
+    constructor(rawObservation: INatData.Observation);
+    getCoordinatesGeoJSON(): [number, number];
     getObsDate(): Date;
 }
 
@@ -25,6 +27,7 @@ declare class ProgressReporter {
 }
 
 declare class SpeciesFilter {
+    getBoundary(): GeoJSON.FeatureCollection | undefined;
     getURL(url?: string | URL): URL;
 }
 
@@ -80,6 +83,7 @@ declare namespace Params {
     export interface SpeciesFilter {
         month?: number;
         place_id?: string;
+        boundary?: GeoJSON.FeatureCollection;
         project_id?: string;
         quality_grade?: string;
         taxon_id?: string;

@@ -170,7 +170,7 @@ fieldset div.form-input label {
     min-width: auto;
 }
 
-div.form-input input {
+div.form-input input[type="text"] {
     width: 100%;
 }
 

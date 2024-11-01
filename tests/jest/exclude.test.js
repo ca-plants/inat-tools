@@ -1,4 +1,3 @@
-import test from "ava";
 import { DataRetriever } from "../../app/js/lib/dataretriever.js";
 
 const RES_BROMUS = {
@@ -33,23 +32,18 @@ const RES_BROMUS_DIANDRUS = {
     },
 };
 
-const exclude = test.macro({
-    /**
-     * @param {INatData.TaxonObsSummary[]} include
-     * @param {INatData.TaxonObsSummary[]} exclude
-     * @param {number[]} expected
-     */
-    async exec(t, include, exclude, expected) {
+/**
+ * @param {string} title
+ * @param {INatData.TaxonObsSummary[]} include
+ * @param {INatData.TaxonObsSummary[]} exclude
+ * @param {number[]} expected
+ */
+function test(title, include, exclude, expected) {
+    it(title, () => {
         const result = DataRetriever.removeExclusions(include, exclude);
-        t.deepEqual(result, expected);
-    },
-    /**
-     * @param {string|undefined} title
-     */
-    title(title) {
-        return title ?? "";
-    },
-});
+        expect(result).toEqual(expected);
+    });
+}
 
-test("species", exclude, [RES_BROMUS_DIANDRUS], [RES_BROMUS_DIANDRUS], []);
-test("genus", exclude, [RES_BROMUS], [RES_BROMUS_DIANDRUS], []);
+test("species", [RES_BROMUS_DIANDRUS], [RES_BROMUS_DIANDRUS], []);
+test("genus", [RES_BROMUS], [RES_BROMUS_DIANDRUS], []);

@@ -23,6 +23,17 @@ export class hdom {
     }
 
     /**
+     * @param {string|Element} e
+     */
+    static clickElement(e) {
+        const elem = this.getElement(e);
+        if (!(elem instanceof HTMLInputElement)) {
+            throw new Error();
+        }
+        elem.click();
+    }
+
+    /**
      * @param {string} id
      * @param {boolean} checked
      * @returns {HTMLInputElement}
@@ -88,6 +99,25 @@ export class hdom {
                 : document.createTextNode(eLinkText.toString())
         );
         return eLink;
+    }
+
+    /**
+     * @param {string} name
+     * @param {string} id
+     * @param {string} value
+     * @param {string} label
+     * @returns {Element[]}
+     */
+    static createRadioElement(name, id, value, label) {
+        const labelEl = this.createElement("label", { for: id });
+        this.setTextValue(labelEl, label);
+        const radio = this.createInputElement({
+            type: "radio",
+            id: id,
+            value: value,
+            name: name,
+        });
+        return [radio, labelEl];
     }
 
     /**

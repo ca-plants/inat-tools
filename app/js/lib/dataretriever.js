@@ -1,5 +1,7 @@
+import whichPolygon from "https://cdn.jsdelivr.net/npm/which-polygon@2.2.1/+esm";
 import { Cache } from "./cache.js";
 import { QueryCancelledException } from "./inatapi.js";
+import { INatObservation } from "./inatobservation.js";
 
 const INPROP = {
     COMMON_NAME: "preferred_common_name",
@@ -54,12 +56,28 @@ class DataRetriever {
         const url = filter.getURL(
             "https://api.inaturalist.org/v1/observations?verifiable=true&per_page=500"
         );
-        return await this.#retrievePagedData(
+        /** @type {INatData.Observation[]} */
+        const rawResults = await this.#retrievePagedData(
             url,
             "species",
             api,
             progressReporter
         );
+        const boundary = filter.getBoundary();
+        if (!boundary) {
+            return rawResults;
+        }
+
+        const query = whichPolygon(boundary);
+        /** @type {INatData.Observation[]} */
+        const filteredResults = [];
+        for (const result of rawResults) {
+            const obs = new INatObservation(result);
+            if (query(obs.getCoordinatesGeoJSON())) {
+                filteredResults.push(result);
+            }
+        }
+        return filteredResults;
     }
 
     /**
