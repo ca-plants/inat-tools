@@ -1,4 +1,5 @@
 import { DOMUtils } from "./domutils.js";
+import { hdom } from "./hdom.js";
 
 export class ProgressReporter {
     #api;
@@ -11,7 +12,7 @@ export class ProgressReporter {
     }
 
     hide() {
-        DOMUtils.showElement("progress", false);
+        hdom.showElement("progress", false);
         this.#api.cancelQuery(false);
     }
 
@@ -33,7 +34,7 @@ export class ProgressReporter {
      * @param {number} numPages
      */
     setNumPages(numPages) {
-        DOMUtils.showElement("prog-page-of", numPages !== 0);
+        hdom.showElement("prog-page-of", numPages !== 0);
         DOMUtils.setElementText("prog-page-max", numPages.toString());
     }
 
@@ -45,6 +46,6 @@ export class ProgressReporter {
     }
 
     show() {
-        DOMUtils.showElement("progress", true);
+        hdom.showElement("progress", true);
     }
 }

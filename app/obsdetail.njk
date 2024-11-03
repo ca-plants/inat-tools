@@ -6,13 +6,25 @@ js: obsdetail
 
 {%block content%}
 
-    <h1 id="h1"></h1>
+    {% import "imports/searchform.njk" as searchform %}
 
-    <div id="filterdesc" class="section summary"></div>
+    <form id="form" novalidate>
 
-    <div class="section">
-        <form id="form"></form>
-    </div>
+        <div id="search-crit" class="no-exclude">
+
+            <div id="f1" class="filter section">
+
+                {{ searchform.create_search_form("f1") }}
+
+                <div class="buttons section">
+                    <input type="submit" id="filter-submit">
+                </div>
+
+            </div>
+
+        </div>
+
+    </form>
 
     {%include "imports/progress.njk"%}
 

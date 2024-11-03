@@ -1,10 +1,10 @@
 import { SearchUI } from "../lib/searchui.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
-import { DOMUtils } from "../lib/domutils.js";
 import { DataRetriever } from "../lib/dataretriever.js";
 import { INatAPI } from "../lib/inatapi.js";
 import { INatObservation } from "../lib/inatobservation.js";
 import { ColDef } from "../lib/coldef.js";
+import { hdom } from "../lib/hdom.js";
 
 /**
  * @typedef {{taxon_id:number,displayName:string,rank:string,count:number,countObscured:number,countPublic:number,countResearchGrade:number}} SummaryEntry
@@ -108,7 +108,7 @@ class ObsUI extends SearchUI {
              * @param {string|undefined} className
              */
             function getCol(content, className) {
-                const td = DOMUtils.createElement("td", className);
+                const td = hdom.createElement("td", className);
                 if (content instanceof Node) {
                     td.appendChild(content);
                 } else {
@@ -117,7 +117,7 @@ class ObsUI extends SearchUI {
                 tr.appendChild(td);
             }
 
-            const tr = DOMUtils.createElement("tr");
+            const tr = hdom.createElement("tr");
             for (const col of cols) {
                 getCol(col.getValue([name, data], ui), col.getClass());
             }
@@ -127,14 +127,14 @@ class ObsUI extends SearchUI {
 
         const table = ColDef.createTable(cols);
 
-        const tbody = DOMUtils.createElement("tbody");
+        const tbody = hdom.createElement("tbody");
         table.appendChild(tbody);
 
         for (const name of Object.keys(results).sort()) {
             tbody.appendChild(getRow(name, results[name], cols, this));
         }
 
-        const section = DOMUtils.createElement("div", "section");
+        const section = hdom.createElement("div", "section");
         section.appendChild(table);
         return section;
     }
@@ -166,7 +166,7 @@ class ObsUI extends SearchUI {
             document.location.origin
         );
         url.hash = JSON.stringify(args);
-        return DOMUtils.createLinkElement(url, num, { target: "_blank" });
+        return hdom.createLinkElement(url, num, { target: "_blank" });
     }
 
     static async getUI() {
@@ -175,7 +175,7 @@ class ObsUI extends SearchUI {
             initArgs = JSON.parse(
                 decodeURIComponent(document.location.hash).substring(1)
             );
-        } catch (error) {
+        } catch {
             initArgs = {};
         }
         const ui = new ObsUI(initArgs.f1);
@@ -186,19 +186,19 @@ class ObsUI extends SearchUI {
      * @param {Object<string,SummaryEntry>} results
      */
     async #getSummaryDOM(results) {
-        const descrip = DOMUtils.createElement("div");
+        const descrip = hdom.createElement("div");
         descrip.appendChild(
             document.createTextNode(
                 await this.#f1.getDescription(this.getAPI())
             )
         );
 
-        const taxaCount = DOMUtils.createElement("div");
+        const taxaCount = hdom.createElement("div");
         taxaCount.appendChild(
             document.createTextNode(Object.entries(results).length + " taxa")
         );
 
-        const obsCountNode = DOMUtils.createElement("div");
+        const obsCountNode = hdom.createElement("div");
         const obsCount = Object.values(results).reduce(
             (numObs, value) => numObs + value.count,
             0
@@ -207,14 +207,11 @@ class ObsUI extends SearchUI {
             document.createTextNode(obsCount + " observations")
         );
 
-        const button = DOMUtils.createElement("input", {
-            type: "button",
-            value: "Change Filter",
-            style: "width:100%;",
-        });
-        button.addEventListener("click", (e) => this.changeFilter(e));
+        const button = this.createChangeFilterButton((e) =>
+            this.changeFilter(e)
+        );
 
-        const summaryDesc = DOMUtils.createElement("div", {
+        const summaryDesc = hdom.createElement("div", {
             class: "flex-fullwidth",
         });
         summaryDesc.appendChild(descrip);
@@ -222,7 +219,7 @@ class ObsUI extends SearchUI {
         summaryDesc.appendChild(obsCountNode);
 
         if (!this.#f1.isResearchGradeOnly()) {
-            const rgCountNode = DOMUtils.createElement("div");
+            const rgCountNode = hdom.createElement("div");
             const rgCount = Object.values(results).reduce(
                 (numObs, value) => numObs + value.countResearchGrade,
                 0
@@ -231,7 +228,7 @@ class ObsUI extends SearchUI {
                 document.createTextNode(rgCount + " research grade")
             );
 
-            const rgPctNode = DOMUtils.createElement("div");
+            const rgPctNode = hdom.createElement("div");
             if (obsCount) {
                 rgPctNode.appendChild(
                     document.createTextNode(
@@ -245,7 +242,7 @@ class ObsUI extends SearchUI {
             summaryDesc.appendChild(rgPctNode);
         }
 
-        const summary = DOMUtils.createElement("div", {
+        const summary = hdom.createElement("div", {
             class: "section summary",
         });
         summary.appendChild(summaryDesc);
@@ -258,14 +255,14 @@ class ObsUI extends SearchUI {
         await super.init();
 
         // Add handlers for form.
-        DOMUtils.getRequiredElement("form").addEventListener("submit", (e) =>
+        hdom.getElement("form").addEventListener("submit", (e) =>
             this.onSubmit(e)
         );
 
         this.initEventListeners("f1");
         await this.initForm("f1", this.#f1);
 
-        DOMUtils.setFocusTo("f1-proj-name");
+        hdom.setFocusTo("f1-proj-name");
     }
 
     /**
@@ -274,7 +271,7 @@ class ObsUI extends SearchUI {
     async onSubmit(e) {
         e.preventDefault();
 
-        const filter = await this.initFilterFromForm("f1");
+        const filter = this.initFilterFromForm("f1");
         if (!filter) {
             return;
         }
@@ -331,8 +328,7 @@ class ObsUI extends SearchUI {
     }
 
     async showResults() {
-        const divResults = DOMUtils.getRequiredElement("results");
-        DOMUtils.removeChildren(divResults);
+        const divResults = hdom.removeChildren("results");
 
         this.#results = await DataRetriever.getObservationData(
             this.getAPI(),
@@ -357,7 +353,7 @@ class ObsUI extends SearchUI {
         divResults.appendChild(this.getResultsTable(results, cols));
 
         // Hide filter form.
-        DOMUtils.showElement("search-crit", false);
+        hdom.showElement("search-crit", false);
     }
 }
 

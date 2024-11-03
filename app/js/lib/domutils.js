@@ -242,18 +242,6 @@ class DOMUtils {
             elem.setAttribute("value", value ? value : "");
         }
     }
-
-    /**
-     * @param {string|Element|EventTarget|null} e
-     * @param {boolean} [show]
-     */
-    static showElement(e, show = true) {
-        const elem = this.getElement(e);
-        if (!elem || !(elem instanceof HTMLElement)) {
-            return;
-        }
-        elem.style.display = show ? "" : "none";
-    }
 }
 
 export { DOMUtils };

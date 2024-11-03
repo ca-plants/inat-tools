@@ -308,10 +308,13 @@ export class hdom {
     }
 
     /**
-     * @param {string|Element} e
+     * @param {string|Element|EventTarget|null} e
      * @param {boolean} [show=true]
      */
     static showElement(e, show = true) {
+        if (typeof e !== "string" && !(e instanceof Element)) {
+            return;
+        }
         const elem = this.getElement(e);
         if (elem instanceof HTMLElement) {
             elem.hidden = !show;

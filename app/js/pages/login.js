@@ -3,6 +3,7 @@ import { DB } from "../lib/db.js";
 import { Login } from "../lib/login.js";
 import { INatAPI } from "../lib/inatapi.js";
 import { DOMUtils } from "../lib/domutils.js";
+import { hdom } from "../lib/hdom.js";
 
 const CLIENT_ID = "96Z8RROGQntitB5Omp-t6ZVS7kU6Z_H5rqRK3F0QVKU";
 const OBJECT_STORE = "login";
@@ -32,7 +33,7 @@ class LoginUI {
     }
 
     enableError() {
-        DOMUtils.showElement("error-section");
+        hdom.showElement("error-section");
         const url = new URL(document.location.toString());
         DOMUtils.getRequiredElement("error-text").appendChild(
             document.createTextNode(
@@ -50,7 +51,7 @@ class LoginUI {
     }
 
     enableLogout() {
-        DOMUtils.showElement("logout-section");
+        hdom.showElement("logout-section");
         DOMUtils.addEventListener(
             "logout-button",
             "click",

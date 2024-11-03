@@ -78,11 +78,29 @@ class SearchUI extends UI {
     }
 
     /**
-     * @param {Event} e
+     * @param {function((Event|null)?):void} fnClick
+     * @returns {HTMLInputElement}
+     */
+    createChangeFilterButton(fnClick) {
+        const button = hdom.createElement("input", {
+            type: "button",
+            value: "Change Filter",
+            style: "width:100%;",
+        });
+        button.addEventListener("click", fnClick);
+        // @ts-ignore
+        return button;
+    }
+
+    /**
+     * @param {Event|null} e
      */
     changeFilter(e) {
+        if (e === null) {
+            return;
+        }
         hdom.showElement("search-crit", true);
-        DOMUtils.showElement(e.target, false);
+        hdom.showElement(e.currentTarget, false);
     }
 
     /**
@@ -763,18 +781,18 @@ class SearchUI extends UI {
     async updateAnnotationsFields(prefix, taxonID) {
         const fieldSetID = prefix + "-annotation-filter";
         if (!taxonID) {
-            DOMUtils.showElement(fieldSetID, false);
+            hdom.showElement(fieldSetID, false);
             return;
         }
         const annotations = await SearchUI.getAnnotationsForTaxon(
             parseInt(taxonID),
             this.getAPI()
         );
-        DOMUtils.showElement(fieldSetID, annotations.length > 0);
+        hdom.showElement(fieldSetID, annotations.length > 0);
 
         // Show only the relevant annotation options.
         for (const type of ANNOTATION_TYPES) {
-            DOMUtils.showElement(
+            hdom.showElement(
                 prefix + "-ann-type-" + type,
                 annotations.includes(type)
             );

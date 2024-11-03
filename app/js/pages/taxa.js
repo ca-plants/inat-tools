@@ -77,8 +77,8 @@ class UI extends SearchUI {
         }
 
         DOMUtils.removeClass("search-crit", "no-exclude");
-        DOMUtils.showElement("f2", true);
-        DOMUtils.showElement("add-exclusions", false);
+        hdom.showElement("f2", true);
+        hdom.showElement("add-exclusions", false);
 
         // If the exclusion filter is empty, initialize it to be the same as the inclusion filter.
         const f = await this.initFilterFromForm("f2");
@@ -260,7 +260,7 @@ class UI extends SearchUI {
             initArgs = JSON.parse(
                 decodeURIComponent(document.location.hash).substring(1)
             );
-        } catch (error) {
+        } catch {
             initArgs = {};
         }
         const ui = new UI(initArgs.f1, initArgs.f2);
@@ -346,8 +346,8 @@ class UI extends SearchUI {
 
     removeExclusions() {
         DOMUtils.addClass("search-crit", "no-exclude");
-        DOMUtils.showElement("f2", false);
-        DOMUtils.showElement("add-exclusions", true);
+        hdom.showElement("f2", false);
+        hdom.showElement("add-exclusions", true);
     }
 
     async showResults() {
@@ -355,7 +355,7 @@ class UI extends SearchUI {
         if (!divResults) {
             return;
         }
-        DOMUtils.removeChildren(divResults);
+        hdom.removeChildren(divResults);
 
         this.#results = await DataRetriever.getSpeciesData(
             this.getAPI(),
@@ -376,7 +376,7 @@ class UI extends SearchUI {
         );
 
         // Hide filter form.
-        DOMUtils.showElement("search-crit", false);
+        hdom.showElement("search-crit", false);
     }
 }
 
