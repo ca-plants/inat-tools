@@ -2,7 +2,6 @@ import pkceChallenge from "https://cdn.jsdelivr.net/npm/pkce-challenge/dist/inde
 import { DB } from "../lib/db.js";
 import { Login } from "../lib/login.js";
 import { INatAPI } from "../lib/inatapi.js";
-import { DOMUtils } from "../lib/domutils.js";
 import { hdom } from "../lib/hdom.js";
 
 const CLIENT_ID = "96Z8RROGQntitB5Omp-t6ZVS7kU6Z_H5rqRK3F0QVKU";
@@ -35,24 +34,24 @@ class LoginUI {
     enableError() {
         hdom.showElement("error-section");
         const url = new URL(document.location.toString());
-        DOMUtils.getRequiredElement("error-text").appendChild(
+        hdom.getElement("error-text").appendChild(
             document.createTextNode(
                 url.searchParams.get("error_description") ?? ""
             )
         );
-        DOMUtils.addEventListener(
+        hdom.addEventListener(
             "error-retry",
             "click",
             async () => await this.authorize()
         );
-        DOMUtils.addEventListener("error-cancel", "click", () =>
+        hdom.addEventListener("error-cancel", "click", () =>
             this.returnToSender()
         );
     }
 
     enableLogout() {
         hdom.showElement("logout-section");
-        DOMUtils.addEventListener(
+        hdom.addEventListener(
             "logout-button",
             "click",
             async () => await this.doLogout()

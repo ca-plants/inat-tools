@@ -6,7 +6,7 @@ js: login
 
 {%block content%}
 
-    <div id="error-section" class="section center" style="display:none;">
+    <div id="error-section" class="section center" hidden>
         <div id="error-text"></div>
         <div>
             <input type="button" value="Login" id="error-retry">
@@ -14,7 +14,7 @@ js: login
         </div>
     </div>
 
-    <div id="logout-section" class="section center" style="display:none;">
+    <div id="logout-section" class="section center" hidden>
         <input type="button" value="Log Out" id="logout-button">
     </div>
 {% endblock %}
