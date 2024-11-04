@@ -328,6 +328,9 @@ class ObsUI extends SearchUI {
     }
 
     async showResults() {
+        // Hide filter form.
+        hdom.showElement("search-crit", false);
+
         const divResults = hdom.removeChildren("results");
 
         this.#results = await DataRetriever.getObservationData(
@@ -351,9 +354,6 @@ class ObsUI extends SearchUI {
 
         // Show taxa.
         divResults.appendChild(this.getResultsTable(results, cols));
-
-        // Hide filter form.
-        hdom.showElement("search-crit", false);
     }
 }
 

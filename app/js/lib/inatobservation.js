@@ -63,6 +63,10 @@ class INatObservation {
         return "unknown";
     }
 
+    getTaxonName() {
+        return this.#rawObservation.taxon.name;
+    }
+
     getURL() {
         return (
             "https://www.inaturalist.org/observations/" +

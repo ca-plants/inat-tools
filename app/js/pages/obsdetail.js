@@ -30,6 +30,7 @@ const DETAIL_COLS = {
             target: "_blank",
         });
     }),
+    TAXON: new DetailColDef("Taxon", (obs) => obs.getTaxonName()),
     OBSERVER: new DetailColDef("Observer", (obs) => {
         return hdom.createLinkElement(
             "https://www.inaturalist.org/people/" + obs.getUserLogin(),
@@ -437,6 +438,8 @@ class ObsDetailUI extends SearchUI {
             return div;
         }
 
+        hdom.showElement("search-crit", false);
+
         if (selArray === undefined) {
             selArray = this.getSelectedTypes();
         }
@@ -478,7 +481,6 @@ class ObsDetailUI extends SearchUI {
         }
 
         // Show filter description.
-        hdom.showElement("search-crit", false);
         const resultsSummary = hdom.createElement("div", {
             id: "results-summary",
             class: "section summary",
@@ -620,6 +622,7 @@ class ObsDetailUI extends SearchUI {
 
         const cols = [
             DETAIL_COLS.OBS_DATE,
+            DETAIL_COLS.TAXON,
             DETAIL_COLS.OBSERVER,
             DETAIL_COLS.LOCATION,
             DETAIL_COLS.COORDS,

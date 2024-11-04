@@ -76,7 +76,7 @@ class UI extends SearchUI {
             }
         }
 
-        DOMUtils.removeClass("search-crit", "no-exclude");
+        hdom.removeClass("search-crit", "no-exclude");
         hdom.showElement("f2", true);
         hdom.showElement("add-exclusions", false);
 
@@ -317,14 +317,12 @@ class UI extends SearchUI {
         const hasExclusions = !hdom
             .getElement("search-crit")
             .classList.contains("no-exclude");
-        const f1 = await this.initFilterFromForm("f1");
+        const f1 = this.initFilterFromForm("f1");
         if (!f1) {
             return;
         }
         this.#f1 = f1;
-        this.#f2 = hasExclusions
-            ? await this.initFilterFromForm("f2")
-            : undefined;
+        this.#f2 = hasExclusions ? this.initFilterFromForm("f2") : undefined;
 
         const errorMsg = checkFilters(this.#f1, this.#f2);
         if (errorMsg) {
@@ -345,12 +343,15 @@ class UI extends SearchUI {
     }
 
     removeExclusions() {
-        DOMUtils.addClass("search-crit", "no-exclude");
+        hdom.addClass("search-crit", "no-exclude");
         hdom.showElement("f2", false);
         hdom.showElement("add-exclusions", true);
     }
 
     async showResults() {
+        // Hide filter form.
+        hdom.showElement("search-crit", false);
+
         const divResults = document.getElementById("results");
         if (!divResults) {
             return;
@@ -374,9 +375,6 @@ class UI extends SearchUI {
         divResults.appendChild(
             this.getTaxaSummaryTable(this.#f1, this.#results)
         );
-
-        // Hide filter form.
-        hdom.showElement("search-crit", false);
     }
 }
 

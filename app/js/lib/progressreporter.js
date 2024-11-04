@@ -1,4 +1,3 @@
-import { DOMUtils } from "./domutils.js";
 import { hdom } from "./hdom.js";
 
 export class ProgressReporter {
@@ -27,7 +26,7 @@ export class ProgressReporter {
      * @param {string} label
      */
     setLabel(label) {
-        DOMUtils.setElementText("prog-label", label);
+        hdom.setElementText("prog-label", label);
     }
 
     /**
@@ -35,14 +34,14 @@ export class ProgressReporter {
      */
     setNumPages(numPages) {
         hdom.showElement("prog-page-of", numPages !== 0);
-        DOMUtils.setElementText("prog-page-max", numPages.toString());
+        hdom.setElementText("prog-page-max", numPages.toString());
     }
 
     /**
      * @param {string} page
      */
     setPage(page) {
-        DOMUtils.setElementText("prog-page", page);
+        hdom.setElementText("prog-page", page);
     }
 
     show() {
