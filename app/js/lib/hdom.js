@@ -23,6 +23,16 @@ export class hdom {
     }
 
     /**
+     * @param {Element} parent
+     * @param {Element[]} children
+     * @returns {Element}
+     */
+    static appendChildren(parent, children) {
+        children.forEach((child) => parent.appendChild(child));
+        return parent;
+    }
+
+    /**
      * @param {string|Element} e
      */
     static clickElement(e) {

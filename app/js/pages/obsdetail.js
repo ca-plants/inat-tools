@@ -129,6 +129,7 @@ class ObsDetailUI extends SearchUI {
 
     clearResults() {
         const elem = hdom.getElement("results");
+        const childrenToDelete = [];
         for (const child of elem.childNodes) {
             if (
                 !(child instanceof HTMLElement) ||
@@ -137,17 +138,79 @@ class ObsDetailUI extends SearchUI {
                     child.getAttribute("id")
                 )
             ) {
-                elem.removeChild(child);
+                childrenToDelete.push(child);
             }
         }
+        childrenToDelete.forEach((child) => elem.removeChild(child));
         return elem;
     }
 
     /**
-     * @returns {string}
+     * @param {string} [type]
+     * @returns {GeoJSON}
      */
-    #getGeoJSONData() {
-        return hdom.getFormElementValue("geojson-value");
+    #getGeoJSON(type) {
+        /**
+         * @param {INatObservation} obs
+         * @returns {object}
+         */
+        function propsDefault(obs) {
+            return {
+                url: obs.getURL(),
+                date: obs.getObsDateString(),
+                observer: obs.getUserDisplayName(),
+            };
+        }
+
+        /**
+         * @param {INatObservation} obs
+         * @returns {object}
+         */
+        function propsGaia(obs) {
+            return {
+                title: obs.getTaxonName(),
+                notes: [
+                    obs.getObsDateString(),
+                    obs.getUserDisplayName(),
+                    obs.getURL(),
+                ].join("\n"),
+            };
+        }
+
+        if (type === undefined) {
+            type = hdom.getFormElementValue("download-type");
+        }
+
+        let fnProps = propsDefault;
+        switch (type) {
+            case "gaia-gj":
+                fnProps = propsGaia;
+                break;
+        }
+
+        // If there is a boundary, include it in the GeoJSON.
+        const params = this.#f1.getParams();
+        /** @type {GeoJSON.Feature[]} */
+        const features = params.boundary ? params.boundary.features : [];
+
+        const selectedTypes = this.getSelectedTypes();
+        for (const obs of this.#results.observations) {
+            if (!selectedTypes.includes(obs.getCoordType())) {
+                continue;
+            }
+            const properties = fnProps(obs);
+            /** @type {GeoJSON.Feature} */
+            const feature = {
+                type: "Feature",
+                properties: properties,
+                geometry: {
+                    type: "Point",
+                    coordinates: obs.getCoordinatesGeoJSON(),
+                },
+            };
+            features.push(feature);
+        }
+        return { type: "FeatureCollection", features: features };
     }
 
     /**
@@ -647,33 +710,6 @@ class ObsDetailUI extends SearchUI {
 
     showGeoJSON() {
         const eResults = this.clearResults();
-        const selectedTypes = this.getSelectedTypes();
-
-        // If there is a boundary, include it in the GeoJSON.
-        const params = this.#f1.getParams();
-        /** @type {GeoJSON.Feature[]} */
-        const features = params.boundary ? params.boundary.features : [];
-        for (const obs of this.#results.observations) {
-            if (!selectedTypes.includes(obs.getCoordType())) {
-                continue;
-            }
-            const properties = {
-                url: obs.getURL(),
-                date: obs.getObsDateString(),
-                observer: obs.getUserDisplayName(),
-            };
-            /** @type {GeoJSON.Feature} */
-            const feature = {
-                type: "Feature",
-                properties: properties,
-                geometry: {
-                    type: "Point",
-                    coordinates: obs.getCoordinatesGeoJSON(),
-                },
-            };
-            features.push(feature);
-        }
-        const geoJSON = { type: "FeatureCollection", features: features };
 
         const eButtons = hdom.createElement("div", {
             class: "section flex-fullwidth",
@@ -681,32 +717,43 @@ class ObsDetailUI extends SearchUI {
         const urlGJ = new URL("https://geojson.io");
         urlGJ.hash =
             "data=data:application/json," +
-            encodeURIComponent(JSON.stringify(geoJSON));
+            encodeURIComponent(JSON.stringify(this.#getGeoJSON("geojson")));
         const eBtnGeoJSONIO = hdom.createLinkElement(urlGJ, "geojson.io", {
             target: "_blank",
         });
         eButtons.appendChild(eBtnGeoJSONIO);
 
+        const typeDiv = hdom.createElement("div", "form-input");
+        const dlOptions = hdom.createSelectElement("download-type", "", [
+            { value: "geojson", label: "GeoJSON" },
+            { value: "gaia-gj", label: "Gaia GPS GeoJSON" },
+        ]);
+        hdom.appendChildren(typeDiv, dlOptions);
         const dlLink = createDownloadLink(
             this,
             "Download GeoJSON",
             "observations.geojson",
-            this.#getGeoJSONData
+            () => JSON.stringify(this.#getGeoJSON())
         );
-        const dlDiv = hdom.createElement("div");
+        const dlDiv = hdom.createElement("div", "buttons");
+        dlDiv.appendChild(typeDiv);
         dlDiv.appendChild(dlLink);
         eButtons.appendChild(dlDiv);
 
         eResults.appendChild(eButtons);
+        hdom.addEventListener("download-type", "change", () =>
+            this.#updateGeoJSONFormat()
+        );
 
         const eDivText = hdom.createElement("div", { class: "section" });
         const textarea = hdom.createElement("textarea", {
             id: "geojson-value",
             rows: 15,
         });
-        hdom.setFormElementValue(textarea, JSON.stringify(geoJSON, null, 2));
         eDivText.appendChild(textarea);
         eResults.appendChild(eDivText);
+
+        this.#updateGeoJSONFormat();
     }
 
     showUserSumm() {
@@ -841,6 +888,13 @@ class ObsDetailUI extends SearchUI {
 
         // Save current settings for bookmark.
         this.#updateHash();
+    }
+
+    #updateGeoJSONFormat() {
+        hdom.setFormElementValue(
+            "geojson-value",
+            JSON.stringify(this.#getGeoJSON(), null, 2)
+        );
     }
 
     #updateHash() {

@@ -1,4 +1,4 @@
-import { DOMUtils } from "./domutils.js";
+import { hdom } from "./hdom.js";
 
 class ColDef {
     #th;
@@ -22,7 +22,7 @@ class ColDef {
      * @param {string|undefined} className
      */
     static addColElement(tr, content, className) {
-        const td = DOMUtils.createElement("td", className);
+        const td = hdom.createElement("td", className);
         if (content instanceof Node) {
             td.appendChild(content);
         } else {
@@ -35,14 +35,14 @@ class ColDef {
      * @param {ColDef[]} cols
      */
     static createTable(cols) {
-        const table = DOMUtils.createElement("table");
+        const table = hdom.createElement("table");
 
-        const thead = DOMUtils.createElement("thead");
+        const thead = hdom.createElement("thead");
         table.appendChild(thead);
-        const tr = DOMUtils.createElement("tr");
+        const tr = hdom.createElement("tr");
         thead.appendChild(tr);
         for (const col of cols) {
-            const th = DOMUtils.createElement("th", col.getClass());
+            const th = hdom.createElement("th", col.getClass());
             tr.appendChild(th);
             th.appendChild(document.createTextNode(col.getHeaderLabel()));
         }
