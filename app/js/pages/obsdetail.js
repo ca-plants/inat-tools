@@ -1,3 +1,4 @@
+import jstoxml from "https://cdn.jsdelivr.net/npm/jstoxml@5.0.2/dist/jstoxml.js/+esm";
 import { ColDef } from "../lib/coldef.js";
 import { DataRetriever } from "../lib/dataretriever.js";
 import { hdom } from "../lib/hdom.js";
@@ -146,10 +147,11 @@ class ObsDetailUI extends SearchUI {
     }
 
     /**
+     * @param {number|undefined} [indent]
      * @param {string} [type]
-     * @returns {GeoJSON}
+     * @returns {{content:string,fileName:string}}
      */
-    #getGeoJSON(type) {
+    #getDownloadData(indent, type) {
         /**
          * @param {INatObservation} obs
          * @returns {object}
@@ -181,6 +183,13 @@ class ObsDetailUI extends SearchUI {
             type = hdom.getFormElementValue("download-type");
         }
 
+        if (type === "gpx") {
+            return {
+                content: this.#getGPX(indent),
+                fileName: "observations.gpx",
+            };
+        }
+
         let fnProps = propsDefault;
         switch (type) {
             case "gaia-gj":
@@ -210,7 +219,62 @@ class ObsDetailUI extends SearchUI {
             };
             features.push(feature);
         }
-        return { type: "FeatureCollection", features: features };
+
+        const gj = { type: "FeatureCollection", features: features };
+        return {
+            content: JSON.stringify(gj, undefined, indent),
+            fileName: "observations.geojson",
+        };
+    }
+
+    /**
+     * @param {number|undefined} indent
+     * @return {string}
+     */
+    #getGPX(indent) {
+        const waypoints = [];
+        const selectedTypes = this.getSelectedTypes();
+        for (const obs of this.#results.observations) {
+            if (!selectedTypes.includes(obs.getCoordType())) {
+                continue;
+            }
+            const coords = obs.getCoordinatesGeoJSON();
+            const waypoint = {
+                _name: "wpt",
+                _attrs: {
+                    lat: coords[1],
+                    lon: coords[0],
+                },
+                _content: {
+                    name: obs.getTaxonName(),
+                    desc: [
+                        obs.getObsDateString(),
+                        obs.getUserDisplayName(),
+                        obs.getURL(),
+                    ].join("\n"),
+                },
+            };
+            waypoints.push(waypoint);
+        }
+
+        const json = {
+            _name: "gpx",
+            _attrs: {
+                xmlns: "http://www.topografix.com/GPX/1/1",
+                version: "1.1",
+                "xmlns:xsi": "http://www.w3.org/2001/XMLSchema-instance",
+                "xsi:schemaLocation":
+                    "http://www.topografix.com/GPX/1/1 http://www.topografix.com/GPX/1/1/gpx.xsd",
+                creator: "inat-tools",
+            },
+            _content: waypoints,
+        };
+        return jstoxml
+            .toXML(json, {
+                indent:
+                    typeof indent === "number" ? " ".repeat(indent) : undefined,
+            })
+            .trim();
     }
 
     /**
@@ -725,7 +789,9 @@ class ObsDetailUI extends SearchUI {
         const urlGJ = new URL("https://geojson.io");
         urlGJ.hash =
             "data=data:application/json," +
-            encodeURIComponent(JSON.stringify(this.#getGeoJSON("geojson")));
+            encodeURIComponent(
+                this.#getDownloadData(undefined, "geojson").content
+            );
         const eBtnGeoJSONIO = hdom.createLinkElement(urlGJ, "geojson.io", {
             target: "_blank",
         });
@@ -734,6 +800,7 @@ class ObsDetailUI extends SearchUI {
         const typeDiv = hdom.createElement("div", "form-input");
         const dlOptions = hdom.createSelectElement("download-type", "", [
             { value: "geojson", label: "GeoJSON" },
+            { value: "gpx", label: "GPX" },
             { value: "gaia-gj", label: "Gaia GPS GeoJSON" },
         ]);
         hdom.appendChildren(typeDiv, dlOptions);
@@ -741,7 +808,7 @@ class ObsDetailUI extends SearchUI {
             this,
             "Download GeoJSON",
             "observations.geojson",
-            () => JSON.stringify(this.#getGeoJSON())
+            () => this.#getDownloadData()
         );
         const dlDiv = hdom.createElement("div", "buttons");
         dlDiv.appendChild(typeDiv);
@@ -901,7 +968,7 @@ class ObsDetailUI extends SearchUI {
     #updateGeoJSONFormat() {
         hdom.setFormElementValue(
             "geojson-value",
-            JSON.stringify(this.#getGeoJSON(), null, 2)
+            this.#getDownloadData(2).content
         );
     }
 

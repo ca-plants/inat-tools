@@ -4,12 +4,16 @@ import { hdom } from "./hdom.js";
  * @param {import('./ui.js').UI} ui
  * @param {string} title
  * @param {string} fileName
- * @param {function():string} getData
+ * @param {function():{content:string,fileName?:string}} getData
  * @returns {Element}
  */
 export function createDownloadLink(ui, title, fileName, getData) {
     function setHref() {
-        var file = new Blob([getData()], { type: "text/plain" });
+        const data = getData();
+        var file = new Blob([data.content], { type: "text/plain" });
+        if (data.fileName) {
+            dlLink.setAttribute("download", data.fileName);
+        }
         dlLink.setAttribute("href", URL.createObjectURL(file));
     }
 

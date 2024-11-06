@@ -8,6 +8,9 @@ declare module "https://cdn.skypack.dev/d3-geo" {
 declare module "https://cdn.jsdelivr.net/npm/@observablehq/plot/+esm" {
     export * from "@observablehq/plot";
 }
+declare module "https://cdn.jsdelivr.net/npm/jstoxml@5.0.2/dist/jstoxml.js/+esm" {
+    export * from "jstoxml";
+}
 declare module "https://cdn.jsdelivr.net/npm/which-polygon@2.2.1/+esm" {
     import whichPolygon from "which-polygon";
     export default whichPolygon;

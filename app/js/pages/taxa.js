@@ -157,7 +157,11 @@ class UI extends SearchUI {
             this,
             "Download CSV",
             "species.csv",
-            () => this.#getCSVData(this.#results)
+            () => {
+                return {
+                    content: this.#getCSVData(this.#results),
+                };
+            }
         );
         const download = hdom.createElement("div");
         download.appendChild(downloadLink);
