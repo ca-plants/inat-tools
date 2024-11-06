@@ -110,8 +110,8 @@ class ObsDetailUI extends SearchUI {
         countTrusted: 0,
         observations: [],
     };
-    /** @type {Object<string,ProjectMember>} */
-    #project_members = {};
+    /** @type {Object<string,ProjectMember>|undefined} */
+    #project_members;
     /** @type {Object<string,UserSummary>|undefined} */
     #userSummary;
 
@@ -284,8 +284,12 @@ class ObsDetailUI extends SearchUI {
 
     /**
      * @param {string} id
+     * @returns {string}
      */
     getMembershipStatus(id) {
+        if (!this.#project_members) {
+            return "??";
+        }
         const data = this.#project_members[id];
         if (!data) {
             return "no";
@@ -537,9 +541,13 @@ class ObsDetailUI extends SearchUI {
                 projectID,
                 this.getProgressReporter()
             );
-            this.#project_members = {};
-            for (const member of members) {
-                this.#project_members[member.user_id] = { role: member.role };
+            this.#project_members = members ? {} : undefined;
+            if (this.#project_members) {
+                for (const member of members) {
+                    this.#project_members[member.user_id] = {
+                        role: member.role,
+                    };
+                }
             }
         }
 

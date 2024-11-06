@@ -173,7 +173,7 @@ class DataRetriever {
 
             if (numPages > maxPages) {
                 await progressReporter.modalAlert(
-                    numPages + " pages found, maximum is " + maxPages
+                    `${numPages} pages found for ${label}, maximum is ${maxPages}`
                 );
                 return;
             }
