@@ -57,6 +57,7 @@ declare namespace INatData {
     }
     export interface TaxonData {
         id: number;
+        parent_id: number;
         name: string;
         preferred_common_name: string;
         rank: string;

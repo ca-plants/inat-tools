@@ -1,14 +1,9 @@
 import { SearchUI } from "../lib/searchui.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { DataRetriever } from "../lib/dataretriever.js";
-import { INatAPI } from "../lib/inatapi.js";
-import { INatObservation } from "../lib/inatobservation.js";
 import { ColDef } from "../lib/coldef.js";
 import { hdom } from "../lib/hdom.js";
-
-/**
- * @typedef {{taxon_id:number,displayName:string,rank:string,count:number,countObscured:number,countPublic:number,countResearchGrade:number}} SummaryEntry
- */
+import { summarizeObservations } from "../lib/obsSummaryTools.js";
 
 const COLUMNS = {
     SCI_NAME: new ColDef(
@@ -81,7 +76,7 @@ const COLUMNS = {
     ),
 };
 
-class ObsUI extends SearchUI {
+export class ObsSummaryUI extends SearchUI {
     #f1;
     /** @type {INatData.Observation[]|undefined} */
     #results;
@@ -92,17 +87,16 @@ class ObsUI extends SearchUI {
     }
 
     /**
-     * @param {Object<string,SummaryEntry>} results
+     * @param {import("../lib/obsSummaryTools.js").SummaryEntry[]} results
      * @param {ColDef[]} cols
      */
     getResultsTable(results, cols) {
         /**
-         * @param {string} name
-         * @param {SummaryEntry} data
+         * @param {import("../lib/obsSummaryTools.js").SummaryEntry} data
          * @param {ColDef[]} cols
-         * @param {ObsUI} ui
+         * @param {ObsSummaryUI} ui
          */
-        function getRow(name, data, cols, ui) {
+        function getRow(data, cols, ui) {
             /**
              * @param {Node|string} content
              * @param {string|undefined} className
@@ -119,7 +113,7 @@ class ObsUI extends SearchUI {
 
             const tr = hdom.createElement("tr");
             for (const col of cols) {
-                getCol(col.getValue([name, data], ui), col.getClass());
+                getCol(col.getValue([data.name, data], ui), col.getClass());
             }
 
             return tr;
@@ -130,8 +124,8 @@ class ObsUI extends SearchUI {
         const tbody = hdom.createElement("tbody");
         table.appendChild(tbody);
 
-        for (const name of Object.keys(results).sort()) {
-            tbody.appendChild(getRow(name, results[name], cols, this));
+        for (const summary of results) {
+            tbody.appendChild(getRow(summary, cols, this));
         }
 
         const section = hdom.createElement("div", "section");
@@ -140,7 +134,7 @@ class ObsUI extends SearchUI {
     }
 
     /**
-     * @param {[string,SummaryEntry]} entry
+     * @param {[string,import("../lib/obsSummaryTools.js").SummaryEntry]} entry
      * @param {number} num
      * @param {("public"|"trusted"|"obscured")[]} [selected=["public", "trusted", "obscured"]]
      * @param {{quality_grade?:"research"|"needs_id"}} [extraParams={}]
@@ -178,12 +172,12 @@ class ObsUI extends SearchUI {
         } catch {
             initArgs = {};
         }
-        const ui = new ObsUI(initArgs.f1);
+        const ui = new ObsSummaryUI(initArgs.f1);
         await ui.init();
     }
 
     /**
-     * @param {Object<string,SummaryEntry>} results
+     * @param {import("../lib/obsSummaryTools.js").SummaryEntry[]} results
      */
     async #getSummaryDOM(results) {
         const descrip = hdom.createElement("div");
@@ -283,50 +277,6 @@ class ObsUI extends SearchUI {
         await this.showResults();
     }
 
-    /**
-     * @param {INatData.Observation[]} rawResults
-     */
-    summarizeResults(rawResults) {
-        /** @type {Object<string,SummaryEntry>} */
-        const summary = {};
-
-        for (const result of rawResults) {
-            if (!result.taxon) {
-                continue;
-            }
-            const name = INatAPI.getTaxonName(result.taxon);
-            const obs = new INatObservation(result);
-            let taxonSummary = summary[name];
-            if (!taxonSummary) {
-                taxonSummary = {
-                    taxon_id: result.taxon.id,
-                    displayName: this.getAPI().getTaxonFormName(
-                        result.taxon,
-                        false
-                    ),
-                    rank: result.taxon.rank,
-                    count: 0,
-                    countObscured: 0,
-                    countPublic: 0,
-                    countResearchGrade: 0,
-                };
-                summary[name] = taxonSummary;
-            }
-            taxonSummary.count++;
-            if (result.quality_grade === "research") {
-                taxonSummary.countResearchGrade++;
-            }
-            if (obs.isObscured()) {
-                taxonSummary.countObscured++;
-            }
-            if (obs.coordsArePublic()) {
-                taxonSummary.countPublic++;
-            }
-        }
-
-        return summary;
-    }
-
     async showResults() {
         // Hide filter form.
         hdom.showElement("search-crit", false);
@@ -341,7 +291,7 @@ class ObsUI extends SearchUI {
         if (!this.#results) {
             return;
         }
-        const results = this.summarizeResults(this.#results);
+        const results = summarizeObservations(this.#results, this.getAPI());
 
         // Show summary.
         divResults.appendChild(await this.#getSummaryDOM(results));
@@ -357,4 +307,4 @@ class ObsUI extends SearchUI {
     }
 }
 
-await ObsUI.getUI();
+await ObsSummaryUI.getUI();

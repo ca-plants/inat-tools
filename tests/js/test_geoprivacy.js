@@ -20,6 +20,7 @@ function makeObservation(taxon_geoprivacy, geoprivacy, private_location) {
         quality_grade: "research",
         taxon: {
             id: 0,
+            parent_id: 0,
             name: "",
             preferred_common_name: "",
             rank: "",

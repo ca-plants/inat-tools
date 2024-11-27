@@ -13,6 +13,8 @@ import { createDownloadLink } from "../lib/utils.js";
 /** @typedef {{id:string,login:string,display_name:string,results:Results}} UserSummary */
 
 const RESULT_FORM_ID = "form-results";
+/** @type {("public" | "obscured" | "trusted")[]} */
+const ALL_COORD_TYPES = ["public", "trusted", "obscured"];
 
 class DetailColDef extends ColDef {
     /**
@@ -401,17 +403,20 @@ class ObsDetailUI extends SearchUI {
         });
     }
 
+    /**
+     * @returns {("public" | "obscured" | "trusted")[]}
+     */
     getSelectedTypes() {
         /** @type {("public" | "obscured" | "trusted")[]} */
         const types = [];
-        for (const type of ["public", "trusted", "obscured"]) {
+        for (const type of ALL_COORD_TYPES) {
             const id = "sel-" + type;
             if (document.getElementById(id) && hdom.isChecked(id)) {
                 // @ts-ignore
                 types.push(type);
             }
         }
-        return types;
+        return types.length > 0 ? types : [...ALL_COORD_TYPES];
     }
 
     #getTaxonData() {
