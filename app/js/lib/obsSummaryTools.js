@@ -13,9 +13,9 @@ import { INatObservation } from "./inatobservation.js";
 /**
  * @param {INatData.Observation[]} rawResults
  * @param {INatAPI} api
- * @returns {SummaryEntry[]}
+ * @returns {Promise<SummaryEntry[]>}
  */
-export function summarizeObservations(rawResults, api) {
+export async function summarizeObservations(rawResults, api) {
     /** @type {Map<string,SummaryEntry>} */
     const summaries = new Map();
 
@@ -27,17 +27,7 @@ export function summarizeObservations(rawResults, api) {
         const obs = new INatObservation(result);
         let taxonSummary = summaries.get(name);
         if (!taxonSummary) {
-            taxonSummary = {
-                name: name,
-                taxon_id: result.taxon.id,
-                parent_id: result.taxon.parent_id,
-                displayName: api.getTaxonFormName(result.taxon, false),
-                rank: result.taxon.rank,
-                count: 0,
-                countObscured: 0,
-                countPublic: 0,
-                countResearchGrade: 0,
-            };
+            taxonSummary = createTaxonSummary(result.taxon, api);
             summaries.set(name, taxonSummary);
         }
         taxonSummary.count++;
@@ -82,14 +72,20 @@ export function summarizeObservations(rawResults, api) {
         if (childSummaries.length + (parentSummary ? 1 : 0) < 2) {
             continue;
         }
+
+        /** @type {SummaryEntry} */
+        let summary;
         if (!parentSummary) {
-            // TODO - HANDLE THIS CASE.
-            throw new Error();
+            const taxon = await api.getTaxonData(parentId.toString());
+            summary = createTaxonSummary(taxon, api);
+        } else {
+            summary = { ...parentSummary };
         }
-        const summary = { ...parentSummary };
-        summary.displayName += " branch";
         summary.parent_id = undefined;
-        summaryArray.push(generateBranchSummary(summary, childSummaries));
+        summary.displayName += " branch";
+        summaryArray.push(
+            generateBranchSummary(summary, childSummaries, childMap)
+        );
     }
 
     return summaryArray.sort((a, b) => {
@@ -104,14 +100,37 @@ export function summarizeObservations(rawResults, api) {
 /**
  * @param {SummaryEntry} summary
  * @param {SummaryEntry[]} children
+ * @param {Map<number,SummaryEntry[]>} childMap
  * @returns {SummaryEntry}
  */
-function generateBranchSummary(summary, children) {
+function generateBranchSummary(summary, children, childMap) {
     for (const child of children) {
         summary.count += child.count;
         summary.countObscured += child.countObscured;
         summary.countResearchGrade += child.countResearchGrade;
         summary.countPublic += child.countPublic;
+        const newChildren = childMap.get(child.taxon_id);
+        if (newChildren) {
+            summary = generateBranchSummary(summary, newChildren, childMap);
+        }
     }
     return summary;
+}
+
+/**
+ * @param {INatData.TaxonData} taxon
+ * @param {INatAPI} api
+ */
+function createTaxonSummary(taxon, api) {
+    return {
+        name: INatAPI.getTaxonName(taxon),
+        taxon_id: taxon.id,
+        parent_id: taxon.parent_id,
+        displayName: api.getTaxonFormName(taxon, false),
+        rank: taxon.rank,
+        count: 0,
+        countObscured: 0,
+        countPublic: 0,
+        countResearchGrade: 0,
+    };
 }

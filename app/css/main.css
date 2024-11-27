@@ -190,6 +190,11 @@ div.flex-fullwidth {
     min-height: 400px;
 }
 
+/* Summary Table */
+tr.branch {
+    font-weight: bold;
+}
+
 @media (min-width: 600px) {
 
     table {

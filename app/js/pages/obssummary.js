@@ -92,11 +92,11 @@ export class ObsSummaryUI extends SearchUI {
      */
     getResultsTable(results, cols) {
         /**
-         * @param {import("../lib/obsSummaryTools.js").SummaryEntry} data
+         * @param {import("../lib/obsSummaryTools.js").SummaryEntry} entry
          * @param {ColDef[]} cols
          * @param {ObsSummaryUI} ui
          */
-        function getRow(data, cols, ui) {
+        function getRow(entry, cols, ui) {
             /**
              * @param {Node|string} content
              * @param {string|undefined} className
@@ -111,9 +111,12 @@ export class ObsSummaryUI extends SearchUI {
                 tr.appendChild(td);
             }
 
-            const tr = hdom.createElement("tr");
+            const tr = hdom.createElement(
+                "tr",
+                entry.parent_id === undefined ? "branch" : undefined
+            );
             for (const col of cols) {
-                getCol(col.getValue([data.name, data], ui), col.getClass());
+                getCol(col.getValue([entry.name, entry], ui), col.getClass());
             }
 
             return tr;
@@ -180,6 +183,9 @@ export class ObsSummaryUI extends SearchUI {
      * @param {import("../lib/obsSummaryTools.js").SummaryEntry[]} results
      */
     async #getSummaryDOM(results) {
+        // Remove branches from results.
+        results = results.filter((r) => r.parent_id !== undefined);
+
         const descrip = hdom.createElement("div");
         descrip.appendChild(
             document.createTextNode(
@@ -291,7 +297,10 @@ export class ObsSummaryUI extends SearchUI {
         if (!this.#results) {
             return;
         }
-        const results = summarizeObservations(this.#results, this.getAPI());
+        const results = await summarizeObservations(
+            this.#results,
+            this.getAPI()
+        );
 
         // Show summary.
         divResults.appendChild(await this.#getSummaryDOM(results));
