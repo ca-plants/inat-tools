@@ -80,6 +80,7 @@ declare namespace Params {
         f1: Params.SpeciesFilter;
         coords?: ("public" | "obscured" | "trusted")[];
         view?: "datehisto" | "details" | "geojson" | "usersumm";
+        branch?: boolean;
     }
     export interface SpeciesFilter {
         month?: number;

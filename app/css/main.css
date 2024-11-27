@@ -139,7 +139,7 @@ div.options {
     width: fit-content;
 }
 
-div.coordoptions {
+div#coordoptions {
     display: flex;
     gap: 1rem;
     margin: auto;

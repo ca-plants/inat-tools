@@ -93,6 +93,17 @@ export class hdom {
     }
 
     /**
+     * @param {string} forId
+     * @param {string} text
+     * @returns {Element}
+     */
+    static createLabelElement(forId, text) {
+        const el = this.createElement("label", { for: forId });
+        this.setTextValue(el, text);
+        return el;
+    }
+
+    /**
      * @param {URL|string|undefined} url
      * @param {Node|string|number} eLinkText
      * @param {Object.<string,string>|string} [attributes]
