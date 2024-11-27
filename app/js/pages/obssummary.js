@@ -158,6 +158,9 @@ export class ObsSummaryUI extends SearchUI {
         Object.assign(fp, extraParams);
         /** @type {Params.PageObsDetail} */
         const args = { f1: fp, coords: selected };
+        if (entry[1].parent_id === undefined) {
+            args.branch = true;
+        }
         const url = new URL(
             this.getPathPrefix() + "obsdetail.html",
             document.location.origin
