@@ -13,6 +13,8 @@ import { createDownloadLink } from "../lib/utils.js";
 /** @typedef {{id:string,login:string,display_name:string,results:Results}} UserSummary */
 
 const RESULT_FORM_ID = "form-results";
+/** @type {("public" | "obscured" | "trusted")[]} */
+const ALL_COORD_TYPES = ["public", "trusted", "obscured"];
 
 class DetailColDef extends ColDef {
     /**
@@ -104,8 +106,10 @@ class ObsDetailUI extends SearchUI {
     #f1;
     /** @type {INatData.TaxonData|undefined} */
     #taxon_data;
+    /** @type {INatData.Observation[]|undefined} */
+    #rawResults;
     /** @type {Results} */
-    #results = {
+    #processedResults = {
         countObscured: 0,
         countPublic: 0,
         countTrusted: 0,
@@ -113,8 +117,6 @@ class ObsDetailUI extends SearchUI {
     };
     /** @type {Object<string,ProjectMember>|undefined} */
     #project_members;
-    /** @type {Object<string,UserSummary>|undefined} */
-    #userSummary;
 
     /**
      * @param {Params.SpeciesFilter} f1
@@ -203,7 +205,7 @@ class ObsDetailUI extends SearchUI {
         const features = params.boundary ? params.boundary.features : [];
 
         const selectedTypes = this.getSelectedTypes();
-        for (const obs of this.#results.observations) {
+        for (const obs of this.#processedResults.observations) {
             if (!selectedTypes.includes(obs.getCoordType())) {
                 continue;
             }
@@ -234,7 +236,7 @@ class ObsDetailUI extends SearchUI {
     #getGPX(indent) {
         const waypoints = [];
         const selectedTypes = this.getSelectedTypes();
-        for (const obs of this.#results.observations) {
+        for (const obs of this.#processedResults.observations) {
             if (!selectedTypes.includes(obs.getCoordType())) {
                 continue;
             }
@@ -289,7 +291,9 @@ class ObsDetailUI extends SearchUI {
         function showAll(ui) {
             const filter = new SpeciesFilter(params);
             const url = filter.getURL();
-            url.searchParams.set("lrank", ui.#getTaxonData().rank);
+            if (!hdom.isChecked("branch")) {
+                url.searchParams.set("lrank", ui.#getTaxonData().rank);
+            }
             return url;
         }
 
@@ -307,7 +311,9 @@ class ObsDetailUI extends SearchUI {
             case "public": {
                 const filter = new SpeciesFilter(params);
                 const url = filter.getURL();
-                url.searchParams.set("lrank", this.#getTaxonData().rank);
+                if (!hdom.isChecked("branch")) {
+                    url.searchParams.set("lrank", this.#getTaxonData().rank);
+                }
                 url.searchParams.set("taxon_geoprivacy", "open");
                 url.searchParams.set("geoprivacy", "open");
                 return url;
@@ -342,7 +348,7 @@ class ObsDetailUI extends SearchUI {
             decodeURIComponent(document.location.hash).substring(1)
         );
         const ui = new ObsDetailUI(initArgs.f1);
-        await ui.initInstance(initArgs.coords, initArgs.view);
+        await ui.initInstance(initArgs.coords, initArgs.view, initArgs.branch);
         return ui;
     }
 
@@ -401,17 +407,20 @@ class ObsDetailUI extends SearchUI {
         });
     }
 
+    /**
+     * @returns {("public" | "obscured" | "trusted")[]}
+     */
     getSelectedTypes() {
         /** @type {("public" | "obscured" | "trusted")[]} */
         const types = [];
-        for (const type of ["public", "trusted", "obscured"]) {
+        for (const type of ALL_COORD_TYPES) {
             const id = "sel-" + type;
             if (document.getElementById(id) && hdom.isChecked(id)) {
                 // @ts-ignore
                 types.push(type);
             }
         }
-        return types;
+        return types.length > 0 ? types : [...ALL_COORD_TYPES];
     }
 
     #getTaxonData() {
@@ -425,47 +434,61 @@ class ObsDetailUI extends SearchUI {
      * @returns {Object<string,UserSummary>}
      */
     #getUserSummary() {
-        if (!this.#userSummary) {
-            this.#userSummary = {};
-            for (const obs of this.#results.observations) {
-                const id = obs.getUserID();
-                let userSumm = this.#userSummary[id];
-                if (!userSumm) {
-                    userSumm = {
-                        id: id,
-                        login: obs.getUserLogin(),
-                        display_name: obs.getUserDisplayName(),
-                        results: {
-                            countPublic: 0,
-                            countObscured: 0,
-                            countTrusted: 0,
-                            observations: [],
-                        },
-                    };
-                    this.#userSummary[id] = userSumm;
-                }
-                switch (obs.getCoordType()) {
-                    case "public":
-                        userSumm.results.countPublic++;
-                        break;
-                    case "trusted":
-                        userSumm.results.countTrusted++;
-                        break;
-                    case "obscured":
-                        userSumm.results.countObscured++;
-                        break;
-                }
-                userSumm.results.observations.push(obs);
+        /** @type {Object<string,UserSummary>|undefined} */
+        const userSummary = {};
+
+        for (const obs of this.#processedResults.observations) {
+            const id = obs.getUserID();
+            let userSumm = userSummary[id];
+            if (!userSumm) {
+                userSumm = {
+                    id: id,
+                    login: obs.getUserLogin(),
+                    display_name: obs.getUserDisplayName(),
+                    results: {
+                        countPublic: 0,
+                        countObscured: 0,
+                        countTrusted: 0,
+                        observations: [],
+                    },
+                };
+                userSummary[id] = userSumm;
             }
+            switch (obs.getCoordType()) {
+                case "public":
+                    userSumm.results.countPublic++;
+                    break;
+                case "trusted":
+                    userSumm.results.countTrusted++;
+                    break;
+                case "obscured":
+                    userSumm.results.countObscured++;
+                    break;
+            }
+            userSumm.results.observations.push(obs);
         }
-        return this.#userSummary;
+
+        return userSummary;
+    }
+
+    handleBranchClick() {
+        if (!this.#rawResults) {
+            return;
+        }
+        this.#processedResults = this.summarizeResults(
+            this.#rawResults,
+            hdom.isChecked("branch")
+        );
+        this.updateCoordOptions();
+        this.updateDisplay();
     }
 
     /**
      * @param {("public"|"obscured"|"trusted")[]} selArray
      * @param {string|undefined} view
+     * @param {boolean|undefined} branch
      */
-    async initInstance(selArray = [], view) {
+    async initInstance(selArray = [], view, branch) {
         await super.init();
 
         // Add handlers for form.
@@ -478,7 +501,7 @@ class ObsDetailUI extends SearchUI {
         this.initEventListeners("f1");
         await this.initForm("f1", this.#f1);
 
-        await this.onSubmit(selArray, view);
+        await this.onSubmit(selArray, view, branch);
     }
 
     onResize() {
@@ -493,34 +516,9 @@ class ObsDetailUI extends SearchUI {
     /**
      * @param {("public"|"obscured"|"trusted")[]} [selArray]
      * @param {string|undefined} [view]
+     * @param {boolean|undefined} [includeDescendants]
      */
-    async onSubmit(selArray, view) {
-        /**
-         * @param {("public"|"obscured"|"trusted")[]} selArray
-         * @param {Element} container
-         * @param {number} count
-         * @param {"public"|"obscured"|"trusted"} label
-         * @param {ObsDetailUI} ui
-         */
-        function addBucket(selArray, container, count, label, ui) {
-            if (count === 0) {
-                return;
-            }
-            const div = hdom.createElement("div");
-            const id = "sel-" + label;
-            const cb = hdom.createInputElement({
-                type: "checkbox",
-                id: id,
-            });
-            cb.checked = selArray.includes(label);
-            cb.addEventListener("click", () => ui.updateDisplay());
-            const lbl = hdom.createElement("label", { for: id });
-            lbl.appendChild(document.createTextNode(count + " " + label));
-            div.appendChild(cb);
-            div.appendChild(lbl);
-            container.appendChild(div);
-        }
-
+    async onSubmit(selArray, view, includeDescendants) {
         /**
          * @param {string} value
          * @param {string} label
@@ -585,15 +583,18 @@ class ObsDetailUI extends SearchUI {
 
         this.#taxon_data = await api.getTaxonData(this.#taxon_id.toString());
 
-        let results = await DataRetriever.getObservationData(
+        this.#rawResults = await DataRetriever.getObservationData(
             api,
             this.#f1,
             this.getProgressReporter()
         );
-        if (!results) {
+        if (!this.#rawResults) {
             return;
         }
-        this.#results = await this.summarizeResults(results);
+        this.#processedResults = this.summarizeResults(
+            this.#rawResults,
+            !!includeDescendants
+        );
 
         hdom.removeChildren("results");
 
@@ -630,30 +631,27 @@ class ObsDetailUI extends SearchUI {
 
         const form = hdom.createElement("form", { id: RESULT_FORM_ID });
         hdom.getElement("results").appendChild(form);
+
+        const divIncludeOpts = hdom.createElement("div", "options");
+        form.appendChild(divIncludeOpts);
+
         const checkBoxes = hdom.createElement("div", {
-            class: "coordoptions",
+            id: "coordoptions",
         });
-        form.appendChild(checkBoxes);
-        addBucket(
-            selArray,
-            checkBoxes,
-            this.#results.countPublic,
-            "public",
-            this
+        divIncludeOpts.appendChild(checkBoxes);
+
+        const divDescendants = hdom.createElement("div");
+        divIncludeOpts.appendChild(divDescendants);
+        const cbDescendants = hdom.createCheckBox(
+            "branch",
+            !!includeDescendants
         );
-        addBucket(
-            selArray,
-            checkBoxes,
-            this.#results.countTrusted,
-            "trusted",
-            this
+        hdom.addEventListener(cbDescendants, "click", () =>
+            this.handleBranchClick()
         );
-        addBucket(
-            selArray,
-            checkBoxes,
-            this.#results.countObscured,
-            "obscured",
-            this
+        divDescendants.appendChild(cbDescendants);
+        divDescendants.appendChild(
+            hdom.createLabelElement("branch", "Show descendants")
         );
 
         const radios = hdom.createElement("div", {
@@ -704,6 +702,7 @@ class ObsDetailUI extends SearchUI {
         optionDiv.appendChild(iNatDiv);
         form.appendChild(optionDiv);
 
+        this.updateCoordOptions();
         this.#updateViewInINaturalistLink();
 
         window.onresize = this.onResize;
@@ -722,7 +721,7 @@ class ObsDetailUI extends SearchUI {
         const coordTypes = this.getSelectedTypes();
 
         const svg = Histogram.createSVG(
-            this.#results.observations.filter((obs) =>
+            this.#processedResults.observations.filter((obs) =>
                 coordTypes.includes(obs.getCoordType())
             ),
             this.#f1
@@ -770,7 +769,7 @@ class ObsDetailUI extends SearchUI {
         const tbody = hdom.createElement("tbody");
         eTable.appendChild(tbody);
 
-        for (const obs of this.#results.observations) {
+        for (const obs of this.#processedResults.observations) {
             if (!selectedTypes.includes(obs.getCoordType())) {
                 continue;
             }
@@ -899,9 +898,10 @@ class ObsDetailUI extends SearchUI {
 
     /**
      * @param {INatData.Observation[]} rawResults
-     * @returns {Promise<Results>}
+     * @param {boolean} includeDescendants
+     * @returns {Results}
      */
-    async summarizeResults(rawResults) {
+    summarizeResults(rawResults, includeDescendants) {
         const taxon_data = this.#getTaxonData();
         const taxonSummary = {
             taxon_id: taxon_data.id,
@@ -915,7 +915,7 @@ class ObsDetailUI extends SearchUI {
         };
 
         for (const rawResult of rawResults) {
-            if (rawResult.taxon.id !== this.#taxon_id) {
+            if (!includeDescendants && rawResult.taxon.id !== this.#taxon_id) {
                 continue;
             }
 
@@ -939,6 +939,38 @@ class ObsDetailUI extends SearchUI {
         }
 
         return taxonSummary;
+    }
+
+    updateCoordOptions() {
+        /**
+         * @param {number} count
+         * @param {"public"|"obscured"|"trusted"} label
+         * @param {ObsDetailUI} ui
+         */
+        function addBucket(count, label, ui) {
+            if (count === 0) {
+                return;
+            }
+            const div = hdom.createElement("div");
+            const id = "sel-" + label;
+            const cb = hdom.createInputElement({
+                type: "checkbox",
+                id: id,
+            });
+            cb.checked = selArray.includes(label);
+            cb.addEventListener("click", () => ui.updateDisplay());
+            const lbl = hdom.createElement("label", { for: id });
+            lbl.appendChild(document.createTextNode(count + " " + label));
+            div.appendChild(cb);
+            div.appendChild(lbl);
+            checkBoxes.appendChild(div);
+        }
+
+        const checkBoxes = hdom.removeChildren("coordoptions");
+        const selArray = this.getSelectedTypes();
+        addBucket(this.#processedResults.countPublic, "public", this);
+        addBucket(this.#processedResults.countTrusted, "trusted", this);
+        addBucket(this.#processedResults.countObscured, "obscured", this);
     }
 
     updateDisplay() {
@@ -982,13 +1014,18 @@ class ObsDetailUI extends SearchUI {
                 hdom.getFormElement(RESULT_FORM_ID, "displayopt")
             ),
         };
+        if (hdom.isChecked("branch")) {
+            params.branch = true;
+        } else {
+            delete params.branch;
+        }
         document.location.hash = JSON.stringify(params);
     }
 
     #updateViewInINaturalistLink() {
         const url = this.getINatObservationURL(
             this.#f1.getParams(),
-            this.#results
+            this.#processedResults
         );
         const link = hdom.getElement("viewininat");
         if (link instanceof HTMLAnchorElement) {

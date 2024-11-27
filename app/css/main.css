@@ -139,7 +139,7 @@ div.options {
     width: fit-content;
 }
 
-div.coordoptions {
+div#coordoptions {
     display: flex;
     gap: 1rem;
     margin: auto;
@@ -188,6 +188,11 @@ div.flex-fullwidth {
 #svg-datehisto {
     margin: auto;
     min-height: 400px;
+}
+
+/* Summary Table */
+tr.branch {
+    font-weight: bold;
 }
 
 @media (min-width: 600px) {

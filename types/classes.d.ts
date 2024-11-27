@@ -57,6 +57,7 @@ declare namespace INatData {
     }
     export interface TaxonData {
         id: number;
+        parent_id: number;
         name: string;
         preferred_common_name: string;
         rank: string;
@@ -79,6 +80,7 @@ declare namespace Params {
         f1: Params.SpeciesFilter;
         coords?: ("public" | "obscured" | "trusted")[];
         view?: "datehisto" | "details" | "geojson" | "usersumm";
+        branch?: boolean;
     }
     export interface SpeciesFilter {
         month?: number;
