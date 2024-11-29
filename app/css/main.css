@@ -72,26 +72,22 @@ table tbody tr:nth-of-type(even)>* {
     background: lightgray;
 }
 
-td.c-sn {
-    order: 1;
+/* Data table column styles */
+th.c-num {
+    text-align: right;
 }
 
 td.c-cn {
-    order: 3;
+    grid-column: 2;
+    grid-row: 1 / 3;
 }
 
-td.c-cat {
-    order: 2;
-    text-align: right;
+td.c-odet {
+    text-align: left;
 }
 
-td.c-num {
-    order: 4;
-    text-align: right;
-}
-
-th.c-num {
-    text-align: right;
+td.c-oin {
+    display: none;
 }
 
 /* Filter Form */
@@ -214,8 +210,23 @@ tr.branch {
         border: solid 1px black;
     }
 
-    td.c-cat {
-        text-align: left;
+    th.c-odet {
+        text-align: center;
+    }
+
+    /* iNat observation link header is combined with previous column (link to detail page). */
+    th.c-oin {
+        display: none;
+    }
+
+    td.c-odet {
+        border-right: none;
+    }
+
+    td.c-oin {
+        border-left: none;
+        display: table-cell;
+        padding-left: .25rem;
     }
 
     span.sm-label {

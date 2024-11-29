@@ -1,21 +1,26 @@
 import { csvFormatRows } from "https://cdn.skypack.dev/d3-dsv";
-import { DOMUtils } from "../lib/domutils.js";
 import { DataRetriever } from "../lib/dataretriever.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { SearchUI } from "../lib/searchui.js";
 import { hdom } from "../lib/hdom.js";
 import { createDownloadLink } from "../lib/utils.js";
 
-/** @type {{label:string,value:function(INatData.TaxonObsSummary):string}[]} */
+/** @type {{
+ * label:string,
+ * class?:string,
+ * colspan?:number,
+ * value:function(INatData.TaxonObsSummary):string}[]} */
 const COLUMNS = [
     {
         label: "Name",
+        class: "c-sn",
         value: (result) => {
             return result.taxon.name;
         },
     },
     {
         label: "Common Name",
+        class: "c-cn",
         value: (result) => {
             /**
              * @param {string} phrase
@@ -41,6 +46,15 @@ const COLUMNS = [
     },
     {
         label: "# Obs",
+        class: "c-odet",
+        colspan: 2,
+        value: (result) => {
+            return result.count.toString();
+        },
+    },
+    {
+        label: "",
+        class: "c-oin",
         value: (result) => {
             return result.count.toString();
         },
@@ -69,9 +83,9 @@ class UI extends SearchUI {
          */
         function copyChecks(suffixes) {
             for (const suffix of suffixes) {
-                DOMUtils.enableCheckBox(
+                hdom.setCheckBoxState(
                     "f2" + suffix,
-                    DOMUtils.isChecked("f1" + suffix)
+                    hdom.isChecked("f1" + suffix)
                 );
             }
         }
@@ -102,8 +116,8 @@ class UI extends SearchUI {
                 "-year1",
                 "-year2",
             ]) {
-                const val = DOMUtils.getFormElementValue("f1" + idSuffix);
-                DOMUtils.setFormElementValue("f2" + idSuffix, val);
+                const val = hdom.getFormElementValue("f1" + idSuffix);
+                hdom.setFormElementValue("f2" + idSuffix, val);
             }
             // Copy checked state.
             copyChecks(["-researchgrade"]);
@@ -111,7 +125,7 @@ class UI extends SearchUI {
 
         this.updateAnnotationsFields(
             "f2",
-            DOMUtils.getFormElementValue("f2-taxon-id")
+            hdom.getFormElementValue("f2-taxon-id")
         );
     }
 
@@ -180,7 +194,7 @@ class UI extends SearchUI {
         summaryDesc.appendChild(count);
         summaryDesc.appendChild(download);
 
-        const summary = DOMUtils.createElement("div", {
+        const summary = hdom.createElement("div", {
             class: "section summary",
         });
         summary.appendChild(summaryDesc);
@@ -200,10 +214,10 @@ class UI extends SearchUI {
         function getTaxonSummary(result) {
             /**
              * @param {Element|string} content
-             * @param {string} className
+             * @param {string|undefined} className
              */
             function getCol(content, className) {
-                const td = DOMUtils.createElement("td", className);
+                const td = hdom.createElement("td", className);
                 if (content instanceof Element) {
                     td.appendChild(content);
                 } else {
@@ -212,48 +226,69 @@ class UI extends SearchUI {
                 tr.appendChild(td);
             }
 
-            const tr = DOMUtils.createElement("tr");
+            const tr = hdom.createElement("tr");
 
-            getCol(COLUMNS[0].value(result), "c-sn");
-            getCol(COLUMNS[1].value(result), "c-cn");
+            for (let index = 0; index < 2; index++) {
+                getCol(COLUMNS[index].value(result), COLUMNS[index].class);
+            }
 
-            obsURL.searchParams.set("taxon_id", result.taxon.id.toString());
-            const eLinkText = DOMUtils.createElement("span");
+            obsParams.taxon_id = result.taxon.id.toString();
+            detailURL.hash = JSON.stringify({ f1: obsParams, branch: true });
+            const eLinkText = hdom.createElement("span");
             eLinkText.appendChild(
                 document.createTextNode(COLUMNS[2].value(result))
             );
-            const eLinkLabel = DOMUtils.createElement("span", "sm-label");
+            const eLinkLabel = hdom.createElement("span", "sm-label");
             eLinkLabel.appendChild(document.createTextNode(" observations"));
             eLinkText.appendChild(eLinkLabel);
-            const eLink = DOMUtils.createLinkElement(obsURL, eLinkText, {
+            const eLink = hdom.createLinkElement(detailURL, eLinkText, {
                 target: "_blank",
             });
-            getCol(eLink, "c-num");
+            getCol(eLink, COLUMNS[2].class);
+
+            obsURL.searchParams.set("taxon_id", result.taxon.id.toString());
+            const eLinkInat = hdom.createLinkElement(obsURL, "iNat", {
+                target: "_blank",
+            });
+            getCol(eLinkInat, COLUMNS[3].class);
 
             return tr;
         }
 
-        const table = DOMUtils.createElement("table");
+        const table = hdom.createElement("table");
 
-        const thead = DOMUtils.createElement("thead");
+        const thead = hdom.createElement("thead");
         table.appendChild(thead);
-        const tr = DOMUtils.createElement("tr");
+        const tr = hdom.createElement("tr");
         thead.appendChild(tr);
         for (const col of COLUMNS) {
-            const th = DOMUtils.createElement("th");
+            /** @type {Object<string,string>} */
+            const attributes = {};
+            if (col.class) {
+                attributes.class = col.class;
+            }
+            if (col.colspan) {
+                attributes.colspan = col.colspan.toString();
+            }
+            const th = hdom.createElement("th", attributes);
             tr.appendChild(th);
             th.appendChild(document.createTextNode(col.label));
         }
 
-        const tbody = DOMUtils.createElement("tbody");
+        const tbody = hdom.createElement("tbody");
         table.appendChild(tbody);
 
         const obsURL = filter.getURL();
+        const obsParams = filter.getParams();
+        const detailURL = new URL(
+            "./obsdetail.html",
+            new URL(document.location.toString())
+        );
         for (const result of results) {
             tbody.appendChild(getTaxonSummary(result));
         }
 
-        const section = DOMUtils.createElement("div", "section");
+        const section = hdom.createElement("div", "section");
         section.appendChild(table);
         return section;
     }
