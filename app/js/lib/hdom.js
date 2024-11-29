@@ -270,6 +270,18 @@ export class hdom {
 
     /**
      * @param {string|Element} e
+     * @param {boolean} state
+     */
+    static setCheckBoxState(e, state) {
+        const elem = this.getElement(e);
+        if (!(elem instanceof HTMLInputElement)) {
+            return;
+        }
+        elem.checked = state;
+    }
+
+    /**
+     * @param {string|Element} e
      * @param {string} text
      */
     static setElementText(e, text) {
