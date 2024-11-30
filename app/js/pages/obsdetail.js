@@ -286,6 +286,27 @@ class ObsDetailUI extends SearchUI {
      */
     getINatObservationURL(params, results, selectedTypes) {
         /**
+         * @param {string[]} selectedTypes
+         */
+        function getIDListURL(selectedTypes) {
+            const selectedIDs = [];
+            for (const obs of results.observations) {
+                if (selectedTypes.includes(obs.getCoordType())) {
+                    selectedIDs.push(obs.getID());
+                }
+            }
+            const url = new URL(
+                "https://www.inaturalist.org/observations?subview=grid"
+            );
+            const idList = selectedIDs.join(",");
+            if (idList.length >= 10813) {
+                return "";
+            }
+            url.searchParams.set("id", idList);
+            return url;
+        }
+
+        /**
          * @param {ObsDetailUI} ui
          */
         function showAll(ui) {
@@ -300,6 +321,12 @@ class ObsDetailUI extends SearchUI {
         if (selectedTypes === undefined) {
             selectedTypes = this.getSelectedTypes();
         }
+
+        if (params.boundary) {
+            // If there's an arbitrary boundary, there's no way to tell iNaturalist.
+            return getIDListURL(selectedTypes);
+        }
+
         const count = ObsDetailUI.#getObsCount(results, selectedTypes);
 
         if (count === results.observations.length) {
@@ -320,23 +347,8 @@ class ObsDetailUI extends SearchUI {
             }
             case "public,trusted":
             case "trusted":
-            case "obscured": {
-                const selectedIDs = [];
-                for (const obs of results.observations) {
-                    if (selectedTypes.includes(obs.getCoordType())) {
-                        selectedIDs.push(obs.getID());
-                    }
-                }
-                const url = new URL(
-                    "https://www.inaturalist.org/observations?subview=grid"
-                );
-                const idList = selectedIDs.join(",");
-                if (idList.length >= 10813) {
-                    return "";
-                }
-                url.searchParams.set("id", idList);
-                return url;
-            }
+            case "obscured":
+                return getIDListURL(selectedTypes);
             default:
                 return "";
         }
@@ -703,7 +715,6 @@ class ObsDetailUI extends SearchUI {
         form.appendChild(optionDiv);
 
         this.updateCoordOptions();
-        this.#updateViewInINaturalistLink();
 
         window.onresize = this.onResize;
 

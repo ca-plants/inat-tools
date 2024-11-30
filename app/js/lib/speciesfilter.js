@@ -1,4 +1,4 @@
-import { geoBounds } from "https://cdn.skypack.dev/d3-geo";
+import { bbox } from "https://cdn.jsdelivr.net/npm/@turf/bbox@7/+esm";
 import { DateUtils } from "./dateutils.js";
 
 const MONTH_NAMES = [
@@ -206,11 +206,11 @@ class SpeciesFilter {
                     break;
                 case "boundary":
                     {
-                        const bounds = geoBounds(v);
-                        url.searchParams.set("nelat", bounds[1][1].toString());
-                        url.searchParams.set("nelng", bounds[1][0].toString());
-                        url.searchParams.set("swlat", bounds[0][1].toString());
-                        url.searchParams.set("swlng", bounds[0][0].toString());
+                        const bounds = bbox(v);
+                        url.searchParams.set("swlng", bounds[0].toString());
+                        url.searchParams.set("swlat", bounds[1].toString());
+                        url.searchParams.set("nelng", bounds[2].toString());
+                        url.searchParams.set("nelat", bounds[3].toString());
                     }
                     break;
                 case "establishment":
