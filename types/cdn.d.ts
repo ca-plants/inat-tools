@@ -2,8 +2,8 @@
 declare module "https://cdn.skypack.dev/d3-dsv" {
     export * from "d3-dsv";
 }
-declare module "https://cdn.skypack.dev/d3-geo" {
-    export * from "d3-geo";
+declare module "https://cdn.jsdelivr.net/npm/@turf/bbox@7/+esm" {
+    export * from "@turf/bbox";
 }
 declare module "https://cdn.jsdelivr.net/npm/@observablehq/plot/+esm" {
     export * from "@observablehq/plot";
