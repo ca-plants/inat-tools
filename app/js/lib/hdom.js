@@ -208,11 +208,14 @@ export class hdom {
     }
 
     /**
-     * @param {string|HTMLFormElement|RadioNodeList} e
+     * @param {string|HTMLElement|RadioNodeList} e
      * @returns {string}
      */
     static getFormElementValue(e) {
         const elem = typeof e === "string" ? this.getElement(e) : e;
+        if (elem instanceof HTMLInputElement && elem.type === "radio") {
+            return this.getFormElementValue(getRadioNodeList(elem));
+        }
         if (
             elem instanceof HTMLInputElement ||
             elem instanceof HTMLSelectElement ||
@@ -306,15 +309,21 @@ export class hdom {
     }
 
     /**
-     * @param {string|Element} e
-     * @param {string} value
+     * @param {string|Element|RadioNodeList} e
+     * @param {string|undefined|null} value
      */
     static setFormElementValue(e, value) {
-        const elem = this.getElement(e);
+        const elem = typeof e === "string" ? this.getElement(e) : e;
+        if (elem instanceof HTMLInputElement && elem.type === "radio") {
+            this.setFormElementValue(getRadioNodeList(elem), value);
+            return;
+        }
+        value = value ? value : "";
         if (
             elem instanceof HTMLInputElement ||
             elem instanceof HTMLTextAreaElement ||
-            elem instanceof HTMLSelectElement
+            elem instanceof HTMLSelectElement ||
+            elem instanceof RadioNodeList
         ) {
             elem.value = value;
         } else if (elem instanceof HTMLElement) {
@@ -353,4 +362,19 @@ export class hdom {
             elem.hidden = !show;
         }
     }
+}
+
+/**
+ * @param {HTMLInputElement} elem
+ * @returns {RadioNodeList}
+ */
+function getRadioNodeList(elem) {
+    if (!elem.form) {
+        throw new Error();
+    }
+    const radios = elem.form.elements.namedItem(elem.name);
+    if (!(radios instanceof RadioNodeList)) {
+        throw new Error();
+    }
+    return radios;
 }

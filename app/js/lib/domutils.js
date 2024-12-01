@@ -222,26 +222,6 @@ class DOMUtils {
         }
         elem.focus();
     }
-
-    /**
-     * @param {string|Element} e
-     * @param {string|undefined|null} value
-     */
-    static setFormElementValue(e, value) {
-        const elem = this.getElement(e);
-        if (!elem) {
-            return;
-        }
-        if (
-            elem instanceof HTMLInputElement ||
-            elem instanceof HTMLTextAreaElement ||
-            elem instanceof HTMLSelectElement
-        ) {
-            elem.value = value ? value : "";
-        } else if (elem instanceof HTMLElement) {
-            elem.setAttribute("value", value ? value : "");
-        }
-    }
 }
 
 export { DOMUtils };

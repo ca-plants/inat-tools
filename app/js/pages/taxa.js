@@ -78,49 +78,46 @@ class UI extends SearchUI {
     }
 
     async addExclusions() {
-        /**
-         * @param {string[]} suffixes
-         */
-        function copyChecks(suffixes) {
-            for (const suffix of suffixes) {
-                hdom.setCheckBoxState(
-                    "f2" + suffix,
-                    hdom.isChecked("f1" + suffix)
-                );
-            }
-        }
-
         hdom.removeClass("search-crit", "no-exclude");
         hdom.showElement("f2", true);
         hdom.showElement("add-exclusions", false);
 
         // If the exclusion filter is empty, initialize it to be the same as the inclusion filter.
-        const f = await this.initFilterFromForm("f2");
+        const f = this.initFilterFromForm("f2");
         if (!f || f.isEmpty()) {
-            // Copy values.
-            for (const idSuffix of [
-                "-ann-ev-mammal",
-                "-ann-plants",
-                "-ann-type-ev-mammal",
-                "-ann-type-plants",
-                "-month1",
-                "-observer-name",
-                "-observer-id",
-                "-place-name",
-                "-place-id",
-                "-proj-name",
-                "-proj-id",
-                "-taxon-name",
-                "-taxon-id",
-                "-year",
-                "-year1",
-                "-year2",
-            ]) {
-                const val = hdom.getFormElementValue("f1" + idSuffix);
-                hdom.setFormElementValue("f2" + idSuffix, val);
+            const form = hdom.getElement("form");
+            if (!(form instanceof HTMLFormElement)) {
+                throw new Error();
             }
-            // Copy checked state.
-            copyChecks(["-researchgrade"]);
+            const elements = form.elements;
+            for (const element of elements) {
+                const id = element.getAttribute("id");
+                if (id === null || !id.startsWith("f1-")) {
+                    continue;
+                }
+                const type = element.tagName;
+                if (type === "FIELDSET") {
+                    continue;
+                }
+                const f2Id = "f2" + id.substring(2);
+                if (element instanceof HTMLInputElement) {
+                    switch (element.type) {
+                        case "checkbox":
+                            hdom.setCheckBoxState(f2Id, hdom.isChecked(id));
+                            continue;
+                        case "file":
+                            continue;
+                        default:
+                            break;
+                    }
+                }
+                hdom.setFormElementValue(f2Id, hdom.getFormElementValue(id));
+            }
+
+            // Make sure form is set correctly for the specified location type.
+            hdom.clickElement(
+                "f2-loc-type-" + hdom.getFormElementValue("f2-loc-type-place")
+            );
         }
 
         this.updateAnnotationsFields(

@@ -155,7 +155,7 @@ class SearchUI extends UI {
          * @param {string|null} value
          */
         function setValue(config, value) {
-            DOMUtils.setFormElementValue(config.getValueID(), value);
+            hdom.setFormElementValue(config.getValueID(), value);
             config.handleChange();
         }
 
@@ -279,8 +279,8 @@ class SearchUI extends UI {
              * @param {string|number} year
              */
             function setValues(e, year) {
-                DOMUtils.setFormElementValue(e.id + "1", year.toString());
-                DOMUtils.setFormElementValue(e.id + "2", year.toString());
+                hdom.setFormElementValue(e.id + "1", year.toString());
+                hdom.setFormElementValue(e.id + "2", year.toString());
                 SearchUI.setYearMinMax(e.id);
             }
 
@@ -288,7 +288,7 @@ class SearchUI extends UI {
                 throw new Error();
             }
 
-            switch (DOMUtils.getFormElementValue(e)) {
+            switch (hdom.getFormElementValue(e)) {
                 case "Any":
                     setValues(e, "");
                     break;
@@ -505,7 +505,7 @@ class SearchUI extends UI {
             if (!month) {
                 return;
             }
-            DOMUtils.setFormElementValue(prefix + "-month1", month.toString());
+            hdom.setFormElementValue(prefix + "-month1", month.toString());
         }
 
         /**
@@ -515,11 +515,11 @@ class SearchUI extends UI {
             const years = filter.getYears();
             const year1 = years.year1;
             const year2 = years.year2;
-            DOMUtils.setFormElementValue(
+            hdom.setFormElementValue(
                 prefix + "-year1",
                 year1 ? year1.toString() : ""
             );
-            DOMUtils.setFormElementValue(
+            hdom.setFormElementValue(
                 prefix + "-year2",
                 year2 ? year2.toString() : ""
             );
@@ -533,7 +533,7 @@ class SearchUI extends UI {
          */
         async function initObserver(api, filter) {
             const id = filter.getUserID();
-            DOMUtils.setFormElementValue(prefix + "-observer-id", id);
+            hdom.setFormElementValue(prefix + "-observer-id", id);
             if (!id) {
                 return;
             }
@@ -542,7 +542,7 @@ class SearchUI extends UI {
             if (!data) {
                 return;
             }
-            DOMUtils.setFormElementValue(prefix + "-observer-name", data.login);
+            hdom.setFormElementValue(prefix + "-observer-name", data.login);
         }
 
         /**
@@ -552,7 +552,7 @@ class SearchUI extends UI {
         async function initPlace(api, filter) {
             // Check for place.
             const placeID = filter.getPlaceID();
-            DOMUtils.setFormElementValue(prefix + "-place-id", placeID);
+            hdom.setFormElementValue(prefix + "-place-id", placeID);
             if (!placeID) {
                 return;
             }
@@ -561,7 +561,7 @@ class SearchUI extends UI {
             if (!placeData) {
                 return;
             }
-            DOMUtils.setFormElementValue(
+            hdom.setFormElementValue(
                 prefix + "-place-name",
                 placeData.display_name
             );
@@ -574,7 +574,7 @@ class SearchUI extends UI {
         async function initProject(api, filter) {
             // Check for project.
             const projID = filter.getProjectID();
-            DOMUtils.setFormElementValue(prefix + "-proj-id", projID);
+            hdom.setFormElementValue(prefix + "-proj-id", projID);
             if (!projID) {
                 return;
             }
@@ -583,10 +583,7 @@ class SearchUI extends UI {
             if (!projectData) {
                 return;
             }
-            DOMUtils.setFormElementValue(
-                prefix + "-proj-name",
-                projectData.title
-            );
+            hdom.setFormElementValue(prefix + "-proj-name", projectData.title);
         }
 
         /**
@@ -596,7 +593,7 @@ class SearchUI extends UI {
         async function initTaxon(api, filter) {
             // Check for taxon.
             const taxonID = filter.getTaxonID();
-            DOMUtils.setFormElementValue(prefix + "-taxon-id", taxonID);
+            hdom.setFormElementValue(prefix + "-taxon-id", taxonID);
             if (!taxonID) {
                 return;
             }
@@ -605,7 +602,7 @@ class SearchUI extends UI {
             if (!taxonData) {
                 return;
             }
-            DOMUtils.setFormElementValue(
+            hdom.setFormElementValue(
                 prefix + "-taxon-name",
                 api.getTaxonFormName(taxonData)
             );
@@ -614,7 +611,7 @@ class SearchUI extends UI {
             const annotations = filter.getAnnotations();
             if (annotations !== undefined) {
                 for (const annotation of annotations) {
-                    DOMUtils.setFormElementValue(
+                    hdom.setFormElementValue(
                         prefix + "-ann-" + annotation.type,
                         annotation.value
                     );
@@ -755,8 +752,8 @@ class SearchUI extends UI {
      */
     static setYearMode(prefix) {
         function getMode() {
-            const d1 = DOMUtils.getFormElementValue(prefix + "1");
-            const d2 = DOMUtils.getFormElementValue(prefix + "2");
+            const d1 = hdom.getFormElementValue(prefix + "1");
+            const d2 = hdom.getFormElementValue(prefix + "2");
             if (d1 === d2 && d1 !== undefined) {
                 if (d1 === "") {
                     return "Any";
@@ -771,7 +768,7 @@ class SearchUI extends UI {
             return "Range";
         }
 
-        DOMUtils.setFormElementValue(prefix, getMode());
+        hdom.setFormElementValue(prefix, getMode());
     }
 
     /**
