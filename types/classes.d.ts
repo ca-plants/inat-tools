@@ -55,6 +55,7 @@ declare namespace INatData {
     export interface ProjectData {
         title: string;
     }
+    export interface ProjectMemberData {}
     export interface TaxonData {
         id: number;
         parent_id: number;

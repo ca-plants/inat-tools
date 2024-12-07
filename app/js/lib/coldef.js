@@ -32,6 +32,35 @@ class ColDef {
     }
 
     /**
+     * @param {any} entry
+     * @param {ColDef[]} cols
+     * @param {any[]} [otherArgs]
+     * @param {string|undefined} [className]
+     */
+    static createRow(entry, cols, otherArgs = [], className) {
+        /**
+         * @param {Node|string} content
+         * @param {string|undefined} className
+         */
+        function getCol(content, className) {
+            const td = hdom.createElement("td", className);
+            if (content instanceof Node) {
+                td.appendChild(content);
+            } else {
+                td.appendChild(document.createTextNode(content));
+            }
+            tr.appendChild(td);
+        }
+
+        const tr = hdom.createElement("tr", className);
+        for (const col of cols) {
+            getCol(col.getValue(entry, otherArgs), col.getClass());
+        }
+
+        return tr;
+    }
+
+    /**
      * @param {ColDef[]} cols
      */
     static createTable(cols) {

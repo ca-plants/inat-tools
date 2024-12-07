@@ -255,6 +255,37 @@ class SearchUI extends UI {
     }
 
     /**
+     *
+     * @param {string} prefix
+     * @param {string} name
+     * @param {function(string):Promise<Object<string,string>>} fnRetrieve
+     * @param {(function(string):void)|undefined} [fnHandleChange]
+     */
+    initAutoCompleteField(prefix, name, fnRetrieve, fnHandleChange) {
+        const id = prefix + "-" + name + "-name";
+        const config = new AutoCompleteConfig(
+            prefix + "-" + name + "-name-list",
+            prefix + "-" + name + "-id",
+            fnRetrieve,
+            fnHandleChange
+        );
+
+        const input = document.getElementById(id);
+        if (!input) {
+            return;
+        }
+        input.addEventListener("change", (e) =>
+            this.handleAutoCompleteField(e, config)
+        );
+        input.addEventListener("focus", (e) =>
+            this.handleAutoCompleteField(e, config)
+        );
+        input.addEventListener("input", (e) =>
+            this.handleAutoCompleteField(e, config)
+        );
+    }
+
+    /**
      * @param {string} prefix
      */
     initEventListeners(prefix) {
@@ -301,27 +332,6 @@ class SearchUI extends UI {
             }
         }
 
-        /**
-         * @param {SearchUI} ui
-         * @param {string} id
-         * @param {AutoCompleteConfig} config
-         */
-        function initField(ui, id, config) {
-            const input = document.getElementById(id);
-            if (!input) {
-                return;
-            }
-            input.addEventListener("change", (e) =>
-                ui.handleAutoCompleteField(e, config)
-            );
-            input.addEventListener("focus", (e) =>
-                ui.handleAutoCompleteField(e, config)
-            );
-            input.addEventListener("input", (e) =>
-                ui.handleAutoCompleteField(e, config)
-            );
-        }
-
         /** @type{{name:string,fnRetrieve:function(string):Promise<Object<string,string>>,fnHandleChange?:function(string):void}[]} */
         const fields = [
             {
@@ -344,15 +354,11 @@ class SearchUI extends UI {
         ];
 
         for (const field of fields) {
-            initField(
-                this,
-                prefix + "-" + field.name + "-name",
-                new AutoCompleteConfig(
-                    prefix + "-" + field.name + "-name-list",
-                    prefix + "-" + field.name + "-id",
-                    field.fnRetrieve,
-                    field.fnHandleChange
-                )
+            this.initAutoCompleteField(
+                prefix,
+                field.name,
+                field.fnRetrieve,
+                field.fnHandleChange
             );
         }
 
@@ -571,25 +577,6 @@ class SearchUI extends UI {
          * @param {INatAPI} api
          * @param {SpeciesFilter} filter
          */
-        async function initProject(api, filter) {
-            // Check for project.
-            const projID = filter.getProjectID();
-            hdom.setFormElementValue(prefix + "-proj-id", projID);
-            if (!projID) {
-                return;
-            }
-            // Look up name based on ID.
-            const projectData = await api.getProjectData(projID);
-            if (!projectData) {
-                return;
-            }
-            hdom.setFormElementValue(prefix + "-proj-name", projectData.title);
-        }
-
-        /**
-         * @param {INatAPI} api
-         * @param {SpeciesFilter} filter
-         */
         async function initTaxon(api, filter) {
             // Check for taxon.
             const taxonID = filter.getTaxonID();
@@ -638,7 +625,7 @@ class SearchUI extends UI {
             filter.getEstablishment() ?? ""
         );
 
-        await initProject(this.getAPI(), filter);
+        await this.initProject(prefix, filter.getProjectID());
         await initPlace(this.getAPI(), filter);
 
         // Add location options.
@@ -727,6 +714,24 @@ class SearchUI extends UI {
         // Select location type.
         const locType = filter.getBoundary() ? "boundary" : "place";
         hdom.clickElement(prefix + "-loc-type-" + locType);
+    }
+
+    /**
+     * @param {string} prefix
+     * @param {string|undefined} projId
+     */
+    async initProject(prefix, projId) {
+        // Check for project.
+        hdom.setFormElementValue(prefix + "-proj-id", projId);
+        if (!projId) {
+            return;
+        }
+        // Look up name based on ID.
+        const projectData = await this.getAPI().getProjectData(projId);
+        if (!projectData) {
+            return;
+        }
+        hdom.setFormElementValue(prefix + "-proj-name", projectData.title);
     }
 
     /**

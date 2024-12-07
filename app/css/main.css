@@ -90,6 +90,12 @@ td.c-oin {
     display: none;
 }
 
+/* Project member columns */
+/* Number of observations */
+td.c-no {
+    text-align: right;
+}
+
 /* Filter Form */
 div.section {
     margin-top: .25rem;
