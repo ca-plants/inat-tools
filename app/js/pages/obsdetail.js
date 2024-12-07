@@ -7,6 +7,7 @@ import { INatObservation } from "../lib/inatobservation.js";
 import { SearchUI } from "../lib/searchui.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { createDownloadLink } from "../lib/utils.js";
+import { InatURL } from "../lib/inaturl.js";
 
 /** @typedef {{role:string}} ProjectMember */
 /** @typedef {{countObscured:number,countPublic:number,countTrusted:number,observations:INatObservation[]}} Results */
@@ -36,7 +37,7 @@ const DETAIL_COLS = {
     TAXON: new DetailColDef("Taxon", (obs) => obs.getTaxonName()),
     OBSERVER: new DetailColDef("Observer", (obs) => {
         return hdom.createLinkElement(
-            "https://www.inaturalist.org/people/" + obs.getUserLogin(),
+            InatURL.getUserLink(obs.getUserLogin()),
             obs.getUserDisplayName(),
             { target: "_blank" }
         );
@@ -73,7 +74,7 @@ class SummaryColDef extends ColDef {
 const SUMMARY_COLS = {
     OBSERVER: new SummaryColDef("Observer", (summ) => {
         return hdom.createLinkElement(
-            "https://www.inaturalist.org/people/" + summ.login,
+            InatURL.getUserLink(summ.login),
             summ.display_name,
             { target: "_blank" }
         );
