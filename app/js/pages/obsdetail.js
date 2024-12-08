@@ -12,9 +12,10 @@ import { InatURL } from "../lib/inaturl.js";
 /** @typedef {{role:string}} ProjectMember */
 /** @typedef {{countObscured:number,countPublic:number,countTrusted:number,observations:INatObservation[]}} Results */
 /** @typedef {{id:string,login:string,display_name:string,results:Results}} UserSummary */
+/** @typedef {("public" | "obscured" | "trusted")[]} SelArray */
 
 const RESULT_FORM_ID = "form-results";
-/** @type {("public" | "obscured" | "trusted")[]} */
+/** @type {SelArray} */
 const ALL_COORD_TYPES = ["public", "trusted", "obscured"];
 
 class DetailColDef extends ColDef {
@@ -492,7 +493,7 @@ class ObsDetailUI extends SearchUI {
             this.#rawResults,
             hdom.isChecked("branch")
         );
-        this.updateCoordOptions();
+        this.updateCoordOptions(this.getSelectedTypes());
         this.updateDisplay();
     }
 
@@ -715,7 +716,7 @@ class ObsDetailUI extends SearchUI {
         optionDiv.appendChild(iNatDiv);
         form.appendChild(optionDiv);
 
-        this.updateCoordOptions();
+        this.updateCoordOptions(selArray);
 
         window.onresize = this.onResize;
 
@@ -953,7 +954,10 @@ class ObsDetailUI extends SearchUI {
         return taxonSummary;
     }
 
-    updateCoordOptions() {
+    /**
+     * @param {SelArray} selArray
+     */
+    updateCoordOptions(selArray = ALL_COORD_TYPES) {
         /**
          * @param {number} count
          * @param {"public"|"obscured"|"trusted"} label
@@ -979,7 +983,6 @@ class ObsDetailUI extends SearchUI {
         }
 
         const checkBoxes = hdom.removeChildren("coordoptions");
-        const selArray = this.getSelectedTypes();
         addBucket(this.#processedResults.countPublic, "public", this);
         addBucket(this.#processedResults.countTrusted, "trusted", this);
         addBucket(this.#processedResults.countObscured, "obscured", this);
