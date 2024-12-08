@@ -167,7 +167,6 @@ function getResultsTable(data) {
         tbody.appendChild(ColDef.createRow(result, cols));
     }
 
-    console.log(data);
     return table;
 }
 
