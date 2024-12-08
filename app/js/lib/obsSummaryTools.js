@@ -3,8 +3,10 @@ import { INatObservation } from "./inatobservation.js";
 /**
  * @typedef {{
  * name:string,
+ * is_branch:boolean,
  * taxon_id:number,
- * parent_id:number|undefined,
+ * parent_id:number,
+ * ancestor_ids:number[],
  * displayName:string,
  * rank:string,
  * count:number,countObscured:number,countPublic:number,countResearchGrade:number}} SummaryEntry
@@ -50,9 +52,6 @@ export async function summarizeObservations(rawResults, api) {
     // Check the summaries to see if there are any with multiple children that should have the option to view them together.
     for (const entry of summaries.values()) {
         const parentId = entry.parent_id;
-        if (parentId === undefined) {
-            throw new Error();
-        }
         idMap.set(entry.taxon_id, entry);
         let children = childMap.get(parentId);
         if (!children) {
@@ -77,11 +76,11 @@ export async function summarizeObservations(rawResults, api) {
         let summary;
         if (!parentSummary) {
             const taxon = await api.getTaxonData(parentId.toString());
-            summary = createTaxonSummary(taxon, api);
+            summary = createTaxonSummary(taxon, api, true);
         } else {
             summary = { ...parentSummary };
+            summary.is_branch = true;
         }
-        summary.parent_id = undefined;
         summary.displayName += " branch";
         summaryArray.push(
             generateBranchSummary(summary, childSummaries, childMap)
@@ -89,11 +88,27 @@ export async function summarizeObservations(rawResults, api) {
     }
 
     return summaryArray.sort((a, b) => {
-        const n = a.name.localeCompare(b.name);
-        if (n !== 0) {
-            return n;
+        // If they have the same id, one is the branch summary; sort this first
+        if (a.taxon_id === b.taxon_id) {
+            return a.is_branch ? -1 : 1;
         }
-        return a.parent_id === undefined ? -1 : 1;
+        // If they have the same parent, sort alphabetically.
+        if (a.parent_id === b.parent_id) {
+            return a.name.localeCompare(b.name);
+        }
+        // If one is the parent of the other, sort the parent first.
+        if (b.ancestor_ids.includes(a.taxon_id)) {
+            return -1;
+        }
+        if (a.ancestor_ids.includes(b.taxon_id)) {
+            return 1;
+        }
+
+        // Otherwise find their common ancestor, and sort by the child of the common ancestor so it is deterministic.
+        const ancestor = findCommonAncestor(a, b);
+        const aIndex = a.ancestor_ids.findIndex((v) => v === ancestor);
+        const bIndex = b.ancestor_ids.findIndex((v) => v === ancestor);
+        return a.ancestor_ids[aIndex + 1] - b.ancestor_ids[bIndex + 1];
     });
 }
 
@@ -120,12 +135,16 @@ function generateBranchSummary(summary, children, childMap) {
 /**
  * @param {INatData.TaxonData} taxon
  * @param {INatAPI} api
+ * @param {boolean} [is_branch=false]
+ * @returns {SummaryEntry}
  */
-function createTaxonSummary(taxon, api) {
+function createTaxonSummary(taxon, api, is_branch = false) {
     return {
         name: INatAPI.getTaxonName(taxon),
+        is_branch: is_branch,
         taxon_id: taxon.id,
         parent_id: taxon.parent_id,
+        ancestor_ids: taxon.ancestor_ids,
         displayName: api.getTaxonFormName(taxon, false),
         rank: taxon.rank,
         count: 0,
@@ -133,4 +152,19 @@ function createTaxonSummary(taxon, api) {
         countPublic: 0,
         countResearchGrade: 0,
     };
+}
+
+/**
+ * @param {SummaryEntry} a
+ * @param {SummaryEntry} b
+ * @returns {number}
+ */
+function findCommonAncestor(a, b) {
+    for (let index = a.ancestor_ids.length - 1; index >= 0; index--) {
+        const id = a.ancestor_ids[index];
+        if (b.ancestor_ids.includes(id)) {
+            return id;
+        }
+    }
+    throw new Error();
 }

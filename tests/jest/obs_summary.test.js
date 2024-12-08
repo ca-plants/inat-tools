@@ -57,7 +57,7 @@ it("test with taxa nested 3 levels", async () => {
     expect(summary.length).toBe(5);
     // Top level should show 3 observations.
     const top = summary.filter(
-        (s) => s.taxon_id === MockTaxa.Cuscuta && s.parent_id === undefined
+        (s) => s.taxon_id === MockTaxa.Cuscuta && s.is_branch
     );
     expect(top.length).toBe(1);
     expect(top[0].count).toBe(3);
