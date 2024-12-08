@@ -40,7 +40,7 @@ it("test with no genus and 2 obs with species of same genus", async () => {
         [OBS_CUSCUTA_CALIFORNICA, OBS_CUSCUTA_PACIFICA],
         API
     );
-    expect(summary.length).toBe(3);
+    expect(summary.length).toBe(2);
 });
 
 it("test with taxa nested 3 levels", async () => {
@@ -53,12 +53,12 @@ it("test with taxa nested 3 levels", async () => {
         API
     );
 
-    // There should be 2 levels of summary.
-    expect(summary.length).toBe(5);
-    // Top level should show 3 observations.
+    // There should be 1 level of summary, for Cuscuta pacifica.
+    expect(summary.length).toBe(4);
+    // Cuscuta pacifica summary should show 2 observations.
     const top = summary.filter(
-        (s) => s.taxon_id === MockTaxa.Cuscuta && s.parent_id === undefined
+        (s) => s.taxon_id === MockTaxa.Cuscuta_pacifica && s.is_branch
     );
     expect(top.length).toBe(1);
-    expect(top[0].count).toBe(3);
+    expect(top[0].count).toBe(2);
 });

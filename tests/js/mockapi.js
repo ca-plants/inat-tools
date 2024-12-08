@@ -36,8 +36,15 @@ class MockAPI extends INatAPI {
                     name: "Cuscuta",
                     preferred_common_name: "",
                     ancestor_ids: [
-                        48460, 47126, 211194, 47125, 47124, 48515, 52345,
+                        48460,
+                        47126,
+                        211194,
+                        47125,
+                        47124,
+                        48515,
+                        52345,
                         993829,
+                        MockTaxa.Cuscuta,
                     ],
                 };
             case MockTaxa.Cuscuta_californica:
@@ -58,6 +65,7 @@ class MockAPI extends INatAPI {
                         52345,
                         993829,
                         MockTaxa.Cuscuta,
+                        MockTaxa.Cuscuta_californica,
                     ],
                 };
             case MockTaxa.Cuscuta_pacifica:
@@ -78,6 +86,7 @@ class MockAPI extends INatAPI {
                         52345,
                         993829,
                         MockTaxa.Cuscuta,
+                        MockTaxa.Cuscuta_pacifica,
                     ],
                 };
             case MockTaxa.Cuscuta_pacifica_pacifica:
@@ -99,6 +108,7 @@ class MockAPI extends INatAPI {
                         993829,
                         MockTaxa.Cuscuta,
                         MockTaxa.Cuscuta_pacifica,
+                        MockTaxa.Cuscuta_pacifica_pacifica,
                     ],
                 };
             case MockTaxa.Homo_sapiens:

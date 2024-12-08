@@ -113,7 +113,7 @@ export class ObsSummaryUI extends SearchUI {
 
             const tr = hdom.createElement(
                 "tr",
-                entry.parent_id === undefined ? "branch" : undefined
+                entry.is_branch ? "branch" : undefined
             );
             for (const col of cols) {
                 getCol(col.getValue([entry.name, entry], ui), col.getClass());
@@ -158,7 +158,7 @@ export class ObsSummaryUI extends SearchUI {
         Object.assign(fp, extraParams);
         /** @type {Params.PageObsDetail} */
         const args = { f1: fp, coords: selected };
-        if (entry[1].parent_id === undefined) {
+        if (entry[1].is_branch) {
             args.branch = true;
         }
         const url = new URL(
@@ -187,7 +187,7 @@ export class ObsSummaryUI extends SearchUI {
      */
     async #getSummaryDOM(results) {
         // Remove branches from results.
-        results = results.filter((r) => r.parent_id !== undefined);
+        results = results.filter((r) => !r.is_branch);
 
         const descrip = hdom.createElement("div");
         descrip.appendChild(
