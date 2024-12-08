@@ -73,6 +73,7 @@ table tbody tr:nth-of-type(even)>* {
 }
 
 /* Data table column styles */
+td.c-num,
 th.c-num {
     text-align: right;
 }

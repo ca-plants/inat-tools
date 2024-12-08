@@ -187,7 +187,7 @@ export class ObsSummaryUI extends SearchUI {
      */
     async #getSummaryDOM(results) {
         // Remove branches from results.
-        results = results.filter((r) => r.parent_id !== undefined);
+        results = results.filter((r) => !r.is_branch);
 
         const descrip = hdom.createElement("div");
         descrip.appendChild(

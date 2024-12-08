@@ -49,16 +49,21 @@ export async function summarizeObservations(rawResults, api) {
     /** @type {Map<number,SummaryEntry>} */
     const idMap = new Map();
 
-    // Check the summaries to see if there are any with multiple children that should have the option to view them together.
+    // Record ids of initial summaries.
     for (const entry of summaries.values()) {
-        const parentId = entry.parent_id;
         idMap.set(entry.taxon_id, entry);
-        let children = childMap.get(parentId);
-        if (!children) {
-            children = [];
-            childMap.set(parentId, children);
+    }
+
+    // Map summaries to all of their ancestors.
+    for (const entry of summaries.values()) {
+        for (const parentId of entry.ancestor_ids) {
+            let children = childMap.get(parentId);
+            if (!children) {
+                children = [];
+                childMap.set(parentId, children);
+            }
+            children.push(entry);
         }
-        children.push(entry);
     }
 
     // Convert to array.
@@ -68,22 +73,12 @@ export async function summarizeObservations(rawResults, api) {
     // For any parent with at least 2 children, add an option to view all descendants.
     for (const [parentId, childSummaries] of childMap) {
         const parentSummary = idMap.get(parentId);
-        if (childSummaries.length + (parentSummary ? 1 : 0) < 2) {
+        if (!parentSummary || childSummaries.length < 2) {
             continue;
         }
 
-        /** @type {SummaryEntry} */
-        let summary;
-        if (!parentSummary) {
-            const taxon = await api.getTaxonData(parentId.toString());
-            summary = createTaxonSummary(taxon, api, true);
-        } else {
-            summary = { ...parentSummary };
-            summary.is_branch = true;
-        }
-        summary.displayName += " branch";
         summaryArray.push(
-            generateBranchSummary(summary, childSummaries, childMap)
+            generateBranchSummary({ ...parentSummary }, childSummaries)
         );
     }
 
@@ -113,35 +108,14 @@ export async function summarizeObservations(rawResults, api) {
 }
 
 /**
- * @param {SummaryEntry} summary
- * @param {SummaryEntry[]} children
- * @param {Map<number,SummaryEntry[]>} childMap
- * @returns {SummaryEntry}
- */
-function generateBranchSummary(summary, children, childMap) {
-    for (const child of children) {
-        summary.count += child.count;
-        summary.countObscured += child.countObscured;
-        summary.countResearchGrade += child.countResearchGrade;
-        summary.countPublic += child.countPublic;
-        const newChildren = childMap.get(child.taxon_id);
-        if (newChildren) {
-            summary = generateBranchSummary(summary, newChildren, childMap);
-        }
-    }
-    return summary;
-}
-
-/**
  * @param {INatData.TaxonData} taxon
  * @param {INatAPI} api
- * @param {boolean} [is_branch=false]
  * @returns {SummaryEntry}
  */
-function createTaxonSummary(taxon, api, is_branch = false) {
+function createTaxonSummary(taxon, api) {
     return {
         name: INatAPI.getTaxonName(taxon),
-        is_branch: is_branch,
+        is_branch: false,
         taxon_id: taxon.id,
         parent_id: taxon.parent_id,
         ancestor_ids: taxon.ancestor_ids,
@@ -167,4 +141,27 @@ function findCommonAncestor(a, b) {
         }
     }
     throw new Error();
+}
+
+/**
+ * @param {SummaryEntry} summary
+ * @param {SummaryEntry[]} children
+ * @returns {SummaryEntry}
+ */
+function generateBranchSummary(summary, children) {
+    summary.is_branch = true;
+    summary.displayName += " branch";
+    summary.count =
+        summary.countObscured =
+        summary.countResearchGrade =
+        summary.countPublic =
+            0;
+
+    for (const child of children) {
+        summary.count += child.count;
+        summary.countObscured += child.countObscured;
+        summary.countResearchGrade += child.countResearchGrade;
+        summary.countPublic += child.countPublic;
+    }
+    return summary;
 }
