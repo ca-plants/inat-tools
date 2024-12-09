@@ -104,6 +104,7 @@ const SUMMARY_COLS = {
 };
 
 class ObsDetailUI extends SearchUI {
+    /** @type {number|undefined} */
     #taxon_id;
     #f1;
     /** @type {INatData.TaxonData|undefined} */
@@ -128,7 +129,6 @@ class ObsDetailUI extends SearchUI {
         if (f1.taxon_id === undefined) {
             throw new Error();
         }
-        this.#taxon_id = parseInt(f1.taxon_id);
         this.#f1 = new SpeciesFilter(f1);
     }
 
@@ -506,11 +506,10 @@ class ObsDetailUI extends SearchUI {
         await super.init();
 
         // Add handlers for form.
-        hdom.addEventListener(
-            "form",
-            "submit",
-            async () => await this.onSubmit()
-        );
+        hdom.addEventListener("form", "submit", async (e) => {
+            e.preventDefault();
+            await this.onSubmit();
+        });
 
         this.initEventListeners("f1");
         await this.initForm("f1", this.#f1);
@@ -581,8 +580,6 @@ class ObsDetailUI extends SearchUI {
             return div;
         }
 
-        hdom.showElement("search-crit", false);
-
         if (selArray === undefined) {
             selArray = this.getSelectedTypes();
         }
@@ -595,6 +592,13 @@ class ObsDetailUI extends SearchUI {
 
         const api = this.getAPI();
 
+        const taxonId = this.#f1.getTaxonID();
+        if (!taxonId) {
+            alert("You must specify a taxon.");
+            hdom.setFocusTo("f1-taxon-name");
+            return;
+        }
+        this.#taxon_id = parseInt(taxonId);
         this.#taxon_data = await api.getTaxonData(this.#taxon_id.toString());
 
         this.#rawResults = await DataRetriever.getObservationData(
@@ -610,6 +614,7 @@ class ObsDetailUI extends SearchUI {
             !!includeDescendants
         );
 
+        hdom.showElement("search-crit", false);
         hdom.removeChildren("results");
 
         // If a project is in the filter, retrieve project members.
