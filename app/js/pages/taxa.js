@@ -135,11 +135,13 @@ class UI extends SearchUI {
             throw new Error();
         }
         const data = [];
-        data.push(COLUMNS.map((col) => col.label));
+        // Ignore the last column.
+        const cols = COLUMNS.slice(0, 3);
+        data.push(cols.map((col) => col.label));
 
         for (const result of results) {
             const row = [];
-            for (const col of COLUMNS) {
+            for (const col of cols) {
                 row.push(col.value(result));
             }
             data.push(row);
