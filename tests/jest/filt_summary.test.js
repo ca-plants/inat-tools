@@ -63,13 +63,13 @@ test(
 );
 test(
     "place - research grade",
-    { place_id: "3523", quality_grade: "research" },
+    { place_id: "3523", quality_grade: ["research"] },
     undefined,
     "Species observed in Tilden Regional Park, CA, US (research grade only)"
 );
 test(
     "place - not research grade",
-    { place_id: "3523", quality_grade: "needs_id" },
+    { place_id: "3523", quality_grade: ["needs_id"] },
     undefined,
     "Species observed in Tilden Regional Park, CA, US (needs ID only)"
 );

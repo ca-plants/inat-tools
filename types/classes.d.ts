@@ -56,6 +56,7 @@ declare namespace INatData {
         title: string;
     }
     export interface ProjectMemberData {}
+    export type QualityGrade = "needs_id" | "research";
     export interface TaxonData {
         id: number;
         parent_id: number;
@@ -88,7 +89,7 @@ declare namespace Params {
         place_id?: string;
         boundary?: GeoJSON.FeatureCollection;
         project_id?: string;
-        quality_grade?: string;
+        quality_grade?: INatData.QualityGrade[];
         taxon_id?: string;
         user_id?: string;
         year1?: number;
