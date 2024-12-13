@@ -113,11 +113,6 @@ class UI extends SearchUI {
                 }
                 hdom.setFormElementValue(f2Id, hdom.getFormElementValue(id));
             }
-
-            // Make sure form is set correctly for the specified location type.
-            hdom.clickElement(
-                "f2-loc-type-" + hdom.getFormElementValue("f2-loc-type-place")
-            );
         }
 
         this.updateAnnotationsFields(

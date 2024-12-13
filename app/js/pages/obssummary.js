@@ -82,7 +82,7 @@ export class ObsSummaryUI extends SearchUI {
     #results;
 
     constructor(f1 = {}) {
-        super();
+        super({ allowBoundary: true });
         this.#f1 = new SpeciesFilter(f1);
     }
 
