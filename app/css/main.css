@@ -28,6 +28,14 @@ fieldset,
     column-gap: 2rem;
 }
 
+input[type="checkbox"] {
+    margin-right: .25rem;
+}
+
+input[type="checkbox"]+label {
+    margin-right: .5rem;
+}
+
 input:invalid {
     border-color: red;
 }

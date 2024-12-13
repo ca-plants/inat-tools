@@ -4,6 +4,12 @@ import { hdom } from "./hdom.js";
 import { SpeciesFilter } from "./speciesfilter.js";
 import { UI } from "./ui.js";
 
+/** @type {{id:INatData.QualityGrade,label:string}[]} */
+const QUALITY_GRADES = [
+    { id: "research", label: "Research Grade" },
+    { id: "needs_id", label: "Needs ID" },
+];
+
 /**
  * @typedef {{allowBoundary?:boolean}} SearchUIOptions
  */
@@ -444,8 +450,11 @@ export class SearchUI extends UI {
             filterArgs.year2 = parseInt(year2);
         }
 
-        if (hdom.isChecked(prefix + "-researchgrade")) {
-            filterArgs.quality_grade = "research";
+        filterArgs.quality_grade = [];
+        for (const qg of QUALITY_GRADES) {
+            if (hdom.isChecked(`${prefix}-${qg.id}`)) {
+                filterArgs.quality_grade.push(qg.id);
+            }
         }
 
         const establishment = hdom.getFormElementValue(
@@ -580,24 +589,7 @@ export class SearchUI extends UI {
             }
         }
 
-        // Add establishment select.
-        const establishment = hdom.createSelectElement(
-            prefix + "-establishment",
-            "Establishment",
-            [
-                { value: "", label: "Any" },
-                { value: "native", label: "Native" },
-                { value: "introduced", label: "Introduced" },
-            ]
-        );
-        const divEst = hdom.createElement("div", "form-input");
-        establishment.forEach((e) => divEst.appendChild(e));
-        const divForm = hdom.getElement(prefix + "-misc");
-        divForm.appendChild(divEst);
-        hdom.setFormElementValue(
-            prefix + "-establishment",
-            filter.getEstablishment() ?? ""
-        );
+        initMiscFields(prefix, filter);
 
         await this.initProject(prefix, filter.getProjectID());
         await initPlace(this.getAPI(), filter);
@@ -611,11 +603,13 @@ export class SearchUI extends UI {
         initMonth(filter);
         initYear(filter);
 
-        const qualityGrade = filter.getQualityGrade();
-        DOMUtils.enableCheckBox(
-            prefix + "-researchgrade",
-            qualityGrade === "research"
-        );
+        const qualityGrades = filter.getQualityGrade();
+        for (const qg of QUALITY_GRADES) {
+            hdom.setCheckBoxState(
+                `${prefix}-${qg.id}`,
+                qualityGrades.includes(qg.id)
+            );
+        }
 
         if (this.#options.allowBoundary) {
             // Select location type.
@@ -829,4 +823,41 @@ function initLocations(prefix, options, filter) {
         }
         locationsDiv.insertBefore(locationTypeDiv, locationsDiv.firstChild);
     }
+}
+
+/**
+ * @param {string} prefix
+ * @param {SpeciesFilter} filter
+ */
+function initMiscFields(prefix, filter) {
+    const divForm = hdom.getElement(prefix + "-misc");
+
+    // Add needs id checkbox.
+    const divQuality = hdom.createElement("div");
+    for (const cb of QUALITY_GRADES) {
+        const id = `${prefix}-${cb.id}`;
+        divQuality.appendChild(
+            hdom.createCheckBox(id, filter.getQualityGrade().includes(cb.id))
+        );
+        divQuality.appendChild(hdom.createLabelElement(id, cb.label));
+    }
+    divForm.appendChild(divQuality);
+
+    // Add establishment select.
+    const establishment = hdom.createSelectElement(
+        prefix + "-establishment",
+        "Establishment",
+        [
+            { value: "", label: "Any" },
+            { value: "native", label: "Native" },
+            { value: "introduced", label: "Introduced" },
+        ]
+    );
+    const divEst = hdom.createElement("div", "form-input");
+    establishment.forEach((e) => divEst.appendChild(e));
+    divForm.appendChild(divEst);
+    hdom.setFormElementValue(
+        prefix + "-establishment",
+        filter.getEstablishment() ?? ""
+    );
 }

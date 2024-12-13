@@ -16,6 +16,9 @@ const MONTH_NAMES = [
     "December",
 ];
 
+/** @type {INatData.QualityGrade[]} */
+const ALL_QUALITY_GRADES = ["needs_id", "research"];
+
 class SpeciesFilter {
     /** @type {Params.SpeciesFilter} */
     #params = {};
@@ -25,6 +28,16 @@ class SpeciesFilter {
      */
     constructor(params) {
         Object.assign(this.#params, params);
+        // If quality grade includes everything, set it to an empty array.
+        if (params.quality_grade) {
+            if (
+                ALL_QUALITY_GRADES.every((g) =>
+                    params.quality_grade?.includes(g)
+                )
+            ) {
+                delete this.#params.quality_grade;
+            }
+        }
     }
 
     getAnnotations() {
@@ -111,13 +124,18 @@ class SpeciesFilter {
                 descrip += " in " + year2 + " or earlier";
             }
         }
-        switch (this.#params.quality_grade) {
-            case "needs_id":
-                descrip += " (needs ID only)";
-                break;
-            case "research":
-                descrip += " (research grade only)";
-                break;
+        if (this.#params.quality_grade) {
+            if (this.#params.quality_grade.length > 1) {
+                throw new Error(JSON.stringify(this.#params.quality_grade));
+            }
+            switch (this.#params.quality_grade[0]) {
+                case "needs_id":
+                    descrip += " (needs ID only)";
+                    break;
+                case "research":
+                    descrip += " (research grade only)";
+                    break;
+            }
         }
         if (exclusions) {
             descrip += ", excluding " + (await exclusions.getDescription(api));
@@ -145,8 +163,11 @@ class SpeciesFilter {
         return this.#params.project_id;
     }
 
+    /**
+     * @returns {string[]}
+     */
     getQualityGrade() {
-        return this.#params.quality_grade;
+        return this.#params.quality_grade ?? [];
     }
 
     getTaxonID() {
@@ -268,7 +289,8 @@ class SpeciesFilter {
     }
 
     isResearchGradeOnly() {
-        return this.#params.quality_grade === "research";
+        const qg = this.getQualityGrade();
+        return qg.length === 1 && qg[0] === "research";
     }
 
     toJSON() {
