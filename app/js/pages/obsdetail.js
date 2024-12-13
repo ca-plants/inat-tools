@@ -125,7 +125,7 @@ class ObsDetailUI extends SearchUI {
      * @param {Params.SpeciesFilter} f1
      */
     constructor(f1) {
-        super();
+        super({ allowBoundary: true });
         if (f1.taxon_id === undefined) {
             throw new Error();
         }
