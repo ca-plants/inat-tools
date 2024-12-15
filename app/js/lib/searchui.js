@@ -450,11 +450,15 @@ export class SearchUI extends UI {
             filterArgs.year2 = parseInt(year2);
         }
 
-        filterArgs.quality_grade = [];
+        /** @type {INatData.QualityGrade[]} */
+        const grades = [];
         for (const qg of QUALITY_GRADES) {
             if (hdom.isChecked(`${prefix}-${qg.id}`)) {
-                filterArgs.quality_grade.push(qg.id);
+                grades.push(qg.id);
             }
+        }
+        if (grades.length > 0) {
+            filterArgs.quality_grade = grades;
         }
 
         const establishment = hdom.getFormElementValue(
