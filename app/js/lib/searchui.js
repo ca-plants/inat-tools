@@ -119,8 +119,7 @@ export class SearchUI extends UI {
         if (e === null) {
             return;
         }
-        hdom.showElement("search-crit", true);
-        hdom.setFocusTo("f1-proj-name");
+        this.showSearchForm();
         hdom.showElement(e.currentTarget, false);
     }
 
@@ -681,6 +680,11 @@ export class SearchUI extends UI {
         }
 
         hdom.setFormElementValue(prefix, getMode());
+    }
+
+    showSearchForm() {
+        hdom.showElement("search-crit", true);
+        hdom.setFocusTo("f1-proj-name");
     }
 
     /**

@@ -298,8 +298,7 @@ export class ObsSummaryUI extends SearchUI {
             this.getProgressReporter()
         );
         if (!this.#results) {
-            hdom.showElement("search-crit", true);
-            hdom.setFocusTo("f1-proj-name");
+            this.showSearchForm();
             return;
         }
         const results = await summarizeObservations(
