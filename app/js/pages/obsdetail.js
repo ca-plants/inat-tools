@@ -1019,6 +1019,15 @@ class ObsDetailUI extends SearchUI {
         // Update view in iNaturalist target.
         this.#updateViewInINaturalistLink();
 
+        // Make sure all checkboxes are checked.
+        const ct = this.getSelectedTypes();
+        for (const type of ALL_COORD_TYPES) {
+            const cb = document.getElementById(`sel-${type}`);
+            if (cb instanceof HTMLInputElement) {
+                cb.checked = ct.includes(type);
+            }
+        }
+
         // Save current settings for bookmark.
         this.#updateHash();
     }
