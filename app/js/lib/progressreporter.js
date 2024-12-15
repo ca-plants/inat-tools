@@ -35,6 +35,13 @@ export class ProgressReporter {
     setNumPages(numPages) {
         hdom.showElement("prog-page-of", numPages !== 0);
         hdom.setElementText("prog-page-max", numPages.toString());
+        const pb = hdom.getElement("progress-bar");
+        if (numPages > 0) {
+            pb.setAttribute("max", numPages.toString());
+        } else {
+            pb.removeAttribute("max");
+            pb.removeAttribute("value");
+        }
     }
 
     /**
@@ -42,6 +49,9 @@ export class ProgressReporter {
      */
     setPage(page) {
         hdom.setElementText("prog-page", page);
+        if (page !== "1") {
+            hdom.getElement("progress-bar").setAttribute("value", page);
+        }
     }
 
     show() {

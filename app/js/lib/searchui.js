@@ -120,6 +120,7 @@ export class SearchUI extends UI {
             return;
         }
         hdom.showElement("search-crit", true);
+        hdom.setFocusTo("f1-proj-name");
         hdom.showElement(e.currentTarget, false);
     }
 
