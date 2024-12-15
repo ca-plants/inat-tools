@@ -502,7 +502,7 @@ class ObsDetailUI extends SearchUI {
      * @param {string|undefined} view
      * @param {boolean|undefined} branch
      */
-    async initInstance(selArray = [], view, branch) {
+    async initInstance(selArray = ALL_COORD_TYPES, view, branch) {
         await super.init();
 
         // Add handlers for form.
@@ -979,6 +979,7 @@ class ObsDetailUI extends SearchUI {
                 id: id,
             });
             cb.checked = selArray.includes(label);
+            hdom.enableElement(cb, numTypes > 1);
             cb.addEventListener("click", () => ui.updateDisplay());
             const lbl = hdom.createElement("label", { for: id });
             lbl.appendChild(document.createTextNode(count + " " + label));
@@ -988,9 +989,14 @@ class ObsDetailUI extends SearchUI {
         }
 
         const checkBoxes = hdom.removeChildren("coordoptions");
-        addBucket(this.#processedResults.countPublic, "public", this);
-        addBucket(this.#processedResults.countTrusted, "trusted", this);
-        addBucket(this.#processedResults.countObscured, "obscured", this);
+        const r = this.#processedResults;
+        const numTypes =
+            Math.sign(r.countObscured) +
+            Math.sign(r.countPublic) +
+            Math.sign(r.countTrusted);
+        addBucket(r.countPublic, "public", this);
+        addBucket(r.countTrusted, "trusted", this);
+        addBucket(r.countObscured, "obscured", this);
     }
 
     updateDisplay() {

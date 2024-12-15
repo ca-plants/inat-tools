@@ -175,6 +175,20 @@ export class hdom {
 
     /**
      * @param {string|Element} e
+     * @param {boolean} [enable=true]
+     */
+    static enableElement(e, enable = true) {
+        if (typeof e !== "string" && !(e instanceof Element)) {
+            return;
+        }
+        const elem = this.getElement(e);
+        if (elem instanceof HTMLInputElement) {
+            elem.disabled = !enable;
+        }
+    }
+
+    /**
+     * @param {string|Element} e
      * @returns {Element}
      */
     static getElement(e) {
