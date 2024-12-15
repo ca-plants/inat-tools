@@ -54,7 +54,7 @@ class DataRetriever {
      */
     static async getObservationData(api, filter, progressReporter) {
         const url = filter.getURL(
-            "https://api.inaturalist.org/v1/observations?verifiable=true&per_page=500"
+            "https://api.inaturalist.org/v1/observations?verifiable=true&order_by=observed_on&per_page=500"
         );
         /** @type {INatData.Observation[]} */
         const rawResults = await this.#retrievePagedData(
