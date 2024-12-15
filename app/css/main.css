@@ -61,6 +61,13 @@ th {
     vertical-align: bottom;
 }
 
+#progress {
+    display: flex;
+    flex-wrap: wrap;
+    justify-content: space-between;
+    margin-top: .25rem;
+}
+
 /* Responsive Table */
 table {
     margin: auto;
@@ -185,8 +192,10 @@ div.form-input input[type="text"] {
     width: 100%;
 }
 
-div.summary {
+div.summary,
+#progress {
     background-color: lightgreen;
+    border-radius: 5px;
     padding: .25rem;
 }
 

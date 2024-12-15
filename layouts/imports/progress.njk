@@ -1,6 +1,11 @@
 <div id="progress" hidden>
-    <input type="button" id="cancel-query" value="Cancel">
+    <div>
     Retrieving <span id="prog-label"></span> page <span id="prog-page"></span>
     <span id="prog-page-of"> of <span
             id="prog-page-max"></span></span>
+    </div>
+    <div><input type="button" id="cancel-query" value="Cancel"></div>
+    <div style="flex-basis:100%">
+    <progress id="progress-bar" style="width:100%"/>
+    </div>
 </div>
