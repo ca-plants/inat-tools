@@ -607,6 +607,9 @@ class ObsDetailUI extends SearchUI {
             this.getProgressReporter()
         );
         if (!this.#rawResults) {
+            // If retrieval failed, make sure the search form is displayed.
+            hdom.showElement("search-crit", true);
+            hdom.setFocusTo("f1-proj-name");
             return;
         }
         this.#processedResults = this.summarizeResults(
