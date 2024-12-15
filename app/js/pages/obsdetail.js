@@ -554,32 +554,6 @@ class ObsDetailUI extends SearchUI {
             radios.appendChild(div);
         }
 
-        /**
-         * @param {SpeciesFilter} filter
-         * @param {string} termID
-         * @param {string} descrip
-         */
-        function getAttributeLink(filter, termID, descrip) {
-            const params = filter.getParams();
-            delete params.annotations;
-            delete params.quality_grade;
-            const url = new URL(
-                "https://www.inaturalist.org/observations/identify"
-            );
-            url.searchParams.set("reviewed", "any");
-            url.searchParams.set("quality_grade", "needs_id,research");
-            url.searchParams.set("without_term_id", termID);
-            filter = new SpeciesFilter(params);
-            const link = hdom.createLinkElement(
-                filter.getURL(url),
-                `Observations with no ${descrip} annotation`,
-                { target: "_blank" }
-            );
-            const div = hdom.createElement("div");
-            div.appendChild(link);
-            return div;
-        }
-
         if (selArray === undefined) {
             selArray = this.getSelectedTypes();
         }
@@ -640,12 +614,24 @@ class ObsDetailUI extends SearchUI {
         // Show filter description.
         const resultsSummary = hdom.createElement("div", {
             id: "results-summary",
-            class: "section summary",
+            class: "section summary flex",
         });
         hdom.getElement("results").appendChild(resultsSummary);
-        resultsSummary.appendChild(
+        const divDesc = hdom.createElement("div", {
+            style: "flex:3;min-width:20rem",
+        });
+        divDesc.appendChild(
             document.createTextNode(await filter.getDescription(api))
         );
+        resultsSummary.appendChild(divDesc);
+        const link = getNeedsAttributeLink(filter);
+        if (link) {
+            const divLink = hdom.createElement("div", {
+                style: "flex:2;min-width:15rem;text-align:right",
+            });
+            divLink.appendChild(link);
+            resultsSummary.appendChild(divLink);
+        }
         resultsSummary.appendChild(
             this.createChangeFilterButton((e) => this.changeFilter(e))
         );
@@ -696,27 +682,6 @@ class ObsDetailUI extends SearchUI {
                 id: "viewininat",
             })
         );
-        const annotations = filter.getAnnotations();
-        if (annotations) {
-            for (const annotation of annotations) {
-                switch (annotation.type) {
-                    case "ev-mammal":
-                        iNatDiv.appendChild(
-                            getAttributeLink(
-                                filter,
-                                "22",
-                                "evidence of presence"
-                            )
-                        );
-                        break;
-                    case "plants":
-                        iNatDiv.appendChild(
-                            getAttributeLink(filter, "12", "plant phenology")
-                        );
-                        break;
-                }
-            }
-        }
 
         const optionDiv = hdom.createElement("div", { class: "options" });
         optionDiv.appendChild(radios);
@@ -1079,6 +1044,50 @@ class ObsDetailUI extends SearchUI {
         const section = hdom.createElement("div", "section");
         section.appendChild(eResultDetail);
         eResultsDiv.appendChild(section);
+    }
+}
+
+/**
+ * @param {SpeciesFilter} filter
+ * @returns {Element|undefined}
+ */
+function getNeedsAttributeLink(filter) {
+    /**
+     * @param {SpeciesFilter} filter
+     * @param {string} termID
+     * @param {string} descrip
+     */
+    function getLink(filter, termID, descrip) {
+        const params = filter.getParams();
+        delete params.annotations;
+        delete params.quality_grade;
+        const url = new URL(
+            "https://www.inaturalist.org/observations/identify"
+        );
+        url.searchParams.set("reviewed", "any");
+        url.searchParams.set("quality_grade", "needs_id,research");
+        url.searchParams.set("without_term_id", termID);
+        filter = new SpeciesFilter(params);
+        const link = hdom.createLinkElement(
+            filter.getURL(url),
+            `Observations with no ${descrip} annotation`,
+            { target: "_blank" }
+        );
+        const div = hdom.createElement("div");
+        div.appendChild(link);
+        return div;
+    }
+
+    const annotations = filter.getAnnotations();
+    if (annotations) {
+        for (const annotation of annotations) {
+            switch (annotation.type) {
+                case "ev-mammal":
+                    return getLink(filter, "22", "evidence of presence");
+                case "plants":
+                    return getLink(filter, "12", "plant phenology");
+            }
+        }
     }
 }
 
