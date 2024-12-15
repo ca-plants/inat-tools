@@ -245,6 +245,7 @@ tr.branch {
 
     td.c-odet {
         border-right: none;
+        text-align: right;
     }
 
     td.c-oin {
