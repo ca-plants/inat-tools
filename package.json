@@ -31,7 +31,10 @@
     "dependencies": {
         "@metalsmith/in-place": "^5.0.0",
         "@metalsmith/layouts": "^2.7.0",
+        "@turf/clone": "^7.1.0",
         "@turf/clusters-dbscan": "^7.1.0",
+        "@turf/convex": "^7.1.0",
+        "@turf/helpers": "^7.1.0",
         "@turf/meta": "^7.1.0",
         "commander": "^12.1.0",
         "jstransformer-marked": "^1.4.0",
