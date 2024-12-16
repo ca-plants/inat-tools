@@ -398,6 +398,7 @@ class UI extends SearchUI {
             this.getProgressReporter()
         );
         if (!this.#results) {
+            this.showSearchForm();
             return;
         }
 

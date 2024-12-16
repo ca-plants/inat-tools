@@ -1,6 +1,8 @@
 const cumulativeDays = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
 
-class DateUtils {
+export class DateUtils {
+    static MILLIS_PER_DAY = 1000 * 60 * 60 * 24;
+
     static getCurrentYear() {
         return new Date().getFullYear();
     }
@@ -68,5 +70,3 @@ class DateUtils {
         return year % 400 !== 0;
     }
 }
-
-export { DateUtils };

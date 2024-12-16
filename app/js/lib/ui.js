@@ -2,6 +2,7 @@ import { ProgressReporter } from "./progressreporter.js";
 import { DOMUtils } from "./domutils.js";
 import { INatAPI } from "./inatapi.js";
 import { Login } from "./login.js";
+import { hdom } from "./hdom.js";
 
 const NAV_LOGIN_ID = "nav-login";
 
@@ -49,7 +50,7 @@ class UI {
             return;
         }
         eLogin.appendChild(document.createTextNode(linkText));
-        DOMUtils.addEventListener(eLogin, "click", () => {
+        hdom.addEventListener(eLogin, "click", () => {
             this.updateLoginTarget();
         });
     }
