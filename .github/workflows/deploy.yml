@@ -28,7 +28,7 @@ jobs:
             - run: node --experimental-vm-modules node_modules/jest/bin/jest.js tests/jest
 
             # Generate pages.
-            - run: node build.js --path "/inat-tools/"
+            - run: node scripts/int-build.js --homepath "/inat-tools/" --no-watch
 
             - uses: actions/upload-pages-artifact@v3
               with:
