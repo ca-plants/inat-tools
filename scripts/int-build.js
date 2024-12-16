@@ -1,11 +1,12 @@
-import { fileURLToPath } from "node:url";
-import { dirname } from "path";
+#!/usr/bin/env node
+
 import Metalsmith from "metalsmith";
 import layouts from "@metalsmith/layouts";
 import inPlace from "@metalsmith/in-place";
 import { Command } from "commander";
+import { cwd } from "node:process";
 
-const __dirname = dirname(fileURLToPath(import.meta.url));
+const __dirname = cwd();
 
 /**
  * @param {import("commander").OptionValues} options
@@ -16,7 +17,7 @@ async function build(options) {
         engineOptions: {
             root: __dirname + "/layouts",
             globals: {
-                homePath: options.path,
+                homePath: options.homepath,
             },
         },
     };
@@ -41,8 +42,8 @@ async function build(options) {
 
 const program = new Command();
 program.option(
-    "--path <path>",
-    "The path to the directory containing Metalsmith files.",
+    "--homepath <path>",
+    "The path to the home directory of the target site.",
     "/"
 );
 program.option(
