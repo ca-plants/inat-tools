@@ -743,9 +743,12 @@ class ObsDetailUI extends SearchUI {
             DETAIL_COLS.OBS_DATE,
             DETAIL_COLS.TAXON,
             DETAIL_COLS.OBSERVER,
-            DETAIL_COLS.LOCATION,
-            DETAIL_COLS.COORDS,
         ];
+        // Don't include location column if all observations are obscured.
+        if (selectedTypes.length > 1 || selectedTypes[0] !== "obscured") {
+            cols.push(DETAIL_COLS.LOCATION);
+        }
+        cols.push(DETAIL_COLS.COORDS);
         if (this.#project_members) {
             cols.push(DETAIL_COLS.PROJECT);
         }
