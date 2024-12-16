@@ -557,6 +557,13 @@ class ObsDetailUI extends SearchUI {
         if (selArray === undefined) {
             selArray = this.getSelectedTypes();
         }
+        if (
+            includeDescendants === undefined &&
+            document.getElementById("branch")
+        ) {
+            // Preserve the state of the Show descendants checkbox if present.
+            includeDescendants = hdom.isChecked("branch");
+        }
 
         const filter = this.initFilterFromForm("f1");
         if (!filter) {
