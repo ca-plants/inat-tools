@@ -2,6 +2,7 @@
 
 import clustersDbscan from "@turf/clusters-dbscan";
 import concave from "@turf/concave";
+import area from "@turf/area";
 import * as clone from "@turf/clone";
 import * as turfMeta from "@turf/meta";
 import * as turfHelpers from "@turf/helpers";
@@ -13,7 +14,7 @@ import { Clusterer } from "../app/js/tools/clusterer.js";
 
 class NodeClusterer extends Clusterer {
     constructor() {
-        super(clustersDbscan, turfMeta, turfHelpers, clone, concave);
+        super(clustersDbscan, turfMeta, turfHelpers, clone, concave, area);
     }
 }
 

@@ -3,6 +3,7 @@ export class Clusterer {
     #concave;
     #turfMeta;
     #turfHelpers;
+    #area;
 
     /**
      * @param {import("@turf/clusters-dbscan").clustersDbscan} clustersDbscan
@@ -10,12 +11,14 @@ export class Clusterer {
      * @param {import("@turf/helpers")} turfHelpers
      * @param {import("@turf/clone")} clone
      * @param {import("@turf/concave").concave} concave
+     * @param {import("@turf/area").area} area
      */
-    constructor(clustersDbscan, turfMeta, turfHelpers, clone, concave) {
+    constructor(clustersDbscan, turfMeta, turfHelpers, clone, concave, area) {
         this.#clustersDbscan = clustersDbscan;
         this.#turfMeta = turfMeta;
         this.#turfHelpers = turfHelpers;
         this.#concave = concave;
+        this.#area = area;
     }
 
     /**
@@ -50,13 +53,37 @@ export class Clusterer {
             }
         });
 
-        for (const features of clusters.values()) {
+        for (const [cluster_num, features] of clusters.entries()) {
             const fc = this.#turfHelpers.featureCollection(features);
             const border = this.#concave(fc, { maxEdge: 1 });
-            if (border) {
-                border.properties = { ...properties };
-                newFeatures.push(border);
+            if (!border) {
+                continue;
             }
+
+            /** @type {import("geojson").Feature<import("geojson").Polygon>[]} */
+            let polygons = [];
+            switch (border.geometry.type) {
+                case "Polygon":
+                    // @ts-ignore
+                    polygons = [border];
+                    break;
+                case "MultiPolygon":
+                    polygons = this.#turfHelpers.polygons(
+                        border.geometry.coordinates
+                    ).features;
+                    break;
+            }
+
+            polygons.forEach((p) => {
+                p.properties = {
+                    cluster_num: cluster_num,
+                    hectares: this.#turfHelpers
+                        .convertArea(this.#area(p), "meters", "hectares")
+                        .toFixed(2),
+                    ...properties,
+                };
+            });
+            newFeatures.push(...polygons);
         }
 
         return this.#turfHelpers.featureCollection(newFeatures);
