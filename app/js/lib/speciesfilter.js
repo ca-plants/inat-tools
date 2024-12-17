@@ -137,6 +137,11 @@ class SpeciesFilter {
                     break;
             }
         }
+        if (this.#params.accuracy !== undefined) {
+            descrip += ` with an accuracy of ${
+                this.#params.accuracy
+            } meters or less`;
+        }
         if (exclusions) {
             descrip += ", excluding " + (await exclusions.getDescription(api));
         }
@@ -145,6 +150,10 @@ class SpeciesFilter {
 
     getEstablishment() {
         return this.#params.establishment;
+    }
+
+    getMinAccuracy() {
+        return this.#params.accuracy;
     }
 
     getMonths() {
@@ -222,6 +231,9 @@ class SpeciesFilter {
         const url = new URL(urlStr);
         for (const [k, v] of Object.entries(this.#params)) {
             switch (k) {
+                case "accuracy":
+                    url.searchParams.set("acc_below_or_unknown", v + 1);
+                    break;
                 case "annotations":
                     setAnnotationParameters(url, v);
                     break;

@@ -139,3 +139,9 @@ test(
     undefined,
     "Species which are native observed in Tilden Regional Park, CA, US"
 );
+test(
+    "place and accuracy",
+    { place_id: "3523", accuracy: 1000 },
+    undefined,
+    "Species observed in Tilden Regional Park, CA, US with an accuracy of 1000 meters or less"
+);

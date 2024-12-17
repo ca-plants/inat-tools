@@ -175,6 +175,10 @@ div.form-input {
     margin-top: .1rem;
 }
 
+div.fieldset {
+    margin-top: .25rem;
+}
+
 div.form-input label {
     min-width: 4rem;
 }

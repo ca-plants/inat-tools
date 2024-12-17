@@ -468,6 +468,11 @@ export class SearchUI extends UI {
             filterArgs.establishment = establishment;
         }
 
+        const accuracy = hdom.getFormElementValue("accuracy");
+        if (accuracy !== "") {
+            filterArgs.accuracy = parseInt(accuracy);
+        }
+
         if (locationType === "boundary") {
             filterArgs.boundary = JSON.parse(
                 hdom.getFormElementValue(prefix + "-boundary-text")
@@ -841,7 +846,7 @@ function initLocations(prefix, options, filter) {
 function initMiscFields(prefix, filter) {
     const divForm = hdom.getElement(prefix + "-misc");
 
-    // Add needs id checkbox.
+    // Add Quality Grade checkboxes.
     const divQuality = hdom.createElement("div");
     for (const cb of QUALITY_GRADES) {
         const id = `${prefix}-${cb.id}`;
@@ -869,4 +874,14 @@ function initMiscFields(prefix, filter) {
         prefix + "-establishment",
         filter.getEstablishment() ?? ""
     );
+
+    const divAccuracy = hdom.createElement("div", "form-input");
+    divAccuracy.appendChild(hdom.createLabelElement("accuracy", "Accuracy"));
+    divAccuracy.appendChild(
+        hdom.createIntegerInput("accuracy", filter.getMinAccuracy(), 99999)
+    );
+    divAccuracy.appendChild(
+        hdom.createTextElement("span", {}, " meters or less")
+    );
+    divForm.appendChild(divAccuracy);
 }

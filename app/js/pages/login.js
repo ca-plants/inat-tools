@@ -173,6 +173,7 @@ class LoginUI {
             // Save the client ID to a form element.
             hdom.setFormElementValue("client_id", CLIENT_ID);
             await this.authorize();
+            return;
         }
 
         // Running on localhost. The production client ID won't work, so paste one in.

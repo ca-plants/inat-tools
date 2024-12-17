@@ -93,6 +93,25 @@ export class hdom {
     }
 
     /**
+     * @param {string} id
+     * @param {string|number|undefined} value
+     * @param {number} max
+     * @returns {HTMLInputElement}
+     */
+    static createIntegerInput(id, value, max) {
+        return this.createInputElement({
+            id: id,
+            type: "number",
+            inputmode: "numeric",
+            autocomplete: "off",
+            min: 0,
+            max: max,
+            step: 1,
+            value: value ?? "",
+        });
+    }
+
+    /**
      * @param {string} forId
      * @param {string} text
      * @returns {Element}
