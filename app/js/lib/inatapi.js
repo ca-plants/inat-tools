@@ -1,5 +1,4 @@
 import { Cache } from "./cache.js";
-import { Login } from "./login.js";
 
 class QueryCancelledException extends Error {}
 
@@ -21,14 +20,6 @@ class INatAPI {
      */
     cancelQuery(yn) {
         this.#cancelQuery = yn === true;
-    }
-
-    async changeLogin() {
-        // Clear the cache.
-        const cache = await Cache.getInstance();
-        await cache.clear();
-        // Update the token.
-        this.#token = await Login.getToken();
     }
 
     checkForCancel() {
@@ -139,21 +130,21 @@ class INatAPI {
             token = this.#token;
         }
 
-        let headers;
+        let headers = new Headers();
         if (token) {
-            headers = {
-                headers: {
-                    "Content-Type": "application/json",
-                    Accept: "application/json",
-                    Authorization: token,
-                },
-            };
+            headers.append("Content-Type", "application/json");
+            headers.append("Accept", "application/json");
+            headers.append("Authorization", token);
         }
 
         await this.delay();
         this.checkForCancel();
 
-        const response = await fetch(url, headers);
+        const response = await fetch(url, {
+            method: "GET",
+            cache: "no-store",
+            headers: headers,
+        });
         const json = await response.json();
         return json;
     }

@@ -13,14 +13,17 @@ class LoginUI {
         const code_challenge = cv.code_challenge;
         const code_verifier = cv.code_verifier;
 
-        // Save verifier so we can use it later.
+        const client_id = hdom.getFormElementValue("client_id");
+
+        // Save client_id and verifier so we can use them later.
         const db = await DB.getInstance("InatLogin", OBJECT_STORE);
         await db.put(OBJECT_STORE, "code_verifier", code_verifier);
+        await db.put(OBJECT_STORE, "client_id", client_id);
 
         const loginURL = new URL("https://www.inaturalist.org/oauth/authorize");
         loginURL.searchParams.set("code_challenge_method", "S256");
         loginURL.searchParams.set("response_type", "code");
-        loginURL.searchParams.set("client_id", CLIENT_ID);
+        loginURL.searchParams.set("client_id", client_id);
         loginURL.searchParams.set("redirect_uri", document.location.toString());
         loginURL.searchParams.set("code_challenge", code_challenge);
         document.location = loginURL.toString();
@@ -75,7 +78,7 @@ class LoginUI {
             data.set("grant_type", "authorization_code");
             data.set("code", code);
             data.set("redirect_uri", redirect_uri.toString());
-            data.set("client_id", CLIENT_ID);
+            data.set("client_id", client_id);
             data.set("code_verifier", code_verifier);
 
             /** @type {RequestInit} */
@@ -110,9 +113,10 @@ class LoginUI {
             return await response.json();
         }
 
-        // Retrieve the saved verifier.
+        // Retrieve the saved client_id and verifier.
         const db = await DB.getInstance("InatLogin", OBJECT_STORE);
         const code_verifier = await db.get(OBJECT_STORE, "code_verifier");
+        const client_id = await db.get(OBJECT_STORE, "client_id");
 
         const url = new URL(document.location.toString());
         const orig_url = url.searchParams.get("url");
@@ -129,11 +133,20 @@ class LoginUI {
         const apiJSON = await getAPIToken(accessJSON.access_token);
 
         // Save the API token.
-        await Login.setToken(apiJSON.api_token, new INatAPI());
+        await Login.setToken(apiJSON.api_token, new INatAPI(apiJSON.api_token));
 
         // Remove the code verifier from storage, and redirect back to page where "Login" was clicked.
         await db.delete(OBJECT_STORE, "code_verifier");
         document.location = orig_url;
+    }
+
+    async handleLocalLogin() {
+        const client_id = hdom.getFormElementValue("client_id");
+        if (!client_id) {
+            alert("You must enter a client id.");
+            return;
+        }
+        await this.authorize();
     }
 
     async init() {
@@ -153,9 +166,23 @@ class LoginUI {
         const login_name = await Login.getLoginName();
         if (login_name) {
             this.enableLogout();
-        } else {
+            return;
+        }
+
+        if (document.location.hostname !== "localhost") {
+            // Save the client ID to a form element.
+            hdom.setFormElementValue("client_id", CLIENT_ID);
             await this.authorize();
         }
+
+        // Running on localhost. The production client ID won't work, so paste one in.
+        hdom.showElement("login-section");
+        hdom.addEventListener(
+            "login",
+            "click",
+            async () => await this.handleLocalLogin()
+        );
+        hdom.setFocusTo("client_id");
     }
 
     returnToSender() {
