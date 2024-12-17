@@ -40,7 +40,7 @@
         "@metalsmith/layouts": "^2.7.0",
         "@turf/clone": "^7.1.0",
         "@turf/clusters-dbscan": "^7.1.0",
-        "@turf/convex": "^7.1.0",
+        "@turf/concave": "^7.1.0",
         "@turf/helpers": "^7.1.0",
         "@turf/meta": "^7.1.0",
         "commander": "^12.1.0",
