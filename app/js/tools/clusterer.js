@@ -1,6 +1,6 @@
 export class Clusterer {
     #clustersDbscan;
-    #convex;
+    #concave;
     #turfMeta;
     #turfHelpers;
 
@@ -9,18 +9,18 @@ export class Clusterer {
      * @param {import("@turf/meta")} turfMeta
      * @param {import("@turf/helpers")} turfHelpers
      * @param {import("@turf/clone")} clone
-     * @param {import("@turf/convex").convex} convex
+     * @param {import("@turf/concave").concave} concave
      */
-    constructor(clustersDbscan, turfMeta, turfHelpers, clone, convex) {
+    constructor(clustersDbscan, turfMeta, turfHelpers, clone, concave) {
         this.#clustersDbscan = clustersDbscan;
         this.#turfMeta = turfMeta;
         this.#turfHelpers = turfHelpers;
-        this.#convex = convex;
+        this.#concave = concave;
     }
 
     /**
      * @param {import("geojson").FeatureCollection} geojson
-     * @param {{includeClusteredPoints?:boolean}} [options]
+     * @param {{includeClusteredPoints?:boolean,convex?:boolean}} [options]
      * @param {import("geojson").GeoJsonProperties} [properties={}]
      * @returns {import("geojson").FeatureCollection}
      */
@@ -28,7 +28,7 @@ export class Clusterer {
         /** @type {import("geojson").Feature[]} */
         const newFeatures = [];
 
-        /** @type {Map<number,import("geojson").Feature[]>} */
+        /** @type {Map<number,import("geojson").Feature<GeoJSON.Point>[]>} */
         const clusters = new Map();
         this.#turfMeta.featureEach(geojson, (f) => {
             if (!f.properties) {
@@ -40,6 +40,7 @@ export class Clusterer {
                     features = [];
                     clusters.set(f.properties.cluster, features);
                 }
+                // @ts-ignore
                 features.push(f);
                 if (options.includeClusteredPoints) {
                     newFeatures.push(f);
@@ -51,7 +52,7 @@ export class Clusterer {
 
         for (const features of clusters.values()) {
             const fc = this.#turfHelpers.featureCollection(features);
-            const border = this.#convex(fc);
+            const border = this.#concave(fc, { maxEdge: 1 });
             if (border) {
                 border.properties = { ...properties };
                 newFeatures.push(border);
