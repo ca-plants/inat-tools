@@ -38,6 +38,7 @@
     "dependencies": {
         "@metalsmith/in-place": "^5.0.0",
         "@metalsmith/layouts": "^2.7.0",
+        "@turf/area": "^7.1.0",
         "@turf/clone": "^7.1.0",
         "@turf/clusters-dbscan": "^7.1.0",
         "@turf/concave": "^7.1.0",
