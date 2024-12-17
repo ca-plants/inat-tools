@@ -468,6 +468,11 @@ export class SearchUI extends UI {
             filterArgs.establishment = establishment;
         }
 
+        const accuracy = hdom.getFormElementValue("accuracy");
+        if (accuracy !== "") {
+            filterArgs.accuracy = parseInt(accuracy);
+        }
+
         if (locationType === "boundary") {
             filterArgs.boundary = JSON.parse(
                 hdom.getFormElementValue(prefix + "-boundary-text")
@@ -872,7 +877,9 @@ function initMiscFields(prefix, filter) {
 
     const divAccuracy = hdom.createElement("div", "form-input");
     divAccuracy.appendChild(hdom.createLabelElement("accuracy", "Accuracy"));
-    divAccuracy.appendChild(hdom.createIntegerInput("accuracy", 99999));
+    divAccuracy.appendChild(
+        hdom.createIntegerInput("accuracy", filter.getMinAccuracy(), 99999)
+    );
     divAccuracy.appendChild(
         hdom.createTextElement("span", {}, " meters or less")
     );
