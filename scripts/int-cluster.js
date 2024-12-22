@@ -33,11 +33,10 @@ async function run(program, options) {
     const json = JSON.parse(str);
     const clusterer = new NodeClusterer();
     const clustered = clusterer.cluster(json, options.maxdistance);
-    const bordered = clusterer.addBorders(
-        clustered,
-        {},
-        { fill: "red", "fill-opacity": 0.8 }
-    );
+    const bordered = clusterer.addBorders(clustered, {
+        fill: "red",
+        "fill-opacity": 0.8,
+    });
     writeFileSync(
         path.join(__dirname, options.output),
         JSON.stringify(bordered)
