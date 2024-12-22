@@ -1,3 +1,5 @@
+import whichPolygon from "which-polygon";
+
 export class Clusterer {
     #clustersDbscan;
     #concave;
@@ -23,48 +25,45 @@ export class Clusterer {
 
     /**
      * @param {import("geojson").FeatureCollection} geojson
-     * @param {{includeClusteredPoints?:boolean,convex?:boolean}} [options]
      * @param {import("geojson").GeoJsonProperties} [properties={}]
      * @returns {import("geojson").FeatureCollection}
      */
-    addBorders(geojson, options = {}, properties = {}) {
+    addBorders(geojson, properties = {}) {
         /** @type {import("geojson").Feature[]} */
-        const newFeatures = [];
+        const unClusteredPoints = [];
+        /** @type {import("geojson").Feature[]} */
+        const newPolygons = [];
 
         /** @type {Map<number,import("geojson").Feature<GeoJSON.Point>[]>} */
         const clusters = new Map();
-        this.#turfMeta.featureEach(geojson, (f) => {
-            if (!f.properties) {
+        this.#turfMeta.featureEach(geojson, (point) => {
+            if (!point.properties || point.geometry.type !== "Point") {
                 return;
             }
-            if (typeof f.properties.cluster === "number") {
-                let features = clusters.get(f.properties.cluster);
-                if (!features) {
-                    features = [];
-                    clusters.set(f.properties.cluster, features);
+            if (typeof point.properties.cluster === "number") {
+                let clusterPoints = clusters.get(point.properties.cluster);
+                if (!clusterPoints) {
+                    clusterPoints = [];
+                    clusters.set(point.properties.cluster, clusterPoints);
                 }
                 // @ts-ignore
-                features.push(f);
-                if (options.includeClusteredPoints) {
-                    newFeatures.push(f);
-                }
+                clusterPoints.push(point);
             } else {
-                newFeatures.push(f);
+                unClusteredPoints.push(point);
             }
         });
 
-        for (const [cluster_num, features] of clusters.entries()) {
-            const fc = this.#turfHelpers.featureCollection(features);
+        for (const [cluster_num, clusterPoints] of clusters.entries()) {
+            const fc = this.#turfHelpers.featureCollection(clusterPoints);
             const border = this.#concave(fc, { maxEdge: 1 });
             if (!border) {
                 continue;
             }
 
-            /** @type {import("geojson").Feature<import("geojson").Polygon>[]} */
+            /** @type {import("geojson").Feature[]} */
             let polygons = [];
             switch (border.geometry.type) {
                 case "Polygon":
-                    // @ts-ignore
                     polygons = [border];
                     break;
                 case "MultiPolygon":
@@ -83,10 +82,22 @@ export class Clusterer {
                     ...properties,
                 };
             });
-            newFeatures.push(...polygons);
+            newPolygons.push(...polygons);
         }
 
-        return this.#turfHelpers.featureCollection(newFeatures);
+        const outsidePoints = this.#findClusteredPointsOutsideOfPolygons(
+            newPolygons,
+            clusters
+        );
+
+        /** @type {import("geojson").Feature[]} */
+        const features = [
+            ...newPolygons,
+            ...unClusteredPoints,
+            ...outsidePoints,
+        ];
+
+        return this.#turfHelpers.featureCollection(features);
     }
 
     /**
@@ -110,5 +121,30 @@ export class Clusterer {
             }
         });
         return maxCluster === -1 ? undefined : maxCluster;
+    }
+
+    /**
+     * @param {import("geojson").Feature[]} polygons
+     * @param {Map<number,import("geojson").Feature<import("geojson").Point,import("geojson").GeoJsonProperties>[]>} clusters
+     * @returns {import("geojson").Feature<import("geojson").Point>[]}
+     */
+    #findClusteredPointsOutsideOfPolygons(polygons, clusters) {
+        const query = whichPolygon(
+            this.#turfHelpers.featureCollection(polygons)
+        );
+
+        const outsidePoints = [];
+
+        for (const [cluster_num, clusterPoints] of clusters.entries()) {
+            for (const point of clusterPoints) {
+                const coords = point.geometry.coordinates;
+                const polyProps = query([coords[0], coords[1]]);
+                if (!polyProps) {
+                    outsidePoints.push(point);
+                }
+            }
+        }
+
+        return outsidePoints;
     }
 }
