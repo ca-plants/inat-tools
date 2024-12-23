@@ -1,4 +1,6 @@
 import whichPolygon from "which-polygon";
+import { polygonToLine } from "@turf/polygon-to-line";
+import { pointToLineDistance } from "@turf/point-to-line-distance";
 
 export class Clusterer {
     #clustersDbscan;
@@ -75,15 +77,22 @@ export class Clusterer {
 
             polygons.forEach((p) => {
                 p.properties = {
-                    cluster_num: cluster_num,
-                    hectares: this.#turfHelpers
-                        .convertArea(this.#area(p), "meters", "hectares")
-                        .toFixed(2),
-                    ...properties,
+                    cluster: cluster_num,
                 };
             });
             newPolygons.push(...polygons);
         }
+
+        newPolygons.forEach((p, index) => {
+            p.properties = {
+                ...p.properties,
+                hectares: this.#turfHelpers
+                    .convertArea(this.#area(p), "meters", "hectares")
+                    .toFixed(2),
+                pop_num: index,
+                ...properties,
+            };
+        });
 
         const outsidePoints = this.#findClusteredPointsOutsideOfPolygons(
             newPolygons,
@@ -133,18 +142,57 @@ export class Clusterer {
             this.#turfHelpers.featureCollection(polygons)
         );
 
-        const outsidePoints = [];
+        const initialOutsidePoints = [];
 
-        for (const [cluster_num, clusterPoints] of clusters.entries()) {
+        for (const clusterPoints of clusters.values()) {
             for (const point of clusterPoints) {
                 const coords = point.geometry.coordinates;
                 const polyProps = query([coords[0], coords[1]]);
                 if (!polyProps) {
-                    outsidePoints.push(point);
+                    initialOutsidePoints.push(point);
                 }
             }
         }
 
-        return outsidePoints;
+        const finalOutsidePoints = [];
+
+        // If any points remain outside, find the distance to the nearest polygon.
+        if (initialOutsidePoints.length) {
+            // Convert all polygons to lines.
+            const polysAsLines = new Map();
+            for (const polygon of polygons) {
+                const cluster = polygon.properties?.cluster;
+                let lines = polysAsLines.get(cluster);
+                if (!lines) {
+                    lines = [];
+                    polysAsLines.set(cluster, lines);
+                }
+                // @ts-ignore
+                lines.push(polygonToLine(polygon));
+            }
+
+            for (const point of initialOutsidePoints) {
+                const cluster = point.properties?.cluster;
+                const lines = polysAsLines.get(cluster);
+                if (!lines) {
+                    console.warn(`cluster ${cluster} has no polygons`);
+                    finalOutsidePoints.push(point);
+                    continue;
+                }
+                let minDistance = Number.MAX_SAFE_INTEGER;
+                for (const line of lines) {
+                    const dist = pointToLineDistance(point, line, {
+                        units: "meters",
+                    });
+                    minDistance = Math.min(minDistance, dist);
+                }
+
+                if (minDistance > 1) {
+                    finalOutsidePoints.push(point);
+                }
+            }
+        }
+
+        return finalOutsidePoints;
     }
 }

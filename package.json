@@ -44,6 +44,8 @@
         "@turf/concave": "^7.1.0",
         "@turf/helpers": "^7.1.0",
         "@turf/meta": "^7.1.0",
+        "@turf/point-to-line-distance": "^7.1.0",
+        "@turf/polygon-to-line": "^7.1.0",
         "commander": "^12.1.0",
         "jstransformer-marked": "^1.4.0",
         "jstransformer-nunjucks": "^1.2.0",

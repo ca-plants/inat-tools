@@ -37,6 +37,17 @@ async function run(program, options) {
         fill: "red",
         "fill-opacity": 0.8,
     });
+
+    // Go through remaining points and color code them.
+    turfMeta.featureEach(bordered, (point) => {
+        if (point.geometry.type === "Point") {
+            const properties = point.properties ?? {};
+            if (properties.dbscan === "noise") {
+                properties["marker-color"] = "yellow";
+            }
+        }
+    });
+
     writeFileSync(
         path.join(__dirname, options.output),
         JSON.stringify(bordered)
