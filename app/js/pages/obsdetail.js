@@ -162,24 +162,10 @@ class ObsDetailUI extends SearchUI {
          */
         function propsDefault(obs) {
             return {
+                taxon_name: obs.getTaxonName(),
                 url: obs.getURL(),
                 date: obs.getObsDateString(),
                 observer: obs.getUserDisplayName(),
-            };
-        }
-
-        /**
-         * @param {INatObservation} obs
-         * @returns {object}
-         */
-        function propsGaia(obs) {
-            return {
-                title: obs.getTaxonName(),
-                notes: [
-                    obs.getObsDateString(),
-                    obs.getUserDisplayName(),
-                    obs.getURL(),
-                ].join("\n"),
             };
         }
 
@@ -194,12 +180,7 @@ class ObsDetailUI extends SearchUI {
             };
         }
 
-        let fnProps = propsDefault;
-        switch (type) {
-            case "gaia-gj":
-                fnProps = propsGaia;
-                break;
-        }
+        const fnProps = propsDefault;
 
         // If there is a boundary, include it in the GeoJSON.
         const params = this.#f1.getParams();
@@ -673,12 +654,12 @@ class ObsDetailUI extends SearchUI {
         });
         const displayOptions = [
             { id: "details" },
-            { id: "geojson" },
+            { id: "maps" },
             { id: "datehisto" },
             { id: "usersumm" },
         ];
         addDisplayOption("details", "Details", this);
-        addDisplayOption("geojson", "GeoJSON", this);
+        addDisplayOption("maps", "Map Data", this);
         addDisplayOption("datehisto", "Date Histogram", this);
         addDisplayOption("usersumm", "Summary by Observer", this);
 
@@ -774,33 +755,22 @@ class ObsDetailUI extends SearchUI {
         this.wrapResults(eResults, eTable);
     }
 
-    showGeoJSON() {
+    showMaps() {
         const eResults = this.clearResults();
 
         const eButtons = hdom.createElement("div", {
             class: "section flex-fullwidth",
         });
-        const urlGJ = new URL("https://geojson.io");
-        urlGJ.hash =
-            "data=data:application/json," +
-            encodeURIComponent(
-                this.#getDownloadData(undefined, "geojson").content
-            );
-        const eBtnGeoJSONIO = hdom.createLinkElement(urlGJ, "geojson.io", {
-            target: "_blank",
-        });
-        eButtons.appendChild(eBtnGeoJSONIO);
 
         const typeDiv = hdom.createElement("div", "form-input");
-        const dlOptions = hdom.createSelectElement("download-type", "", [
+        const dlOptions = hdom.createSelectElement("download-type", "Format:", [
             { value: "geojson", label: "GeoJSON" },
             { value: "gpx", label: "GPX" },
-            { value: "gaia-gj", label: "Gaia GPS GeoJSON" },
         ]);
         hdom.appendChildren(typeDiv, dlOptions);
         const dlLink = createDownloadLink(
             this,
-            "Download GeoJSON",
+            "Download",
             "observations.geojson",
             () => this.#getDownloadData()
         );
@@ -808,6 +778,22 @@ class ObsDetailUI extends SearchUI {
         dlDiv.appendChild(typeDiv);
         dlDiv.appendChild(dlLink);
         eButtons.appendChild(dlDiv);
+
+        const urlGJ = new URL("https://geojson.io");
+        urlGJ.hash =
+            "data=data:application/json," +
+            encodeURIComponent(
+                this.#getDownloadData(undefined, "geojson").content
+            );
+        const eBtnGeoJSONIO = hdom.createLinkElement(
+            urlGJ,
+            "View at geojson.io",
+            {
+                id: "geojson-io-link",
+                target: "_blank",
+            }
+        );
+        eButtons.appendChild(eBtnGeoJSONIO);
 
         eResults.appendChild(eButtons);
         hdom.addEventListener("download-type", "change", () =>
@@ -982,8 +968,8 @@ class ObsDetailUI extends SearchUI {
             case "datehisto":
                 this.showDateHistogram();
                 break;
-            case "geojson":
-                this.showGeoJSON();
+            case "maps":
+                this.showMaps();
                 break;
             case "usersumm":
                 this.showUserSumm();
@@ -1014,6 +1000,16 @@ class ObsDetailUI extends SearchUI {
             "geojson-value",
             this.#getDownloadData(2).content
         );
+
+        // Update links based on selected type.
+        switch (hdom.getFormElementValue("download-type")) {
+            case "gpx":
+                hdom.showElement("geojson-io-link", false);
+                break;
+            case "geojson":
+                hdom.showElement("geojson-io-link", true);
+                break;
+        }
     }
 
     #updateHash() {

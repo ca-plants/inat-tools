@@ -179,7 +179,8 @@ div.fieldset {
     margin-top: .25rem;
 }
 
-div.form-input label {
+/* Align the labels in a filter form. */
+div.filter div.form-input label {
     min-width: 4rem;
 }
 
