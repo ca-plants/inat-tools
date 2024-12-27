@@ -16,8 +16,11 @@ class MockAPI extends INatAPI {
         return { display_name: "Tilden Regional Park, CA, US" };
     }
 
+    /**
+     * @returns {Promise<INatData.ProjectData>}
+     */
     async getProjectData() {
-        return { title: "projname" };
+        return { id: 0, title: "projname", slug: "projname", user_ids: [] };
     }
 
     /**

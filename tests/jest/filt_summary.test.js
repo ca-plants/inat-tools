@@ -145,3 +145,9 @@ test(
     undefined,
     "Species observed in Tilden Regional Park, CA, US with an accuracy of 1000 meters or less"
 );
+test(
+    "place and taxon obscured",
+    { place_id: "3523", obscuration: "taxon" },
+    undefined,
+    "Species observed in Tilden Regional Park, CA, US where taxon is obscured"
+);

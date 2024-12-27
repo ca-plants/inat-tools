@@ -473,6 +473,11 @@ export class SearchUI extends UI {
             filterArgs.accuracy = parseInt(accuracy);
         }
 
+        const taxonObscured = hdom.isChecked("taxon-obscured");
+        if (taxonObscured) {
+            filterArgs.obscuration = "taxon";
+        }
+
         if (locationType === "boundary") {
             filterArgs.boundary = JSON.parse(
                 hdom.getFormElementValue(prefix + "-boundary-text")
@@ -841,6 +846,8 @@ function initLocations(prefix, options, filter) {
  * @param {SpeciesFilter} filter
  */
 function initMiscFields(prefix, filter) {
+    const filterParams = filter.getParams();
+
     const divForm = hdom.getElement(prefix + "-misc");
 
     // Add Quality Grade checkboxes.
@@ -881,4 +888,17 @@ function initMiscFields(prefix, filter) {
         hdom.createTextElement("span", {}, " meters or less")
     );
     divForm.appendChild(divAccuracy);
+
+    // Add "taxon obscured" option.
+    const divObscured = hdom.createElement("div");
+    divObscured.appendChild(
+        hdom.createCheckBox(
+            "taxon-obscured",
+            filterParams.obscuration === "taxon"
+        )
+    );
+    divObscured.appendChild(
+        hdom.createLabelElement("taxon-obscured", "Taxon obscured")
+    );
+    divForm.appendChild(divObscured);
 }

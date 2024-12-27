@@ -54,6 +54,7 @@ declare namespace INatData {
         display_name: string;
     }
     export interface ProjectData {
+        id: number;
         title: string;
         slug: string;
         user_ids: number[];
@@ -100,5 +101,6 @@ declare namespace Params {
         annotations?: { type: "ev-mammal" | "plants"; value: string }[];
         establishment?: "native" | "introduced";
         accuracy?: number;
+        obscuration?: "obscured" | "private" | "none" | "taxon";
     }
 }

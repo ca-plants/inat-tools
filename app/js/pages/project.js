@@ -3,6 +3,8 @@ import { DataRetriever } from "../lib/dataretriever.js";
 import { hdom } from "../lib/hdom.js";
 import { InatURL } from "../lib/inaturl.js";
 import { SearchUI } from "../lib/searchui.js";
+import { SpeciesFilter } from "../lib/speciesfilter.js";
+import { createTaxaSummaryTable } from "../lib/utils.js";
 
 /**
  * @typedef {{proj?:string,submit?:boolean}} QueryArgs
@@ -38,6 +40,8 @@ class UI extends SearchUI {
     #projData;
     /** @type {INatData.ProjectMemberData[]|undefined} */
     #projMembers;
+    /** @type {INatData.TaxonObsSummary[]|undefined} */
+    #projObscuredTaxa;
 
     /**
      * @param {QueryArgs} args
@@ -149,8 +153,11 @@ class UI extends SearchUI {
         );
         divOpt1.appendChild(memLink);
 
-        const divOpt2 = hdom.createElement("div", "displayoptions");
+        const divOpt2 = hdom.createElement("div", { id: "taxa-count" });
         divOptions.appendChild(divOpt2);
+
+        const divOpt3 = hdom.createElement("div", "displayoptions");
+        divOptions.appendChild(divOpt3);
 
         const radioData = [
             { type: "members", label: "Members" },
@@ -171,7 +178,7 @@ class UI extends SearchUI {
                 async (e) => await this.#handleViewTypeClick(e)
             );
             div.appendChild(radio.label);
-            divOpt2.appendChild(div);
+            divOpt3.appendChild(div);
         }
 
         return divOptions;
@@ -215,6 +222,41 @@ class UI extends SearchUI {
     }
 
     /**
+     * @returns {Promise<Element|undefined>}
+     */
+    async #getSpeciesTable() {
+        if (!this.#projData) {
+            throw new Error();
+        }
+
+        /** @type {Params.SpeciesFilter} */
+        const filterParams = {
+            project_id: this.#projData.id.toString(),
+            obscuration: "taxon",
+        };
+        const filter = new SpeciesFilter(filterParams);
+        if (this.#projObscuredTaxa === undefined) {
+            this.#projObscuredTaxa = await DataRetriever.getSpeciesData(
+                this.getAPI(),
+                filter,
+                undefined,
+                this.getProgressReporter()
+            );
+            if (this.#projObscuredTaxa === undefined) {
+                return;
+            }
+        }
+
+        hdom.showElement("taxa-count", true);
+        hdom.setElementText(
+            "taxa-count",
+            `${this.#projObscuredTaxa.length} obscured taxa`
+        );
+
+        return createTaxaSummaryTable(filter, this.#projObscuredTaxa);
+    }
+
+    /**
      * @param {Event} e
      */
     async #handleViewTypeClick(e) {
@@ -227,9 +269,11 @@ class UI extends SearchUI {
         let results;
         switch (e.currentTarget.id) {
             case "view-type-members":
+                hdom.showElement("taxa-count", false);
                 results = await this.#getResultsTable();
                 break;
             case "view-type-taxa":
+                results = await this.#getSpeciesTable();
                 break;
         }
 
