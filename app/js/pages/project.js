@@ -3,6 +3,8 @@ import { DataRetriever } from "../lib/dataretriever.js";
 import { hdom } from "../lib/hdom.js";
 import { InatURL } from "../lib/inaturl.js";
 import { SearchUI } from "../lib/searchui.js";
+import { SpeciesFilter } from "../lib/speciesfilter.js";
+import { createTaxaSummaryTable } from "../lib/utils.js";
 
 /**
  * @typedef {{proj?:string,submit?:boolean}} QueryArgs
@@ -34,6 +36,13 @@ const COLUMNS = {
 class UI extends SearchUI {
     #args;
 
+    /** @type {INatData.ProjectData|undefined} */
+    #projData;
+    /** @type {INatData.ProjectMemberData[]|undefined} */
+    #projMembers;
+    /** @type {INatData.TaxonObsSummary[]|undefined} */
+    #projObscuredTaxa;
+
     /**
      * @param {QueryArgs} args
      */
@@ -49,17 +58,20 @@ class UI extends SearchUI {
             return;
         }
 
+        this.#projData = this.#projMembers = undefined;
+
         document.location.hash = JSON.stringify({ proj: projId });
 
         const divResults = hdom.removeChildren("results");
 
-        const data = await DataRetriever.getProjectMembers(
-            this.getAPI(),
-            projId,
-            this.getProgressReporter()
+        this.#projData = await this.getAPI().getProjectData(projId);
+        divResults.appendChild(this.#getResultsHeader());
+
+        divResults.appendChild(
+            hdom.createElement("div", { id: "results-table" })
         );
 
-        divResults.appendChild(getResultsTable(data));
+        hdom.clickElement("view-type-members");
     }
 
     static async getUI() {
@@ -112,6 +124,163 @@ class UI extends SearchUI {
         e.preventDefault();
         await this.doSearch();
     }
+
+    /**
+     * @returns {Element}
+     */
+    #getResultsHeader() {
+        if (!this.#projData) {
+            throw new Error();
+        }
+        const divOptions = hdom.createElement("div", "section flex-fullwidth");
+        const divOpt1 = hdom.createElement("div");
+        divOptions.appendChild(divOpt1);
+
+        const projLink = hdom.createLinkElement(
+            "https://www.inaturalist.org/projects/" + this.#projData.slug,
+            this.#projData.title,
+            { target: "_blank" }
+        );
+        divOpt1.appendChild(projLink);
+        hdom.appendTextValue(divOpt1, " - ");
+
+        const memLink = hdom.createLinkElement(
+            `https://www.inaturalist.org/projects/${
+                this.#projData.slug
+            }/members`,
+            ` ${this.#projData.user_ids.length} members`,
+            { target: "_blank" }
+        );
+        divOpt1.appendChild(memLink);
+
+        const divOpt2 = hdom.createElement("div", { id: "taxa-count" });
+        divOptions.appendChild(divOpt2);
+
+        const divOpt3 = hdom.createElement("div", "displayoptions");
+        divOptions.appendChild(divOpt3);
+
+        const radioData = [
+            { type: "members", label: "Members" },
+            { type: "taxa", label: "Obscured Taxa" },
+        ];
+        for (const data of radioData) {
+            const div = hdom.createElement("div");
+            const radio = hdom.createRadioElement(
+                "view-type",
+                "view-type-" + data.type,
+                data.type,
+                data.label
+            );
+            div.appendChild(radio.radio);
+            hdom.addEventListener(
+                radio.radio,
+                "click",
+                async (e) => await this.#handleViewTypeClick(e)
+            );
+            div.appendChild(radio.label);
+            divOpt3.appendChild(div);
+        }
+
+        return divOptions;
+    }
+
+    /**
+     * @returns {Promise<Element|undefined>}
+     */
+    async #getResultsTable() {
+        if (!this.#projData) {
+            throw new Error();
+        }
+
+        if (this.#projMembers === undefined) {
+            this.#projMembers = await DataRetriever.getProjectMembers(
+                this.getAPI(),
+                this.#projData.slug,
+                this.getProgressReporter()
+            );
+            if (this.#projMembers === undefined) {
+                return;
+            }
+        }
+
+        const cols = [
+            COLUMNS.USER_LOGIN,
+            COLUMNS.USER_NAME,
+            COLUMNS.PROJ_OBS,
+            COLUMNS.USER_ROLE,
+        ];
+        const table = ColDef.createTable(cols);
+
+        const tbody = hdom.createElement("tbody");
+        table.appendChild(tbody);
+
+        for (const result of this.#projMembers) {
+            tbody.appendChild(ColDef.createRow(result, cols));
+        }
+
+        return table;
+    }
+
+    /**
+     * @returns {Promise<Element|undefined>}
+     */
+    async #getSpeciesTable() {
+        if (!this.#projData) {
+            throw new Error();
+        }
+
+        /** @type {Params.SpeciesFilter} */
+        const filterParams = {
+            project_id: this.#projData.id.toString(),
+            obscuration: "taxon",
+        };
+        const filter = new SpeciesFilter(filterParams);
+        if (this.#projObscuredTaxa === undefined) {
+            this.#projObscuredTaxa = await DataRetriever.getSpeciesData(
+                this.getAPI(),
+                filter,
+                undefined,
+                this.getProgressReporter()
+            );
+            if (this.#projObscuredTaxa === undefined) {
+                return;
+            }
+        }
+
+        hdom.showElement("taxa-count", true);
+        hdom.setElementText(
+            "taxa-count",
+            `${this.#projObscuredTaxa.length} obscured taxa`
+        );
+
+        return createTaxaSummaryTable(filter, this.#projObscuredTaxa);
+    }
+
+    /**
+     * @param {Event} e
+     */
+    async #handleViewTypeClick(e) {
+        if (!(e.currentTarget instanceof Element)) {
+            throw new Error();
+        }
+
+        const divTable = hdom.removeChildren("results-table");
+
+        let results;
+        switch (e.currentTarget.id) {
+            case "view-type-members":
+                hdom.showElement("taxa-count", false);
+                results = await this.#getResultsTable();
+                break;
+            case "view-type-taxa":
+                results = await this.#getSpeciesTable();
+                break;
+        }
+
+        if (results) {
+            divTable.appendChild(results);
+        }
+    }
 }
 
 /**
@@ -145,29 +314,6 @@ function getAutoCompleteDiv(prefix, name, label) {
     eDiv.appendChild(eDataList);
 
     return eDiv;
-}
-
-/**
- * @param {INatData.ProjectMemberData[]} data
- * @returns {Element}
- */
-function getResultsTable(data) {
-    const cols = [
-        COLUMNS.USER_LOGIN,
-        COLUMNS.USER_NAME,
-        COLUMNS.PROJ_OBS,
-        COLUMNS.USER_ROLE,
-    ];
-    const table = ColDef.createTable(cols);
-
-    const tbody = hdom.createElement("tbody");
-    table.appendChild(tbody);
-
-    for (const result of data) {
-        tbody.appendChild(ColDef.createRow(result, cols));
-    }
-
-    return table;
 }
 
 function getSubmitDiv() {

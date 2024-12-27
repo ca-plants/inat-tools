@@ -3,63 +3,11 @@ import { DataRetriever } from "../lib/dataretriever.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { SearchUI } from "../lib/searchui.js";
 import { hdom } from "../lib/hdom.js";
-import { createDownloadLink } from "../lib/utils.js";
-
-/** @type {{
- * label:string,
- * class?:string,
- * colspan?:number,
- * value:function(INatData.TaxonObsSummary):string}[]} */
-const COLUMNS = [
-    {
-        label: "Name",
-        class: "c-sn",
-        value: (result) => {
-            return result.taxon.name;
-        },
-    },
-    {
-        label: "Common Name",
-        class: "c-cn",
-        value: (result) => {
-            /**
-             * @param {string} phrase
-             */
-            function capitalizeFirstLetters(phrase) {
-                if (phrase === undefined) {
-                    return "";
-                }
-                const words = phrase.split(" ");
-                const capWords = words.map((w) =>
-                    w ? w[0].toUpperCase() + w.substring(1) : ""
-                );
-                return capWords.join(" ");
-            }
-
-            let taxon = result.taxon;
-            let commonName = taxon.preferred_common_name;
-            if (!commonName && taxon.rank_level > 10) {
-                commonName = taxon.rank + " " + taxon.name;
-            }
-            return capitalizeFirstLetters(commonName);
-        },
-    },
-    {
-        label: "# Obs",
-        class: "c-odet",
-        colspan: 2,
-        value: (result) => {
-            return result.count.toString();
-        },
-    },
-    {
-        label: "",
-        class: "c-oin",
-        value: (result) => {
-            return result.count.toString();
-        },
-    },
-];
+import {
+    createDownloadLink,
+    createTaxaSummaryTable,
+    TAXA_SUMMARY_COLUMNS,
+} from "../lib/utils.js";
 
 class UI extends SearchUI {
     #f1;
@@ -131,7 +79,7 @@ class UI extends SearchUI {
         }
         const data = [];
         // Ignore the last column.
-        const cols = COLUMNS.slice(0, 3);
+        const cols = TAXA_SUMMARY_COLUMNS.slice(0, 3);
         data.push(cols.map((col) => col.label));
 
         for (const result of results) {
@@ -195,96 +143,6 @@ class UI extends SearchUI {
         summary.appendChild(button);
 
         return summary;
-    }
-
-    /**
-     * @param {SpeciesFilter} filter
-     * @param {INatData.TaxonObsSummary[]} results
-     */
-    getTaxaSummaryTable(filter, results) {
-        /**
-         * @param {INatData.TaxonObsSummary} result
-         */
-        function getTaxonSummary(result) {
-            /**
-             * @param {Element|string} content
-             * @param {string|undefined} className
-             */
-            function getCol(content, className) {
-                const td = hdom.createElement("td", className);
-                if (content instanceof Element) {
-                    td.appendChild(content);
-                } else {
-                    td.appendChild(document.createTextNode(content));
-                }
-                tr.appendChild(td);
-            }
-
-            const tr = hdom.createElement("tr");
-
-            for (let index = 0; index < 2; index++) {
-                getCol(COLUMNS[index].value(result), COLUMNS[index].class);
-            }
-
-            obsParams.taxon_id = result.taxon.id.toString();
-            detailURL.hash = JSON.stringify({ f1: obsParams, branch: true });
-            const eLinkText = hdom.createElement("span");
-            eLinkText.appendChild(
-                document.createTextNode(COLUMNS[2].value(result))
-            );
-            const eLinkLabel = hdom.createElement("span", "sm-label");
-            eLinkLabel.appendChild(document.createTextNode(" observations"));
-            eLinkText.appendChild(eLinkLabel);
-            const eLink = hdom.createLinkElement(detailURL, eLinkText, {
-                target: "_blank",
-            });
-            getCol(eLink, COLUMNS[2].class);
-
-            obsURL.searchParams.set("taxon_id", result.taxon.id.toString());
-            const eLinkInat = hdom.createLinkElement(obsURL, "iNat", {
-                target: "_blank",
-            });
-            getCol(eLinkInat, COLUMNS[3].class);
-
-            return tr;
-        }
-
-        const table = hdom.createElement("table");
-
-        const thead = hdom.createElement("thead");
-        table.appendChild(thead);
-        const tr = hdom.createElement("tr");
-        thead.appendChild(tr);
-        for (const col of COLUMNS) {
-            /** @type {Object<string,string>} */
-            const attributes = {};
-            if (col.class) {
-                attributes.class = col.class;
-            }
-            if (col.colspan) {
-                attributes.colspan = col.colspan.toString();
-            }
-            const th = hdom.createElement("th", attributes);
-            tr.appendChild(th);
-            th.appendChild(document.createTextNode(col.label));
-        }
-
-        const tbody = hdom.createElement("tbody");
-        table.appendChild(tbody);
-
-        const obsURL = filter.getURL();
-        const obsParams = filter.getParams();
-        const detailURL = new URL(
-            "./obsdetail.html",
-            new URL(document.location.toString())
-        );
-        for (const result of results) {
-            tbody.appendChild(getTaxonSummary(result));
-        }
-
-        const section = hdom.createElement("div", "section");
-        section.appendChild(table);
-        return section;
     }
 
     static async getUI() {
@@ -406,9 +264,7 @@ class UI extends SearchUI {
         divResults.appendChild(await this.#getSummaryDOM(this.#results));
 
         // Show taxa.
-        divResults.appendChild(
-            this.getTaxaSummaryTable(this.#f1, this.#results)
-        );
+        divResults.appendChild(createTaxaSummaryTable(this.#f1, this.#results));
     }
 }
 

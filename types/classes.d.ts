@@ -28,6 +28,7 @@ declare class ProgressReporter {
 
 declare class SpeciesFilter {
     getBoundary(): GeoJSON.FeatureCollection | undefined;
+    getParams(): Params.SpeciesFilter;
     getURL(url?: string | URL): URL;
 }
 
@@ -53,7 +54,10 @@ declare namespace INatData {
         display_name: string;
     }
     export interface ProjectData {
+        id: number;
         title: string;
+        slug: string;
+        user_ids: number[];
     }
     export interface ProjectMemberData {}
     export type QualityGrade = "needs_id" | "research";
@@ -97,5 +101,6 @@ declare namespace Params {
         annotations?: { type: "ev-mammal" | "plants"; value: string }[];
         establishment?: "native" | "introduced";
         accuracy?: number;
+        obscuration?: "obscured" | "private" | "none" | "taxon";
     }
 }

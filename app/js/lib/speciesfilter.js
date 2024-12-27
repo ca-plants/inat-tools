@@ -142,6 +142,10 @@ class SpeciesFilter {
                 this.#params.accuracy
             } meters or less`;
         }
+        if (this.#params.obscuration === "taxon") {
+            descrip += " where taxon is obscured";
+        }
+
         if (exclusions) {
             descrip += ", excluding " + (await exclusions.getDescription(api));
         }
@@ -160,6 +164,9 @@ class SpeciesFilter {
         return { month1: this.#params.month };
     }
 
+    /**
+     * @returns {Params.SpeciesFilter}
+     */
     getParams() {
         return structuredClone(this.#params);
     }
@@ -251,6 +258,19 @@ class SpeciesFilter {
                         url.searchParams.set("native", "true");
                     } else if (v === "introduced") {
                         url.searchParams.set("introduced", "true");
+                    }
+                    break;
+                case "obscuration":
+                    switch (v) {
+                        case "taxon":
+                            url.searchParams.set(
+                                "taxon_geoprivacy",
+                                "obscured"
+                            );
+                            break;
+                        default:
+                            url.searchParams.set(k, v);
+                            break;
                     }
                     break;
                 case "year1":
