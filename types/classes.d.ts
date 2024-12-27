@@ -28,6 +28,7 @@ declare class ProgressReporter {
 
 declare class SpeciesFilter {
     getBoundary(): GeoJSON.FeatureCollection | undefined;
+    getParams(): Params.SpeciesFilter;
     getURL(url?: string | URL): URL;
 }
 

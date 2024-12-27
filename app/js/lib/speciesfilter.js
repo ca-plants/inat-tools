@@ -160,6 +160,9 @@ class SpeciesFilter {
         return { month1: this.#params.month };
     }
 
+    /**
+     * @returns {Params.SpeciesFilter}
+     */
     getParams() {
         return structuredClone(this.#params);
     }
