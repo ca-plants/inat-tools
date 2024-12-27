@@ -826,14 +826,11 @@ function initLocations(prefix, options, filter) {
                 data.type,
                 data.label
             );
-            for (const element of radio) {
-                locationTypeDiv.appendChild(element);
-                if (element instanceof HTMLInputElement) {
-                    hdom.addEventListener(element, "click", () =>
-                        handleLocationTypeClick(prefix)
-                    );
-                }
-            }
+            locationTypeDiv.appendChild(radio.radio);
+            hdom.addEventListener(radio.radio, "click", () =>
+                handleLocationTypeClick(prefix)
+            );
+            locationTypeDiv.appendChild(radio.label);
         }
         locationsDiv.insertBefore(locationTypeDiv, locationsDiv.firstChild);
     }

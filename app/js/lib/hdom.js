@@ -33,6 +33,14 @@ export class hdom {
     }
 
     /**
+     * @param {Element} parent
+     * @param {string} str
+     */
+    static appendTextValue(parent, str) {
+        parent.appendChild(document.createTextNode(str));
+    }
+
+    /**
      * @param {string|Element} e
      */
     static clickElement(e) {
@@ -146,7 +154,7 @@ export class hdom {
      * @param {string} id
      * @param {string} value
      * @param {string} label
-     * @returns {Element[]}
+     * @returns {{radio:HTMLInputElement,label:Element}}
      */
     static createRadioElement(name, id, value, label) {
         const labelEl = this.createElement("label", { for: id });
@@ -157,7 +165,7 @@ export class hdom {
             value: value,
             name: name,
         });
-        return [radio, labelEl];
+        return { radio: radio, label: labelEl };
     }
 
     /**

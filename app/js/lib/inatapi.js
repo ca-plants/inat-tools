@@ -161,6 +161,7 @@ class INatAPI {
 
     /**
      * @param {string} projID
+     * @returns {Promise<INatData.ProjectData>}
      */
     async getProjectData(projID) {
         return this.#getDataByID(
