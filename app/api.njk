@@ -1,0 +1,19 @@
+---
+layout: default.njk
+title: API
+js: api
+---
+
+{%block content%}
+
+<form id="form">
+<div class="form-input">
+    <input type="text" id="url">
+    <input type="submit" id="submit">
+</div>
+<div class="form-input">
+    <textarea id="result" disabled style="height:10rem"></textarea>
+    </div>
+</form>
+
+{% endblock %}

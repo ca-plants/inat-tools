@@ -145,8 +145,7 @@ class INatAPI {
             cache: "no-store",
             headers: headers,
         });
-        const json = await response.json();
-        return json;
+        return await response.json();
     }
 
     /**
