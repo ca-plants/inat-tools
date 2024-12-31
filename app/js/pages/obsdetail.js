@@ -18,87 +18,105 @@ const RESULT_FORM_ID = "form-results";
 /** @type {SelArray} */
 const ALL_COORD_TYPES = ["public", "trusted", "obscured"];
 
-class DetailColDef extends ColDef {
-    /**
-     * @param {string} th
-     * @param {function (INatObservation,...ObsDetailUI) : Element|string} fnValue
-     * @param {string} [className]
-     */
-    constructor(th, fnValue, className) {
-        super(th, fnValue, className);
-    }
-}
-
+/** @type {Object<string,ColDef<INatObservation>>} */
 const DETAIL_COLS = {
-    OBS_DATE: new DetailColDef("Date", (obs) => {
-        return hdom.createLinkElement(obs.getURL(), obs.getObsDateString(), {
-            target: "_blank",
-        });
-    }),
-    TAXON: new DetailColDef("Taxon", (obs) => obs.getTaxonName()),
-    OBSERVER: new DetailColDef("Observer", (obs) => {
-        return hdom.createLinkElement(
-            InatURL.getUserLink(obs.getUserLogin()),
-            obs.getUserDisplayName(),
-            { target: "_blank" }
-        );
-    }),
-    LOCATION: new DetailColDef("Location", (obs) => {
-        if (obs.isObscured()) {
-            return "";
+    OBS_DATE: new ColDef(
+        "Date",
+        (obs) => {
+            return obs.getObsDateString();
+        },
+        (value, obs) => {
+            return hdom.createLinkElement(obs.getURL(), value, {
+                target: "_blank",
+            });
         }
-        const url = new URL("https://www.google.com/maps/search/?api=1");
-        url.searchParams.set("query", obs.getCoordinatesString());
-        return hdom.createLinkElement(url, obs.getPlaceGuess(), {
-            target: "_blank",
-        });
-    }),
-    COORDS: new DetailColDef("Coords", (obs) => {
+    ),
+    TAXON: new ColDef("Taxon", (obs) => obs.getTaxonName()),
+    OBSERVER: new ColDef(
+        "Observer",
+        (obs) => obs.getUserDisplayName(),
+        (value, obs) => {
+            return hdom.createLinkElement(
+                InatURL.getUserLink(obs.getUserLogin()),
+                value,
+                { target: "_blank" }
+            );
+        }
+    ),
+    LOCATION: new ColDef(
+        "Location",
+        (obs) => {
+            return obs.getPlaceGuess();
+        },
+        (value, obs) => {
+            if (obs.isObscured()) {
+                return "";
+            }
+            const url = new URL("https://www.google.com/maps/search/?api=1");
+            url.searchParams.set("query", obs.getCoordinatesString());
+            return hdom.createLinkElement(url, value, {
+                target: "_blank",
+            });
+        }
+    ),
+    COORDS: new ColDef("Coords", (obs) => {
         return obs.getCoordType();
     }),
-    PROJECT: new DetailColDef("Proj Mem", (obs, ui) => {
+    PROJECT: new ColDef("Proj Mem", (obs, ui) => {
         return ui.getMembershipStatus(obs.getUserID());
     }),
 };
 
-class SummaryColDef extends ColDef {
-    /**
-     * @param {string} th
-     * @param {function (UserSummary,ObsDetailUI) : Element|string} fnValue
-     * @param {string} [className]
-     */
-    constructor(th, fnValue, className) {
-        super(th, fnValue, className);
-    }
-}
-
+/** @type {Object<string,ColDef<UserSummary>>} */
 const SUMMARY_COLS = {
-    OBSERVER: new SummaryColDef("Observer", (summ) => {
-        return hdom.createLinkElement(
-            InatURL.getUserLink(summ.login),
-            summ.display_name,
-            { target: "_blank" }
-        );
-    }),
-    NUM_OBS: new SummaryColDef("Total", (summ, ui) => {
-        return ui.getObserverINatLink(summ, summ.results.observations.length);
-    }),
-    NUM_PUBLIC: new SummaryColDef("Public", (summ, ui) => {
-        return ui.getObserverINatLink(summ, summ.results.countPublic, [
-            "public",
-        ]);
-    }),
-    NUM_TRUSTED: new SummaryColDef("Trusted", (summ, ui) => {
-        return ui.getObserverINatLink(summ, summ.results.countTrusted, [
-            "trusted",
-        ]);
-    }),
-    NUM_OBSCURED: new SummaryColDef("Obscured", (summ, ui) => {
-        return ui.getObserverINatLink(summ, summ.results.countObscured, [
-            "obscured",
-        ]);
-    }),
-    PROJECT: new SummaryColDef("Proj Mem", (summ, ui) => {
+    OBSERVER_LOGIN: new ColDef("Login", (summ) => summ.login),
+    OBSERVER_NAME: new ColDef("Name", (summ) =>
+        summ.display_name === summ.login ? "" : summ.display_name
+    ),
+    OBSERVER: new ColDef(
+        "Observer",
+        (summ) => summ.display_name,
+        (value, summ) => {
+            return hdom.createLinkElement(
+                InatURL.getUserLink(summ.login),
+                value,
+                { target: "_blank" }
+            );
+        }
+    ),
+    NUM_OBS: new ColDef(
+        "Total",
+        (summ) => String(summ.results.observations.length),
+        (value, summ, ui) => {
+            return ui.getObserverINatLink(summ, value);
+        },
+        "right"
+    ),
+    NUM_PUBLIC: new ColDef(
+        "Public",
+        (summ) => String(summ.results.countPublic),
+        (value, summ, ui) => {
+            return ui.getObserverINatLink(summ, value, ["public"]);
+        },
+        "right"
+    ),
+    NUM_TRUSTED: new ColDef(
+        "Trusted",
+        (summ) => String(summ.results.countTrusted),
+        (value, summ, ui) => {
+            return ui.getObserverINatLink(summ, value, ["trusted"]);
+        },
+        "right"
+    ),
+    NUM_OBSCURED: new ColDef(
+        "Obscured",
+        (summ) => String(summ.results.countObscured),
+        (value, summ, ui) => {
+            return ui.getObserverINatLink(summ, value, ["obscured"]);
+        },
+        "right"
+    ),
+    PROJECT: new ColDef("Proj Mem", (summ, ui) => {
         return ui.getMembershipStatus(summ.id);
     }),
 };
@@ -706,24 +724,6 @@ class ObsDetailUI extends SearchUI {
     }
 
     showDetails() {
-        /**
-         * @param {INatObservation} obs
-         * @param {DetailColDef[]} cols
-         * @param {ObsDetailUI} ui
-         */
-        function getRow(obs, cols, ui) {
-            const tr = hdom.createElement("tr");
-            for (const col of cols) {
-                DetailColDef.addColElement(
-                    tr,
-                    col.getValue(obs, ui),
-                    col.getClass()
-                );
-            }
-
-            return tr;
-        }
-
         const eResults = this.clearResults();
         const selectedTypes = this.getSelectedTypes();
 
@@ -740,7 +740,7 @@ class ObsDetailUI extends SearchUI {
         if (this.#project_members) {
             cols.push(DETAIL_COLS.PROJECT);
         }
-        const eTable = DetailColDef.createTable(cols);
+        const eTable = ColDef.createTable(cols);
 
         const tbody = hdom.createElement("tbody");
         eTable.appendChild(tbody);
@@ -749,10 +749,10 @@ class ObsDetailUI extends SearchUI {
             if (!selectedTypes.includes(obs.getCoordType())) {
                 continue;
             }
-            tbody.appendChild(getRow(obs, cols, this));
+            tbody.appendChild(ColDef.createRow(obs, cols, [this]));
         }
 
-        this.wrapResults(eResults, eTable);
+        this.#wrapResults(eResults, eTable);
     }
 
     showMaps() {
@@ -769,7 +769,7 @@ class ObsDetailUI extends SearchUI {
         ]);
         hdom.appendChildren(typeDiv, dlOptions);
         const dlLink = createDownloadLink(
-            this,
+            this.getPathPrefix(),
             "Download",
             "observations.geojson",
             () => this.#getDownloadData()
@@ -812,55 +812,48 @@ class ObsDetailUI extends SearchUI {
     }
 
     showUserSumm() {
-        /**
-         * @param {UserSummary} userSumm
-         * @param {DetailColDef[]} cols
-         * @param {ObsDetailUI} ui
-         */
-        function getRow(userSumm, cols, ui) {
-            const tr = hdom.createElement("tr");
-            for (const col of cols) {
-                DetailColDef.addColElement(
-                    tr,
-                    col.getValue(userSumm, ui),
-                    col.getClass()
-                );
-            }
-            return tr;
-        }
-
         const eResults = this.clearResults();
         const selectedTypes = this.getSelectedTypes();
 
         // Summarize results.
         const summary = this.#getUserSummary();
+        const sortedSummary = Object.values(summary).sort(
+            (a, b) =>
+                ObsDetailUI.#getObsCount(b.results, selectedTypes) -
+                ObsDetailUI.#getObsCount(a.results, selectedTypes)
+        );
 
         const cols = [SUMMARY_COLS.OBSERVER];
+        const csvCols = [
+            SUMMARY_COLS.OBSERVER_LOGIN,
+            SUMMARY_COLS.OBSERVER_NAME,
+        ];
         if (selectedTypes.length > 1) {
             cols.push(SUMMARY_COLS.NUM_OBS);
+            csvCols.push(SUMMARY_COLS.NUM_OBS);
         }
         if (selectedTypes.includes("public")) {
             cols.push(SUMMARY_COLS.NUM_PUBLIC);
+            csvCols.push(SUMMARY_COLS.NUM_PUBLIC);
         }
         if (selectedTypes.includes("trusted")) {
             cols.push(SUMMARY_COLS.NUM_TRUSTED);
+            csvCols.push(SUMMARY_COLS.NUM_TRUSTED);
         }
         if (selectedTypes.includes("obscured")) {
             cols.push(SUMMARY_COLS.NUM_OBSCURED);
+            csvCols.push(SUMMARY_COLS.NUM_OBSCURED);
         }
         if (this.#project_members) {
             cols.push(SUMMARY_COLS.PROJECT);
+            csvCols.push(SUMMARY_COLS.PROJECT);
         }
-        const eTable = DetailColDef.createTable(cols);
+        const eTable = ColDef.createTable(cols);
 
         const tbody = hdom.createElement("tbody");
         eTable.appendChild(tbody);
 
-        for (const userSumm of Object.values(summary).sort(
-            (a, b) =>
-                ObsDetailUI.#getObsCount(b.results, selectedTypes) -
-                ObsDetailUI.#getObsCount(a.results, selectedTypes)
-        )) {
+        for (const userSumm of sortedSummary) {
             // Only show rows with something to display.
             if (
                 (selectedTypes.includes("public") &&
@@ -870,11 +863,28 @@ class ObsDetailUI extends SearchUI {
                 (selectedTypes.includes("trusted") &&
                     userSumm.results.countTrusted)
             ) {
-                tbody.appendChild(getRow(userSumm, cols, this));
+                tbody.appendChild(ColDef.createRow(userSumm, cols, [this]));
             }
         }
 
-        this.wrapResults(eResults, eTable);
+        const divHeader = hdom.createElement("div", "center");
+        hdom.setTextValue(divHeader, "Download ");
+        const downloadLink = createDownloadLink(
+            this.getPathPrefix(),
+            "Download CSV",
+            "species.csv",
+            () => {
+                return {
+                    content: ColDef.getCSVData(sortedSummary, csvCols, this),
+                };
+            }
+        );
+        divHeader.appendChild(downloadLink);
+
+        const divUserSumm = hdom.createElement("div", "section");
+        divUserSumm.appendChild(divHeader);
+        divUserSumm.appendChild(eTable);
+        eResults.appendChild(divUserSumm);
     }
 
     /**
@@ -1046,7 +1056,7 @@ class ObsDetailUI extends SearchUI {
      * @param {Element} eResultsDiv
      * @param {Element} eResultDetail
      */
-    wrapResults(eResultsDiv, eResultDetail) {
+    #wrapResults(eResultsDiv, eResultDetail) {
         const section = hdom.createElement("div", "section");
         section.appendChild(eResultDetail);
         eResultsDiv.appendChild(section);

@@ -16,15 +16,18 @@ const COLUMNS = {
         (member) => {
             return member.observations_count.toLocaleString();
         },
+        undefined,
         "c-no"
     ),
-    USER_LOGIN: new ColDef("Login", (member) => {
-        return hdom.createLinkElement(
-            InatURL.getUserLink(member.user.login),
-            member.user.login,
-            { target: "_blank" }
-        );
-    }),
+    USER_LOGIN: new ColDef(
+        "Login",
+        (member) => member.user.login,
+        (value) => {
+            return hdom.createLinkElement(InatURL.getUserLink(value), value, {
+                target: "_blank",
+            });
+        }
+    ),
     USER_NAME: new ColDef("Name", (member) => {
         return member.user.name ?? "";
     }),

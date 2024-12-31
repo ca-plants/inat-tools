@@ -57,13 +57,13 @@ export const TAXA_SUMMARY_COLUMNS = [
 ];
 
 /**
- * @param {import('./ui.js').UI} ui
+ * @param {string} pathPrefix
  * @param {string} title
  * @param {string} fileName
  * @param {function():{content:string,fileName?:string}} getData
  * @returns {Element}
  */
-export function createDownloadLink(ui, title, fileName, getData) {
+export function createDownloadLink(pathPrefix, title, fileName, getData) {
     function setHref() {
         const data = getData();
         var file = new Blob([data.content], { type: "text/plain" });
@@ -74,7 +74,7 @@ export function createDownloadLink(ui, title, fileName, getData) {
     }
 
     const dlImg = hdom.createElement("img", {
-        src: ui.getPathPrefix() + "img/icon/download.svg",
+        src: pathPrefix + "img/icon/download.svg",
         title: title,
     });
     const dlLink = hdom.createLinkElement("", dlImg, { download: fileName });

@@ -23,13 +23,15 @@ class UI {
         return ui;
     }
 
+    /**
+     * @returns {string}
+     */
     getPathPrefix() {
         const homeLink = document.getElementById("homelink");
         if (!homeLink) {
             return "";
         }
-        const href = homeLink.getAttribute("href");
-        return href;
+        return homeLink.getAttribute("href") ?? "";
     }
 
     getProgressReporter() {
