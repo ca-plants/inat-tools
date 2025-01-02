@@ -5,72 +5,63 @@ import { ColDef } from "../lib/coldef.js";
 import { hdom } from "../lib/hdom.js";
 import { summarizeObservations } from "../lib/obsSummaryTools.js";
 
+/** @type {Object<string,ColDef<import("../lib/obsSummaryTools.js").SummaryEntry>>} */
 const COLUMNS = {
     SCI_NAME: new ColDef(
         "Taxon",
         (entry) => {
-            return entry[1].displayName;
+            return entry.displayName;
         },
+        undefined,
         "c-sn"
     ),
     NUM_OBS: new ColDef(
         "#",
-        (entry, ui) => {
-            return ui.getDetailLink(entry, entry[1].count);
+        (entry) => entry.count.toLocaleString(),
+        (value, entry, ui) => {
+            return ui.getDetailLink(entry, value);
         },
         "c-num"
     ),
     NUM_RG: new ColDef(
         "Res. Grd.",
-        (entry, ui) => {
-            return ui.getDetailLink(
-                entry,
-                entry[1].countResearchGrade,
-                undefined,
-                { quality_grade: "research" }
-            );
+        (entry) => entry.countResearchGrade.toLocaleString(),
+        (value, entry, ui) => {
+            return ui.getDetailLink(entry, value, undefined, {
+                quality_grade: "research",
+            });
         },
         "c-num"
     ),
     NUM_NOT_RG: new ColDef(
         "Not Res. Grd.",
-        (entry, ui) => {
-            return ui.getDetailLink(
-                entry,
-                entry[1].count - entry[1].countResearchGrade,
-                undefined,
-                { quality_grade: "needs_id" }
-            );
+        (entry) => (entry.count - entry.countResearchGrade).toLocaleString(),
+        (value, entry, ui) => {
+            return ui.getDetailLink(entry, value, undefined, {
+                quality_grade: "needs_id",
+            });
         },
         "c-num"
     ),
     PCT_RG: new ColDef(
         "% Res. Grd.",
-        (entry) => {
-            return (
-                (entry[1].countResearchGrade * 100) /
-                entry[1].count
-            ).toFixed(2);
-        },
+        (entry) => ((entry.countResearchGrade * 100) / entry.count).toFixed(2),
+        undefined,
         "c-num"
     ),
     NUM_OBSCURED: new ColDef(
         "Obscured",
-        (entry, ui) => {
-            return ui.getDetailLink(entry, entry[1].countObscured, [
-                "obscured",
-            ]);
+        (entry) => entry.countObscured.toLocaleString(),
+        (value, entry, ui) => {
+            return ui.getDetailLink(entry, value, ["obscured"]);
         },
         "c-num"
     ),
     NUM_NOT_OBSCURED: new ColDef(
         "Not Obscured",
-        (entry, ui) => {
-            return ui.getDetailLink(
-                entry,
-                entry[1].count - entry[1].countObscured,
-                ["public", "trusted"]
-            );
+        (entry) => (entry.count - entry.countObscured).toLocaleString(),
+        (value, entry, ui) => {
+            return ui.getDetailLink(entry, value, ["public", "trusted"]);
         },
         "c-num"
     ),
@@ -88,47 +79,23 @@ export class ObsSummaryUI extends SearchUI {
 
     /**
      * @param {import("../lib/obsSummaryTools.js").SummaryEntry[]} results
-     * @param {ColDef[]} cols
+     * @param {ColDef<import("../lib/obsSummaryTools.js").SummaryEntry>[]} cols
      */
     getResultsTable(results, cols) {
-        /**
-         * @param {import("../lib/obsSummaryTools.js").SummaryEntry} entry
-         * @param {ColDef[]} cols
-         * @param {ObsSummaryUI} ui
-         */
-        function getRow(entry, cols, ui) {
-            /**
-             * @param {Node|string} content
-             * @param {string|undefined} className
-             */
-            function getCol(content, className) {
-                const td = hdom.createElement("td", className);
-                if (content instanceof Node) {
-                    td.appendChild(content);
-                } else {
-                    td.appendChild(document.createTextNode(content));
-                }
-                tr.appendChild(td);
-            }
-
-            const tr = hdom.createElement(
-                "tr",
-                entry.is_branch ? "branch" : undefined
-            );
-            for (const col of cols) {
-                getCol(col.getValue([entry.name, entry], ui), col.getClass());
-            }
-
-            return tr;
-        }
-
         const table = ColDef.createTable(cols);
 
         const tbody = hdom.createElement("tbody");
         table.appendChild(tbody);
 
         for (const summary of results) {
-            tbody.appendChild(getRow(summary, cols, this));
+            tbody.appendChild(
+                ColDef.createRow(
+                    summary,
+                    cols,
+                    [this],
+                    summary.is_branch ? "branch" : undefined
+                )
+            );
         }
 
         const section = hdom.createElement("div", "section");
@@ -137,8 +104,8 @@ export class ObsSummaryUI extends SearchUI {
     }
 
     /**
-     * @param {[string,import("../lib/obsSummaryTools.js").SummaryEntry]} entry
-     * @param {number} num
+     * @param {import("../lib/obsSummaryTools.js").SummaryEntry} entry
+     * @param {string} num
      * @param {("public"|"trusted"|"obscured")[]} [selected=["public", "trusted", "obscured"]]
      * @param {{quality_grade?:"research"|"needs_id"}} [extraParams={}]
      */
@@ -148,17 +115,16 @@ export class ObsSummaryUI extends SearchUI {
         selected = ["public", "trusted", "obscured"],
         extraParams = {}
     ) {
-        if (num === 0) {
+        if (num === "0") {
             return "0";
         }
-        const data = entry[1];
 
         const fp = this.#f1.getParams();
-        fp.taxon_id = data.taxon_id.toString();
+        fp.taxon_id = entry.taxon_id.toString();
         Object.assign(fp, extraParams);
         /** @type {Params.PageObsDetail} */
         const args = { f1: fp, coords: selected };
-        if (entry[1].is_branch) {
+        if (entry.is_branch) {
             args.branch = true;
         }
         const url = new URL(
