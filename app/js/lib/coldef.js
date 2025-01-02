@@ -1,18 +1,27 @@
+import { csvFormatRows } from "https://cdn.skypack.dev/d3-dsv";
 import { hdom } from "./hdom.js";
 
-class ColDef {
+/**
+ * @template T
+ */
+export class ColDef {
     #th;
+    /** @type {function (T,...any) : string} */
     #fnValue;
+    /** @type {(function (string,T,...any) : (Element|string))|undefined} */
+    #fnCellContent;
     #className;
 
     /**
      * @param {string} th
-     * @param {function (any,...any) : Element|string} fnValue
+     * @param {function (T,...any) : string} fnValue
+     * @param {function (string,T,...any) : (Element|string)} [fnCellContent]
      * @param {string} [className]
      */
-    constructor(th, fnValue, className) {
+    constructor(th, fnValue, fnCellContent, className) {
         this.#th = th;
         this.#fnValue = fnValue;
+        this.#fnCellContent = fnCellContent;
         this.#className = className;
     }
 
@@ -33,7 +42,8 @@ class ColDef {
 
     /**
      * @param {any} entry
-     * @param {ColDef[]} cols
+     * @template T
+     * @param {ColDef<T>[]} cols
      * @param {any[]} [otherArgs]
      * @param {string|undefined} [className]
      */
@@ -54,14 +64,15 @@ class ColDef {
 
         const tr = hdom.createElement("tr", className);
         for (const col of cols) {
-            getCol(col.getValue(entry, otherArgs), col.getClass());
+            getCol(col.getCellContent(entry, ...otherArgs), col.getClass());
         }
 
         return tr;
     }
 
     /**
-     * @param {ColDef[]} cols
+     * @template T
+     * @param {ColDef<T>[]} cols
      */
     static createTable(cols) {
         const table = hdom.createElement("table");
@@ -88,12 +99,45 @@ class ColDef {
     }
 
     /**
-     * @param {any} entry
+     * @param {T} entry
      * @param {any[]} args
+     * @returns {Element|string}
+     */
+    getCellContent(entry, ...args) {
+        const value = this.getValue(entry, ...args);
+        return this.#fnCellContent
+            ? this.#fnCellContent(value, entry, ...args)
+            : value;
+    }
+
+    /**
+     * @template T
+     * @param {T[]} results
+     * @param {ColDef<T>[]} cols
+     * @param {any[]} otherArgs
+     * @returns {string}
+     */
+    static getCSVData(results, cols, ...otherArgs) {
+        const data = [];
+        data.push(cols.map((col) => col.getHeaderLabel()));
+
+        for (const result of results) {
+            const row = [];
+            for (const col of cols) {
+                row.push(col.getValue(result, ...otherArgs));
+            }
+            data.push(row);
+        }
+
+        return csvFormatRows(data);
+    }
+
+    /**
+     * @param {T} entry
+     * @param {any[]} args
+     * @returns {string}
      */
     getValue(entry, ...args) {
         return this.#fnValue(entry, ...args);
     }
 }
-
-export { ColDef };
