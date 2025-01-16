@@ -767,7 +767,7 @@ class ObsDetailUI extends SearchUI {
             { value: "geojson", label: "GeoJSON" },
             { value: "gpx", label: "GPX" },
         ]);
-        hdom.appendChildren(typeDiv, dlOptions);
+        hdom.appendChildren(typeDiv, Object.values(dlOptions));
         const dlLink = createDownloadLink(
             this.getPathPrefix(),
             "Download",

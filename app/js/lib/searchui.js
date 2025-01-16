@@ -603,6 +603,8 @@ export class SearchUI extends UI {
             }
         }
 
+        addMonthSelects(prefix);
+
         initMiscFields(prefix, filter);
 
         await this.initProject(prefix, filter.getProjectID());
@@ -721,6 +723,25 @@ export class SearchUI extends UI {
             );
         }
     }
+}
+
+/**
+ * @param {string} prefix
+ */
+function addMonthSelects(prefix) {
+    const options = [{}].concat(
+        DateUtils.MONTH_NAMES.map((n, index) => {
+            return { value: String(index + 1), label: n };
+        })
+    );
+    const id = prefix + "-month1";
+    const select = hdom.createSelectElement(id, "Month", options);
+    const div = hdom.createElement("div", "form-input");
+    div.appendChild(select.label);
+    div.appendChild(select.select);
+    const yearsDiv = hdom.getElement(`${prefix}-date-years`);
+    // @ts-ignore - remove once all controls are generated dynamically
+    yearsDiv.parentElement.insertBefore(div, yearsDiv);
 }
 
 /**
@@ -872,7 +893,8 @@ function initMiscFields(prefix, filter) {
         ]
     );
     const divEst = hdom.createElement("div", "form-input");
-    establishment.forEach((e) => divEst.appendChild(e));
+    divEst.appendChild(establishment.label);
+    divEst.appendChild(establishment.select);
     divForm.appendChild(divEst);
     hdom.setFormElementValue(
         prefix + "-establishment",
