@@ -105,7 +105,17 @@ class SpeciesFilter {
             descrip += " in specified boundary";
         }
         if (this.#params.month) {
-            descrip += " in " + MONTH_NAMES[this.#params.month - 1];
+            if (typeof this.#params.month === "number") {
+                descrip += " in " + MONTH_NAMES[this.#params.month - 1];
+            } else {
+                descrip += ` in ${
+                    MONTH_NAMES[this.#params.month[0] - 1]
+                } through ${
+                    MONTH_NAMES[
+                        this.#params.month[this.#params.month.length - 1] - 1
+                    ]
+                }`;
+            }
         }
         const year1 = this.#params.year1;
         const year2 = this.#params.year2;
@@ -160,8 +170,8 @@ class SpeciesFilter {
         return this.#params.accuracy;
     }
 
-    getMonths() {
-        return { month1: this.#params.month };
+    getMonth() {
+        return this.#params.month;
     }
 
     /**
@@ -301,7 +311,9 @@ class SpeciesFilter {
                     }
                     break;
                 default:
-                    url.searchParams.set(k, v);
+                    if (v !== undefined) {
+                        url.searchParams.set(k, v);
+                    }
                     break;
             }
         }

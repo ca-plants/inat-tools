@@ -418,8 +418,9 @@ export class SearchUI extends UI {
         }
 
         const month1 = hdom.getFormElementValue(prefix + "-month1");
-        if (month1) {
-            filterArgs.month = parseInt(month1);
+        const month2 = hdom.getFormElementValue(prefix + "-month2");
+        if (month1 && month2) {
+            filterArgs.month = getMonthList(month1, month2);
         }
 
         // If annotation fields are visible, include them.
@@ -504,11 +505,16 @@ export class SearchUI extends UI {
          * @param {SpeciesFilter} filter
          */
         function initMonth(filter) {
-            const month = filter.getMonths().month1;
-            if (!month) {
-                return;
+            const months = filter.getMonth();
+            let m1, m2;
+            if (typeof months === "number") {
+                m1 = m2 = months;
+            } else if (months !== undefined) {
+                m1 = months[0];
+                m2 = months[months.length - 1];
             }
-            hdom.setFormElementValue(prefix + "-month1", month.toString());
+            hdom.setFormElementValue(prefix + "-month1", m1);
+            hdom.setFormElementValue(prefix + "-month2", m2);
         }
 
         /**
@@ -734,11 +740,21 @@ function addMonthSelects(prefix) {
             return { value: String(index + 1), label: n };
         })
     );
-    const id = prefix + "-month1";
-    const select = hdom.createSelectElement(id, "Month", options);
+
+    const select1 = hdom.createSelectElementWithLabel(
+        prefix + "-month1",
+        "Month",
+        options
+    );
     const div = hdom.createElement("div", "form-input");
-    div.appendChild(select.label);
-    div.appendChild(select.select);
+    if (select1.label) {
+        div.appendChild(select1.label);
+    }
+    div.appendChild(select1.select);
+
+    hdom.appendTextValue(div, " to ");
+    div.appendChild(hdom.createSelectElement(prefix + "-month2", options));
+
     const yearsDiv = hdom.getElement(`${prefix}-date-years`);
     // @ts-ignore - remove once all controls are generated dynamically
     yearsDiv.parentElement.insertBefore(div, yearsDiv);
@@ -751,6 +767,33 @@ function addMonthSelects(prefix) {
 function getLocationType(prefix) {
     const locType = hdom.getFormElement("form", prefix + "-loc-type");
     return hdom.getFormElementValue(locType);
+}
+
+/**
+ * @param {string} m1
+ * @param {string} m2
+ * @returns {number|number[]|undefined}
+ */
+export function getMonthList(m1, m2) {
+    const n1 = parseInt(m1);
+    const n2 = parseInt(m2);
+    if (n1 === n2) {
+        return n1;
+    }
+    if (n1 === 1 && n2 === 12) {
+        return;
+    }
+    const months = [n1];
+    for (let month = n1 + 1; month <= (n2 > n1 ? n2 : 12); month++) {
+        months.push(month);
+    }
+    if (n2 < n1) {
+        // Add months at beginning of year.
+        for (let month = 1; month <= n2; month++) {
+            months.push(month);
+        }
+    }
+    return months;
 }
 
 /**
@@ -883,7 +926,7 @@ function initMiscFields(prefix, filter) {
     divForm.appendChild(divQuality);
 
     // Add establishment select.
-    const establishment = hdom.createSelectElement(
+    const establishment = hdom.createSelectElementWithLabel(
         prefix + "-establishment",
         "Establishment",
         [
