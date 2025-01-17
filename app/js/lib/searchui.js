@@ -61,6 +61,8 @@ const MIN_YEAR = 2000;
 
 export class SearchUI extends UI {
     #options;
+    /** @type {Object<string,boolean>} */
+    #monthLock = {};
 
     /** @type {NodeJS.Timeout|number|undefined} */
     #debounceTimer;
@@ -127,7 +129,7 @@ export class SearchUI extends UI {
      * @param {Event} e
      * @param {AutoCompleteConfig} config
      */
-    async #debounce(e, config, timeout = 500) {
+    async #debounce(e, config, timeout = 400) {
         if (!(e instanceof InputEvent) || !e.inputType) {
             // Ignore events with no inputType (e.g., the event triggered after we set value).
             return;
@@ -154,6 +156,14 @@ export class SearchUI extends UI {
             annotations.push("ev-mammal");
         }
         return annotations;
+    }
+
+    /**
+     * @param {string} prefix
+     * @returns {boolean}
+     */
+    getMonthLock(prefix) {
+        return this.#monthLock[prefix];
     }
 
     /**
@@ -503,8 +513,9 @@ export class SearchUI extends UI {
     async initForm(prefix, filter = new SpeciesFilter({})) {
         /**
          * @param {SpeciesFilter} filter
+         * @param {SearchUI} ui
          */
-        function initMonth(filter) {
+        function initMonth(filter, ui) {
             const months = filter.getMonth();
             let m1, m2;
             if (typeof months === "number") {
@@ -515,6 +526,7 @@ export class SearchUI extends UI {
             }
             hdom.setFormElementValue(prefix + "-month1", m1);
             hdom.setFormElementValue(prefix + "-month2", m2);
+            ui.setMonthLock(prefix, m1 === m2);
         }
 
         /**
@@ -609,7 +621,7 @@ export class SearchUI extends UI {
             }
         }
 
-        addMonthSelects(prefix);
+        addMonthSelects(prefix, this);
 
         initMiscFields(prefix, filter);
 
@@ -622,7 +634,7 @@ export class SearchUI extends UI {
         await initObserver(this.getAPI(), filter);
         await initTaxon(this.getAPI(), filter);
         await this.updateAnnotationsFields(prefix, filter.getTaxonID());
-        initMonth(filter);
+        initMonth(filter, this);
         initYear(filter);
 
         const qualityGrades = filter.getQualityGrade();
@@ -656,6 +668,14 @@ export class SearchUI extends UI {
             return;
         }
         hdom.setFormElementValue(prefix + "-proj-name", projectData.title);
+    }
+
+    /**
+     * @param {string} prefix
+     * @param {boolean} value
+     */
+    setMonthLock(prefix, value) {
+        this.#monthLock[prefix] = value;
     }
 
     /**
@@ -733,8 +753,9 @@ export class SearchUI extends UI {
 
 /**
  * @param {string} prefix
+ * @param {SearchUI} ui
  */
-function addMonthSelects(prefix) {
+function addMonthSelects(prefix, ui) {
     const options = [{}].concat(
         DateUtils.MONTH_NAMES.map((n, index) => {
             return { value: String(index + 1), label: n };
@@ -751,9 +772,14 @@ function addMonthSelects(prefix) {
         div.appendChild(select1.label);
     }
     div.appendChild(select1.select);
+    hdom.addEventListener(select1.select, "change", (e) =>
+        handleMonth1Change(e, ui)
+    );
 
     hdom.appendTextValue(div, " to ");
-    div.appendChild(hdom.createSelectElement(prefix + "-month2", options));
+    const select2 = hdom.createSelectElement(prefix + "-month2", options);
+    div.appendChild(select2);
+    hdom.addEventListener(select2, "change", (e) => handleMonth2Change(e, ui));
 
     const yearsDiv = hdom.getElement(`${prefix}-date-years`);
     // @ts-ignore - remove once all controls are generated dynamically
@@ -903,6 +929,42 @@ function initLocations(prefix, options, filter) {
         }
         locationsDiv.insertBefore(locationTypeDiv, locationsDiv.firstChild);
     }
+}
+
+/**
+ * @param {Event} e
+ * @param {SearchUI} ui
+ */
+function handleMonth1Change(e, ui) {
+    const target = e.currentTarget;
+    if (!(target instanceof HTMLElement)) {
+        throw new Error();
+    }
+    const prefix = target.id.split("-")[0];
+    const locked = ui.getMonthLock(prefix);
+    if (locked) {
+        hdom.setFormElementValue(
+            prefix + "-month2",
+            hdom.getFormElementValue(target)
+        );
+    }
+}
+
+/**
+ * @param {Event} e
+ * @param {SearchUI} ui
+ */
+function handleMonth2Change(e, ui) {
+    const target = e.currentTarget;
+    if (!(target instanceof HTMLElement)) {
+        throw new Error();
+    }
+    const prefix = target.id.split("-")[0];
+    ui.setMonthLock(
+        prefix,
+        hdom.getFormElementValue(target) ===
+            hdom.getFormElementValue(prefix + "-month1")
+    );
 }
 
 /**
