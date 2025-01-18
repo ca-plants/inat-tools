@@ -763,11 +763,15 @@ class ObsDetailUI extends SearchUI {
         });
 
         const typeDiv = hdom.createElement("div", "form-input");
-        const dlOptions = hdom.createSelectElement("download-type", "Format:", [
-            { value: "geojson", label: "GeoJSON" },
-            { value: "gpx", label: "GPX" },
-        ]);
-        hdom.appendChildren(typeDiv, dlOptions);
+        const dlOptions = hdom.createSelectElementWithLabel(
+            "download-type",
+            "Format:",
+            [
+                { value: "geojson", label: "GeoJSON" },
+                { value: "gpx", label: "GPX" },
+            ]
+        );
+        hdom.appendChildren(typeDiv, Object.values(dlOptions));
         const dlLink = createDownloadLink(
             this.getPathPrefix(),
             "Download",

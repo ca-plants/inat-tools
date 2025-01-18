@@ -170,22 +170,41 @@ export class hdom {
 
     /**
      * @param {string} id
-     * @param {string} label
-     * @param {{value:string,label:string}[]} options
-     * @returns {Element[]}
+     * @param {{value?:string,label?:string}[]} options
+     * @returns {Element}
      */
-    static createSelectElement(id, label, options) {
-        const labelEl = this.createElement("label", { for: id });
-        this.setTextValue(labelEl, label);
+    static createSelectElement(id, options) {
         const select = this.createElement("select", { id: id });
         for (const option of options) {
-            const optionEl = this.createElement("option", {
-                value: option.value,
-            });
-            this.setTextValue(optionEl, option.label);
+            const optionEl = this.createElement(
+                "option",
+                option.value
+                    ? {
+                          value: option.value,
+                      }
+                    : {}
+            );
+            if (option.label) {
+                this.setTextValue(optionEl, option.label);
+            }
             select.appendChild(optionEl);
         }
-        return [labelEl, select];
+        return select;
+    }
+
+    /**
+     * @param {string} id
+     * @param {string} label
+     * @param {{value?:string,label?:string}[]} options
+     * @returns {{label:Element,select:Element}}
+     */
+    static createSelectElementWithLabel(id, label, options) {
+        const labelEl = this.createElement("label", { for: id });
+        this.setTextValue(labelEl, label);
+        return {
+            label: labelEl,
+            select: this.createSelectElement(id, options),
+        };
     }
 
     /**
@@ -351,13 +370,16 @@ export class hdom {
 
     /**
      * @param {string|Element|RadioNodeList} e
-     * @param {string|undefined|null} value
+     * @param {string|number|undefined|null} value
      */
     static setFormElementValue(e, value) {
         const elem = typeof e === "string" ? this.getElement(e) : e;
         if (elem instanceof HTMLInputElement && elem.type === "radio") {
             this.setFormElementValue(getRadioNodeList(elem), value);
             return;
+        }
+        if (typeof value === "number") {
+            value = value.toString();
         }
         value = value ? value : "";
         if (

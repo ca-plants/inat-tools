@@ -89,7 +89,7 @@ declare namespace Params {
         branch?: boolean;
     }
     export interface SpeciesFilter {
-        month?: number;
+        month?: number | number[];
         place_id?: string;
         boundary?: GeoJSON.FeatureCollection;
         project_id?: string;

@@ -188,7 +188,7 @@ div.form-input input.year {
     width: 4rem;
 }
 
-fieldset div.form-input label {
+fieldset.group div.form-input label {
     min-width: auto;
 }
 

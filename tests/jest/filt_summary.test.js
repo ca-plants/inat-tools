@@ -26,6 +26,12 @@ test(
 );
 test("month", { month: 3 }, undefined, "Species observed in March");
 test(
+    "month range",
+    { month: [10, 1] },
+    undefined,
+    "Species observed in October through January"
+);
+test(
     "year",
     { year1: 2023, year2: 2023 },
     undefined,

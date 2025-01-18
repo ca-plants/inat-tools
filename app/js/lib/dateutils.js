@@ -2,6 +2,20 @@ const cumulativeDays = [0, 31, 59, 90, 120, 151, 181, 212, 243, 273, 304, 334];
 
 export class DateUtils {
     static MILLIS_PER_DAY = 1000 * 60 * 60 * 24;
+    static MONTH_NAMES = [
+        "January",
+        "February",
+        "March",
+        "April",
+        "May",
+        "June",
+        "July",
+        "August",
+        "September",
+        "October",
+        "November",
+        "December",
+    ];
 
     static getCurrentYear() {
         return new Date().getFullYear();
