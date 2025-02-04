@@ -49,8 +49,7 @@
                 "ms/index.html",
                 "ms/favicon.ico",
                 "ms/img/**"
-            ],
-            "outputFormat": "esmodule"
+            ]
         }
     }
 }
