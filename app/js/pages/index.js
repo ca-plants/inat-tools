@@ -1,3 +1,5 @@
 import { UI } from "../lib/ui.js";
 
-await UI.getInstance();
+(async function () {
+    await UI.getInstance();
+})();

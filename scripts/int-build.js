@@ -16,15 +16,12 @@ async function build(options) {
         transform: "nunjucks",
         engineOptions: {
             root: __dirname + "/layouts",
-            globals: {
-                homePath: options.homepath,
-            },
         },
     };
 
     const ms = Metalsmith(__dirname);
 
-    ms.directory(__dirname).source("./app").destination("./public").clean(true);
+    ms.directory(__dirname).source("./app").destination("./ms").clean(true);
 
     if (options.watch) {
         ms.watch(["./app", "./layouts"]);
@@ -41,11 +38,6 @@ async function build(options) {
 }
 
 const program = new Command();
-program.option(
-    "--homepath <path>",
-    "The path to the home directory of the target site.",
-    "/"
-);
 program.option(
     "--no-watch",
     "Generate the output files, but do not continue to watch."

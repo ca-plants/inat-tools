@@ -27,4 +27,6 @@ class APIUI extends UI {
     }
 }
 
-await APIUI.getUI();
+(async function () {
+    await APIUI.getUI();
+})();

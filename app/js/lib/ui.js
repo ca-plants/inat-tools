@@ -1,5 +1,4 @@
 import { ProgressReporter } from "./progressreporter.js";
-import { DOMUtils } from "./domutils.js";
 import { INatAPI } from "./inatapi.js";
 import { Login } from "./login.js";
 import { hdom } from "./hdom.js";
@@ -31,7 +30,8 @@ class UI {
         if (!homeLink) {
             return "";
         }
-        return homeLink.getAttribute("href") ?? "";
+        const href = homeLink.getAttribute("href");
+        return href ? href.substring(0, href.lastIndexOf("/") + 1) : "";
     }
 
     getProgressReporter() {
@@ -63,7 +63,7 @@ class UI {
             document.location.origin
         );
         url.searchParams.set("url", document.location.toString());
-        const eLogin = DOMUtils.getRequiredElement(NAV_LOGIN_ID);
+        const eLogin = hdom.getElement(NAV_LOGIN_ID);
         eLogin.setAttribute("href", url.toString());
     }
 }

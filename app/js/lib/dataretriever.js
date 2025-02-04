@@ -1,4 +1,4 @@
-import whichPolygon from "https://cdn.jsdelivr.net/npm/which-polygon@2.2.1/+esm";
+import whichPolygon from "which-polygon";
 import { Cache } from "./cache.js";
 import { QueryCancelledException } from "./inatapi.js";
 import { INatObservation } from "./inatobservation.js";

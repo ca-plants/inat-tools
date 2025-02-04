@@ -286,4 +286,6 @@ export class ObsSummaryUI extends SearchUI {
     }
 }
 
-await ObsSummaryUI.getUI();
+(async function () {
+    await ObsSummaryUI.getUI();
+})();

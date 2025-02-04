@@ -1,4 +1,4 @@
-import * as Plot from "https://cdn.jsdelivr.net/npm/@observablehq/plot/+esm";
+import * as Plot from "@observablehq/plot";
 import { DateUtils } from "./dateutils.js";
 
 /** @typedef {{date:number,count:number}} Summary */

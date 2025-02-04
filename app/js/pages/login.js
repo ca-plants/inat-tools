@@ -1,4 +1,4 @@
-import pkceChallenge from "https://cdn.jsdelivr.net/npm/pkce-challenge/dist/index.js";
+import pkceChallenge from "pkce-challenge";
 import { DB } from "../lib/db.js";
 import { Login } from "../lib/login.js";
 import { INatAPI } from "../lib/inatapi.js";
@@ -195,4 +195,6 @@ class LoginUI {
     }
 }
 
-await LoginUI.getInstance();
+(async function () {
+    await LoginUI.getInstance();
+})();

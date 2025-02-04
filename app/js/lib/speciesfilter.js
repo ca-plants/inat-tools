@@ -1,4 +1,4 @@
-import { bbox } from "https://cdn.jsdelivr.net/npm/@turf/bbox@7/+esm";
+import { bbox } from "@turf/bbox";
 import { DateUtils } from "./dateutils.js";
 
 const MONTH_NAMES = [
