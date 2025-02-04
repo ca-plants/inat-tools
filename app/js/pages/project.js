@@ -331,4 +331,6 @@ function getSubmitDiv() {
     return eDiv;
 }
 
-await UI.getUI();
+(async function () {
+    await UI.getUI();
+})();

@@ -1,4 +1,4 @@
-import jstoxml from "https://cdn.jsdelivr.net/npm/jstoxml@5.0.2/dist/jstoxml.js/+esm";
+import jstoxml from "jstoxml";
 import { ColDef } from "../lib/coldef.js";
 import { DataRetriever } from "../lib/dataretriever.js";
 import { hdom } from "../lib/hdom.js";
@@ -1111,4 +1111,6 @@ function getNeedsAttributeLink(filter) {
     }
 }
 
-await ObsDetailUI.getInstance();
+(async function () {
+    await ObsDetailUI.getInstance();
+})();

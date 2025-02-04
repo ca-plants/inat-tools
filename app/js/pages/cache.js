@@ -152,4 +152,6 @@ class CacheUI extends UI {
     }
 }
 
-await CacheUI.init();
+(async function () {
+    await CacheUI.init();
+})();

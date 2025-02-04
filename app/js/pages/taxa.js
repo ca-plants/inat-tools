@@ -268,4 +268,6 @@ class UI extends SearchUI {
     }
 }
 
-await UI.getUI();
+(async function () {
+    await UI.getUI();
+})();

@@ -195,4 +195,6 @@ class LoginUI {
     }
 }
 
-await LoginUI.getInstance();
+(async function () {
+    await LoginUI.getInstance();
+})();

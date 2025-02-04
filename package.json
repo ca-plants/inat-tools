@@ -47,6 +47,8 @@
         "default": {
             "source": [
                 "ms/index.html",
+                "ms/obsdetail.html",
+                "ms/api.html",
                 "ms/favicon.ico",
                 "ms/img/**"
             ]
