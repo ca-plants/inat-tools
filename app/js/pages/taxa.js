@@ -1,4 +1,4 @@
-import { csvFormatRows } from "https://cdn.skypack.dev/d3-dsv";
+import { csvFormatRows } from "d3-dsv";
 import { DataRetriever } from "../lib/dataretriever.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { SearchUI } from "../lib/searchui.js";
