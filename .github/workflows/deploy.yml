@@ -22,10 +22,7 @@ jobs:
             - run: npm update
 
             # Validate code.
-            - run: npx tsc
-            - run: npx eslint app tests
-            - run: npx ava tests/js/test*.js
-            - run: node --experimental-vm-modules node_modules/jest/bin/jest.js tests/jest
+            - run: npm run check
 
             # Generate pages.
             - run: node scripts/int-build.js --no-watch
