@@ -4,7 +4,7 @@ export class ProgressReporter {
     #api;
 
     /**
-     * @param {INatAPI} api
+     * @param {import("../types.js").INatAPI} api
      */
     constructor(api) {
         this.#api = api;

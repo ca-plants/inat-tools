@@ -32,7 +32,7 @@ class SpeciesFilter {
         if (params.quality_grade) {
             if (
                 ALL_QUALITY_GRADES.every((g) =>
-                    params.quality_grade?.includes(g)
+                    params.quality_grade?.includes(g),
                 )
             ) {
                 delete this.#params.quality_grade;
@@ -49,7 +49,7 @@ class SpeciesFilter {
     }
 
     /**
-     * @param {INatAPI} api
+     * @param {import("../types.js").INatAPI} api
      * @param {SpeciesFilter} [exclusions]
      */
     async getDescription(api, exclusions) {
@@ -236,7 +236,7 @@ class SpeciesFilter {
                                 url.searchParams.set("term_id", "12");
                                 url.searchParams.set(
                                     "without_term_value_id",
-                                    "13"
+                                    "13",
                                 );
                                 break;
                         }
@@ -275,7 +275,7 @@ class SpeciesFilter {
                         case "taxon":
                             url.searchParams.set(
                                 "taxon_geoprivacy",
-                                "obscured"
+                                "obscured",
                             );
                             break;
                         default:
@@ -298,7 +298,7 @@ class SpeciesFilter {
                     } else {
                         url.searchParams.set(
                             "d1",
-                            DateUtils.getDateString(new Date(v, 0, 1))
+                            DateUtils.getDateString(new Date(v, 0, 1)),
                         );
                     }
                     break;
@@ -306,7 +306,7 @@ class SpeciesFilter {
                     if (!this.#params.month) {
                         url.searchParams.set(
                             "d2",
-                            DateUtils.getDateString(new Date(v, 11, 31))
+                            DateUtils.getDateString(new Date(v, 11, 31)),
                         );
                     }
                     break;

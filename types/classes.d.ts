@@ -1,31 +1,3 @@
-declare class INatAPI {
-    cancelQuery(yn: boolean): void;
-    getJSON(url: URL | string, token?: string): Promise<any>;
-    getPlaceData(id: string): Promise<INatData.PlaceData>;
-    getProjectData(id: string): Promise<INatData.ProjectData>;
-    getTaxonData(id: string): Promise<INatData.TaxonData>;
-    getTaxonFormName(
-        taxon: INatData.TaxonData,
-        addCommonName?: boolean
-    ): string;
-    getUserData(id: string): Promise<INatData.UserData>;
-}
-
-declare class INatObservation {
-    constructor(rawObservation: INatData.Observation);
-    getCoordinatesGeoJSON(): [number, number];
-    getObsDate(): Date;
-}
-
-declare class ProgressReporter {
-    hide(): void;
-    modalAlert(message: string): Promise<void>;
-    setLabel(label: string): void;
-    setNumPages(np: number): void;
-    setPage(p: string): void;
-    show(): void;
-}
-
 declare class SpeciesFilter {
     getBoundary(): GeoJSON.FeatureCollection | undefined;
     getParams(): Params.SpeciesFilter;

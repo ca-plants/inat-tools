@@ -13,7 +13,7 @@ const COLUMNS = {
             return entry.displayName;
         },
         undefined,
-        "c-sn"
+        "c-sn",
     ),
     NUM_OBS: new ColDef(
         "#",
@@ -21,7 +21,7 @@ const COLUMNS = {
         (value, entry, ui) => {
             return ui.getDetailLink(entry, value);
         },
-        "c-num"
+        "c-num",
     ),
     NUM_RG: new ColDef(
         "Res. Grd.",
@@ -31,7 +31,7 @@ const COLUMNS = {
                 quality_grade: "research",
             });
         },
-        "c-num"
+        "c-num",
     ),
     NUM_NOT_RG: new ColDef(
         "Not Res. Grd.",
@@ -41,13 +41,13 @@ const COLUMNS = {
                 quality_grade: "needs_id",
             });
         },
-        "c-num"
+        "c-num",
     ),
     PCT_RG: new ColDef(
         "% Res. Grd.",
         (entry) => ((entry.countResearchGrade * 100) / entry.count).toFixed(2),
         undefined,
-        "c-num"
+        "c-num",
     ),
     NUM_OBSCURED: new ColDef(
         "Obscured",
@@ -55,7 +55,7 @@ const COLUMNS = {
         (value, entry, ui) => {
             return ui.getDetailLink(entry, value, ["obscured"]);
         },
-        "c-num"
+        "c-num",
     ),
     NUM_NOT_OBSCURED: new ColDef(
         "Not Obscured",
@@ -63,7 +63,7 @@ const COLUMNS = {
         (value, entry, ui) => {
             return ui.getDetailLink(entry, value, ["public", "trusted"]);
         },
-        "c-num"
+        "c-num",
     ),
 };
 
@@ -93,8 +93,8 @@ export class ObsSummaryUI extends SearchUI {
                     summary,
                     cols,
                     [this],
-                    summary.is_branch ? "branch" : undefined
-                )
+                    summary.is_branch ? "branch" : undefined,
+                ),
             );
         }
 
@@ -113,7 +113,7 @@ export class ObsSummaryUI extends SearchUI {
         entry,
         num,
         selected = ["public", "trusted", "obscured"],
-        extraParams = {}
+        extraParams = {},
     ) {
         if (num === "0") {
             return "0";
@@ -129,7 +129,7 @@ export class ObsSummaryUI extends SearchUI {
         }
         const url = new URL(
             this.getPathPrefix() + "obsdetail.html",
-            document.location.origin
+            document.location.origin,
         );
         url.hash = JSON.stringify(args);
         return hdom.createLinkElement(url, num, { target: "_blank" });
@@ -139,7 +139,7 @@ export class ObsSummaryUI extends SearchUI {
         let initArgs;
         try {
             initArgs = JSON.parse(
-                decodeURIComponent(document.location.hash).substring(1)
+                decodeURIComponent(document.location.hash).substring(1),
             );
         } catch {
             initArgs = {};
@@ -158,26 +158,26 @@ export class ObsSummaryUI extends SearchUI {
         const descrip = hdom.createElement("div");
         descrip.appendChild(
             document.createTextNode(
-                await this.#f1.getDescription(this.getAPI())
-            )
+                await this.#f1.getDescription(this.getAPI()),
+            ),
         );
 
         const taxaCount = hdom.createElement("div");
         taxaCount.appendChild(
-            document.createTextNode(Object.entries(results).length + " taxa")
+            document.createTextNode(Object.entries(results).length + " taxa"),
         );
 
         const obsCountNode = hdom.createElement("div");
         const obsCount = Object.values(results).reduce(
             (numObs, value) => numObs + value.count,
-            0
+            0,
         );
         obsCountNode.appendChild(
-            document.createTextNode(obsCount + " observations")
+            document.createTextNode(obsCount + " observations"),
         );
 
         const button = this.createChangeFilterButton((e) =>
-            this.changeFilter(e)
+            this.changeFilter(e),
         );
 
         const summaryDesc = hdom.createElement("div", {
@@ -191,10 +191,10 @@ export class ObsSummaryUI extends SearchUI {
             const rgCountNode = hdom.createElement("div");
             const rgCount = Object.values(results).reduce(
                 (numObs, value) => numObs + value.countResearchGrade,
-                0
+                0,
             );
             rgCountNode.appendChild(
-                document.createTextNode(rgCount + " research grade")
+                document.createTextNode(rgCount + " research grade"),
             );
 
             const rgPctNode = hdom.createElement("div");
@@ -202,8 +202,8 @@ export class ObsSummaryUI extends SearchUI {
                 rgPctNode.appendChild(
                     document.createTextNode(
                         ((rgCount * 100) / obsCount).toFixed(2) +
-                            "% research grade"
-                    )
+                            "% research grade",
+                    ),
                 );
             }
 
@@ -225,7 +225,7 @@ export class ObsSummaryUI extends SearchUI {
 
         // Add handlers for form.
         hdom.getElement("form").addEventListener("submit", (e) =>
-            this.onSubmit(e)
+            this.onSubmit(e),
         );
 
         this.initEventListeners("f1");
@@ -261,7 +261,7 @@ export class ObsSummaryUI extends SearchUI {
         this.#results = await DataRetriever.getObservationData(
             this.getAPI(),
             this.#f1,
-            this.getProgressReporter()
+            this.getProgressReporter(),
         );
         if (!this.#results) {
             this.showSearchForm();
@@ -269,7 +269,7 @@ export class ObsSummaryUI extends SearchUI {
         }
         const results = await summarizeObservations(
             this.#results,
-            this.getAPI()
+            this.getAPI(),
         );
 
         // Show summary.

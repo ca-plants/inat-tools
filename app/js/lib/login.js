@@ -64,14 +64,14 @@ class Login {
 
     /**
      * @param {string} token
-     * @param {INatAPI} api
+     * @param {import("../types.js").INatAPI} api
      */
     static async setToken(token, api) {
         // Retrieve user info.
         /** @type {{results:Object<string,{}>[]}} */
         const json = await api.getJSON(
             "https://api.inaturalist.org/v1/users/me",
-            token
+            token,
         );
 
         const db = await this.#getDB();

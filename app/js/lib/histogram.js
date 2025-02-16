@@ -5,7 +5,7 @@ import { DateUtils } from "./dateutils.js";
 
 class Histogram {
     /**
-     * @param {INatObservation[]} observations
+     * @param {import("../types.js").INatObservation[]} observations
      * @param {SpeciesFilter} filter
      */
     static createSVG(observations, filter) {
@@ -31,7 +31,7 @@ class Histogram {
             // Add the first of each month.
             for (let month = startMonth + 1; month <= endMonth; month++) {
                 ticks.push(
-                    DateUtils.getDayOfYear(new Date(2024, month - 1, 1), true)
+                    DateUtils.getDayOfYear(new Date(2024, month - 1, 1), true),
                 );
             }
             ticks.push(end);
@@ -73,7 +73,7 @@ class Histogram {
                                     ? `${d} observations`
                                     : `${d} observation`,
                         },
-                    })
+                    }),
                 ),
                 Plot.frame(),
             ],
@@ -88,7 +88,7 @@ class Histogram {
     }
 
     /**
-     * @param {INatObservation[]} observations
+     * @param {import("../types.js").INatObservation[]} observations
      * @returns {Summary[]}
      */
     static #summarizeObservations(observations) {
