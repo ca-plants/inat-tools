@@ -12,7 +12,7 @@ permissions:
     id-token: write
 
 jobs:
-    build:
+    test:
         runs-on: ubuntu-latest
         steps:
             - uses: actions/checkout@v4
@@ -23,6 +23,16 @@ jobs:
 
             # Validate code.
             - run: npm run check
+    build:
+        runs-on: ubuntu-latest
+        if: ${{ github.event_name != 'pull_request' }}
+        needs: test
+        steps:
+            - uses: actions/checkout@v4
+            - uses: actions/setup-node@v4
+              with:
+                  node-version: "*"
+            - run: npm update
 
             # Generate pages.
             - run: node scripts/int-build.js --no-watch
