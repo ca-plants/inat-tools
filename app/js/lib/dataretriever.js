@@ -3,33 +3,25 @@ import { Cache } from "./cache.js";
 import { QueryCancelledException } from "./inatapi.js";
 import { INatObservation } from "./inatobservation.js";
 
-const INPROP = {
-    COMMON_NAME: "preferred_common_name",
-    PAGE: "page",
-    PER_PAGE: "per_page",
-    RESULTS: "results",
-    TOTAL_RESULTS: "total_results",
-};
-
-class DataRetriever {
+export class DataRetriever {
     /**
-     * @param {INatAPI} api
+     * @param {import("../types.js").INatAPI} api
      * @param {SpeciesFilter} filtInclude
      * @param {SpeciesFilter|undefined} filtExclude
-     * @param {ProgressReporter} progressReporter
+     * @param {import("../types.js").ProgressReporter} progressReporter
      * @returns {Promise<INatData.TaxonObsSummary[]>}
      */
     static async getSpeciesData(
         api,
         filtInclude,
         filtExclude,
-        progressReporter
+        progressReporter,
     ) {
         const include = await this.#retrieveSpeciesData(
             "species",
             api,
             filtInclude,
-            progressReporter
+            progressReporter,
         );
         if (!filtExclude) {
             return include;
@@ -40,28 +32,28 @@ class DataRetriever {
             "exclusions",
             api,
             filtExclude,
-            progressReporter
+            progressReporter,
         );
 
         return this.removeExclusions(include, exclude);
     }
 
     /**
-     * @param {INatAPI} api
+     * @param {import("../types.js").INatAPI} api
      * @param {SpeciesFilter} filter
-     * @param {ProgressReporter} progressReporter
+     * @param {import("../types.js").ProgressReporter} progressReporter
      * @returns {Promise<INatData.Observation[]>}
      */
     static async getObservationData(api, filter, progressReporter) {
         const url = filter.getURL(
-            "https://api.inaturalist.org/v1/observations?verifiable=true&order_by=observed_on&per_page=500"
+            "https://api.inaturalist.org/v1/observations?verifiable=true&order_by=observed_on&per_page=500",
         );
         /** @type {INatData.Observation[]} */
         const rawResults = await this.#retrievePagedData(
             url,
             "species",
             api,
-            progressReporter
+            progressReporter,
         );
         const boundary = filter.getBoundary();
         if (!boundary) {
@@ -81,19 +73,19 @@ class DataRetriever {
     }
 
     /**
-     * @param {INatAPI} api
+     * @param {import("../types.js").INatAPI} api
      * @param {string} id
-     * @param {ProgressReporter} progressReporter
+     * @param {import("../types.js").ProgressReporter} progressReporter
      */
     static async getProjectMembers(api, id, progressReporter) {
         const url = new URL(
-            "https://api.inaturalist.org/v1/projects/" + id + "/members"
+            "https://api.inaturalist.org/v1/projects/" + id + "/members",
         );
         return await this.#retrievePagedData(
             url,
             "project members",
             api,
-            progressReporter
+            progressReporter,
         );
     }
 
@@ -129,15 +121,15 @@ class DataRetriever {
     /**
      * @param {URL} baseURL
      * @param {string} label
-     * @param {INatAPI} api
-     * @param {ProgressReporter} progressReporter
+     * @param {import("../types.js").INatAPI} api
+     * @param {import("../types.js").ProgressReporter} progressReporter
      */
     static async #retrievePagedData(baseURL, label, api, progressReporter) {
         /**
          * @param {number} pageNum
          */
         async function getPage(pageNum) {
-            baseURL.searchParams.set(INPROP.PAGE, pageNum.toString());
+            baseURL.searchParams.set("page", pageNum.toString());
             return await api.getJSON(baseURL);
         }
 
@@ -159,33 +151,33 @@ class DataRetriever {
             progressReporter.show();
 
             const json = await getPage(1);
-            const totalResults = json[INPROP.TOTAL_RESULTS];
+            const totalResults = json["total_results"];
 
             if (totalResults > maxResults) {
                 await progressReporter.modalAlert(
-                    totalResults + " results found, maximum is " + maxResults
+                    totalResults + " results found, maximum is " + maxResults,
                 );
                 return;
             }
 
-            const perPage = json[INPROP.PER_PAGE];
+            const perPage = json["per_page"];
             const numPages = Math.ceil(totalResults / perPage);
 
             if (numPages > maxPages) {
                 await progressReporter.modalAlert(
-                    `${numPages} pages found for ${label}, maximum is ${maxPages}`
+                    `${numPages} pages found for ${label}, maximum is ${maxPages}`,
                 );
                 return;
             }
 
-            results = json[INPROP.RESULTS];
+            results = json["results"];
 
             progressReporter.setNumPages(numPages);
 
             for (let page = 2; page <= numPages; page++) {
                 progressReporter.setPage(page.toString());
                 const json = await getPage(page);
-                results.push(...json[INPROP.RESULTS]);
+                results.push(...json["results"]);
             }
 
             await cache.put(key, results);
@@ -203,17 +195,15 @@ class DataRetriever {
 
     /**
      * @param {string} label
-     * @param {INatAPI} api
+     * @param {import("../types.js").INatAPI} api
      * @param {SpeciesFilter} filter
-     * @param {ProgressReporter} progressReporter
+     * @param {import("../types.js").ProgressReporter} progressReporter
      */
     static async #retrieveSpeciesData(label, api, filter, progressReporter) {
         // Include verifiable=true; this seems to be consistent with iNat web UI default.
         const url = filter.getURL(
-            "https://api.inaturalist.org/v1/observations/species_counts?verifiable=true"
+            "https://api.inaturalist.org/v1/observations/species_counts?verifiable=true",
         );
         return await this.#retrievePagedData(url, label, api, progressReporter);
     }
 }
-
-export { DataRetriever, INPROP };

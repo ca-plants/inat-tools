@@ -94,7 +94,7 @@ export class SearchUI extends UI {
         const results = await config.getResults(value);
         for (const [k, v] of Object.entries(results)) {
             dl.appendChild(
-                hdom.createElement("option", { value: k, value_id: v })
+                hdom.createElement("option", { value: k, value_id: v }),
             );
         }
     }
@@ -137,13 +137,13 @@ export class SearchUI extends UI {
         clearTimeout(this.#debounceTimer);
         this.#debounceTimer = setTimeout(
             () => this.autoComplete(e, config),
-            timeout
+            timeout,
         );
     }
 
     /**
      * @param {number} taxonID
-     * @param {INatAPI} api
+     * @param {import("../types.js").INatAPI} api
      */
     static async getAnnotationsForTaxon(taxonID, api) {
         const taxon = await api.getTaxonData(taxonID.toString());
@@ -191,7 +191,7 @@ export class SearchUI extends UI {
                     setValue(config, "");
                     const value = target.value;
                     const list = DOMUtils.getRequiredElement(
-                        config.getListID()
+                        config.getListID(),
                     );
                     if (!(list instanceof HTMLDataListElement)) {
                         throw new Error();
@@ -228,7 +228,7 @@ export class SearchUI extends UI {
         const prefix = valueElementID.split("-")[0];
         await this.updateAnnotationsFields(
             prefix,
-            DOMUtils.getFormElementValue(valueElementID)
+            DOMUtils.getFormElementValue(valueElementID),
         );
     }
 
@@ -255,7 +255,7 @@ export class SearchUI extends UI {
             prefix + "-" + name + "-name-list",
             prefix + "-" + name + "-id",
             fnRetrieve,
-            fnHandleChange
+            fnHandleChange,
         );
 
         const input = document.getElementById(id);
@@ -263,13 +263,13 @@ export class SearchUI extends UI {
             return;
         }
         input.addEventListener("change", (e) =>
-            this.handleAutoCompleteField(e, config)
+            this.handleAutoCompleteField(e, config),
         );
         input.addEventListener("focus", (e) =>
-            this.handleAutoCompleteField(e, config)
+            this.handleAutoCompleteField(e, config),
         );
         input.addEventListener("input", (e) =>
-            this.handleAutoCompleteField(e, config)
+            this.handleAutoCompleteField(e, config),
         );
     }
 
@@ -346,20 +346,20 @@ export class SearchUI extends UI {
                 prefix,
                 field.name,
                 field.fnRetrieve,
-                field.fnHandleChange
+                field.fnHandleChange,
             );
         }
 
         const eSelect = document.getElementById(prefix + "-year");
         if (eSelect) {
             eSelect.addEventListener("change", (e) =>
-                handleYearModeChange(e.target)
+                handleYearModeChange(e.target),
             );
             DOMUtils.addEventListener(prefix + "-year1", "change", (e) =>
-                handleYearChange(e.target)
+                handleYearChange(e.target),
             );
             DOMUtils.addEventListener(prefix + "-year2", "change", (e) =>
-                handleYearChange(e.target)
+                handleYearChange(e.target),
             );
         }
     }
@@ -408,7 +408,7 @@ export class SearchUI extends UI {
                 continue;
             }
             const id = hdom.getFormElementValue(
-                prefix + "-" + field.name + "-id"
+                prefix + "-" + field.name + "-id",
             );
             const input = hdom.getElement(prefix + "-" + field.name + "-name");
             if (id) {
@@ -440,7 +440,7 @@ export class SearchUI extends UI {
             for (const type of ANNOTATION_TYPES) {
                 if (DOMUtils.isVisible(prefix + "-ann-type-" + type)) {
                     const value = DOMUtils.getFormElementValue(
-                        prefix + "-ann-" + type
+                        prefix + "-ann-" + type,
                     );
                     if (value !== "Any" && value !== undefined) {
                         annotations.push({ type: type, value: value });
@@ -473,7 +473,7 @@ export class SearchUI extends UI {
         }
 
         const establishment = hdom.getFormElementValue(
-            prefix + "-establishment"
+            prefix + "-establishment",
         );
         if (establishment === "native" || establishment === "introduced") {
             filterArgs.establishment = establishment;
@@ -491,7 +491,7 @@ export class SearchUI extends UI {
 
         if (locationType === "boundary") {
             filterArgs.boundary = JSON.parse(
-                hdom.getFormElementValue(prefix + "-boundary-text")
+                hdom.getFormElementValue(prefix + "-boundary-text"),
             );
         }
 
@@ -538,18 +538,18 @@ export class SearchUI extends UI {
             const year2 = years.year2;
             hdom.setFormElementValue(
                 prefix + "-year1",
-                year1 ? year1.toString() : ""
+                year1 ? year1.toString() : "",
             );
             hdom.setFormElementValue(
                 prefix + "-year2",
-                year2 ? year2.toString() : ""
+                year2 ? year2.toString() : "",
             );
             SearchUI.setYearMinMax(prefix + "-year");
             SearchUI.setYearMode(prefix + "-year");
         }
 
         /**
-         * @param {INatAPI} api
+         * @param {import("../types.js").INatAPI} api
          * @param {SpeciesFilter} filter
          */
         async function initObserver(api, filter) {
@@ -567,7 +567,7 @@ export class SearchUI extends UI {
         }
 
         /**
-         * @param {INatAPI} api
+         * @param {import("../types.js").INatAPI} api
          * @param {SpeciesFilter} filter
          */
         async function initPlace(api, filter) {
@@ -584,12 +584,12 @@ export class SearchUI extends UI {
             }
             hdom.setFormElementValue(
                 prefix + "-place-name",
-                placeData.display_name
+                placeData.display_name,
             );
         }
 
         /**
-         * @param {INatAPI} api
+         * @param {import("../types.js").INatAPI} api
          * @param {SpeciesFilter} filter
          */
         async function initTaxon(api, filter) {
@@ -606,7 +606,7 @@ export class SearchUI extends UI {
             }
             hdom.setFormElementValue(
                 prefix + "-taxon-name",
-                api.getTaxonFormName(taxonData)
+                api.getTaxonFormName(taxonData),
             );
 
             // Set value of any annotations.
@@ -615,7 +615,7 @@ export class SearchUI extends UI {
                 for (const annotation of annotations) {
                     hdom.setFormElementValue(
                         prefix + "-ann-" + annotation.type,
-                        annotation.value
+                        annotation.value,
                     );
                 }
             }
@@ -641,7 +641,7 @@ export class SearchUI extends UI {
         for (const qg of QUALITY_GRADES) {
             hdom.setCheckBoxState(
                 `${prefix}-${qg.id}`,
-                qualityGrades.includes(qg.id)
+                qualityGrades.includes(qg.id),
             );
         }
 
@@ -689,7 +689,7 @@ export class SearchUI extends UI {
             const d2Val = DOMUtils.getFormElementValue(d2);
             d1.setAttribute(
                 "max",
-                d2Val ? d2Val : DateUtils.getCurrentYear().toString()
+                d2Val ? d2Val : DateUtils.getCurrentYear().toString(),
             );
             d2.setAttribute("min", d1Val ? d1Val : MIN_YEAR.toString());
             d2.setAttribute("max", DateUtils.getCurrentYear().toString());
@@ -737,7 +737,7 @@ export class SearchUI extends UI {
         }
         const annotations = await SearchUI.getAnnotationsForTaxon(
             parseInt(taxonID),
-            this.getAPI()
+            this.getAPI(),
         );
         hdom.showElement(fieldSetID, annotations.length > 0);
 
@@ -745,7 +745,7 @@ export class SearchUI extends UI {
         for (const type of ANNOTATION_TYPES) {
             hdom.showElement(
                 prefix + "-ann-type-" + type,
-                annotations.includes(type)
+                annotations.includes(type),
             );
         }
     }
@@ -759,13 +759,13 @@ function addMonthSelects(prefix, ui) {
     const options = [{}].concat(
         DateUtils.MONTH_NAMES.map((n, index) => {
             return { value: String(index + 1), label: n };
-        })
+        }),
     );
 
     const select1 = hdom.createSelectElementWithLabel(
         prefix + "-month1",
         "Month",
-        options
+        options,
     );
     const div = hdom.createElement("div", "form-input");
     if (select1.label) {
@@ -773,7 +773,7 @@ function addMonthSelects(prefix, ui) {
     }
     div.appendChild(select1.select);
     hdom.addEventListener(select1.select, "change", (e) =>
-        handleMonth1Change(e, ui)
+        handleMonth1Change(e, ui),
     );
 
     hdom.appendTextValue(div, " to ");
@@ -842,7 +842,7 @@ async function handleBoundaryChange(event, prefix) {
     const str = await file.text();
     hdom.setFormElementValue(
         prefix + "-boundary-text",
-        JSON.stringify(JSON.parse(str))
+        JSON.stringify(JSON.parse(str)),
     );
 }
 
@@ -876,7 +876,7 @@ function initLocations(prefix, options, filter) {
                 id: prefix + "-boundary-text",
                 rows: 1,
                 readonly: "",
-            })
+            }),
         );
         boundaryDiv.appendChild(boundaryTextDiv);
         const boundaryFileDiv = hdom.createElement("div", {
@@ -891,7 +891,7 @@ function initLocations(prefix, options, filter) {
         hdom.addEventListener(
             boundaryUpload,
             "change",
-            async (e) => await handleBoundaryChange(e, prefix)
+            async (e) => await handleBoundaryChange(e, prefix),
         );
         boundaryFileDiv.appendChild(boundaryUpload);
         boundaryDiv.appendChild(boundaryFileDiv);
@@ -900,7 +900,7 @@ function initLocations(prefix, options, filter) {
         if (boundary) {
             hdom.setFormElementValue(
                 prefix + "-boundary-text",
-                JSON.stringify(boundary)
+                JSON.stringify(boundary),
             );
         }
 
@@ -908,7 +908,7 @@ function initLocations(prefix, options, filter) {
         locationTypeDiv.appendChild(
             hdom
                 .createElement("label")
-                .appendChild(document.createTextNode("Location"))
+                .appendChild(document.createTextNode("Location")),
         );
         const radioData = [
             { type: "place", label: "Place" },
@@ -919,11 +919,11 @@ function initLocations(prefix, options, filter) {
                 prefix + "-loc-type",
                 prefix + "-loc-type-" + data.type,
                 data.type,
-                data.label
+                data.label,
             );
             locationTypeDiv.appendChild(radio.radio);
             hdom.addEventListener(radio.radio, "click", () =>
-                handleLocationTypeClick(prefix)
+                handleLocationTypeClick(prefix),
             );
             locationTypeDiv.appendChild(radio.label);
         }
@@ -945,7 +945,7 @@ function handleMonth1Change(e, ui) {
     if (locked) {
         hdom.setFormElementValue(
             prefix + "-month2",
-            hdom.getFormElementValue(target)
+            hdom.getFormElementValue(target),
         );
     }
 }
@@ -963,7 +963,7 @@ function handleMonth2Change(e, ui) {
     ui.setMonthLock(
         prefix,
         hdom.getFormElementValue(target) ===
-            hdom.getFormElementValue(prefix + "-month1")
+            hdom.getFormElementValue(prefix + "-month1"),
     );
 }
 
@@ -981,7 +981,7 @@ function initMiscFields(prefix, filter) {
     for (const cb of QUALITY_GRADES) {
         const id = `${prefix}-${cb.id}`;
         divQuality.appendChild(
-            hdom.createCheckBox(id, filter.getQualityGrade().includes(cb.id))
+            hdom.createCheckBox(id, filter.getQualityGrade().includes(cb.id)),
         );
         divQuality.appendChild(hdom.createLabelElement(id, cb.label));
     }
@@ -995,7 +995,7 @@ function initMiscFields(prefix, filter) {
             { value: "", label: "Any" },
             { value: "native", label: "Native" },
             { value: "introduced", label: "Introduced" },
-        ]
+        ],
     );
     const divEst = hdom.createElement("div", "form-input");
     divEst.appendChild(establishment.label);
@@ -1003,16 +1003,16 @@ function initMiscFields(prefix, filter) {
     divForm.appendChild(divEst);
     hdom.setFormElementValue(
         prefix + "-establishment",
-        filter.getEstablishment() ?? ""
+        filter.getEstablishment() ?? "",
     );
 
     const divAccuracy = hdom.createElement("div", "form-input");
     divAccuracy.appendChild(hdom.createLabelElement("accuracy", "Accuracy"));
     divAccuracy.appendChild(
-        hdom.createIntegerInput("accuracy", filter.getMinAccuracy(), 99999)
+        hdom.createIntegerInput("accuracy", filter.getMinAccuracy(), 99999),
     );
     divAccuracy.appendChild(
-        hdom.createTextElement("span", {}, " meters or less")
+        hdom.createTextElement("span", {}, " meters or less"),
     );
     divForm.appendChild(divAccuracy);
 
@@ -1021,11 +1021,11 @@ function initMiscFields(prefix, filter) {
     divObscured.appendChild(
         hdom.createCheckBox(
             "taxon-obscured",
-            filterParams.obscuration === "taxon"
-        )
+            filterParams.obscuration === "taxon",
+        ),
     );
     divObscured.appendChild(
-        hdom.createLabelElement("taxon-obscured", "Taxon obscured")
+        hdom.createLabelElement("taxon-obscured", "Taxon obscured"),
     );
     divForm.appendChild(divObscured);
 }
