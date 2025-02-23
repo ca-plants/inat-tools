@@ -1,22 +1,11 @@
 #!/usr/bin/env node
 
-import clustersDbscan from "@turf/clusters-dbscan";
-import concave from "@turf/concave";
-import area from "@turf/area";
-import * as clone from "@turf/clone";
-import * as turfMeta from "@turf/meta";
-import * as turfHelpers from "@turf/helpers";
 import { Command } from "commander";
 import { readFileSync, writeFileSync } from "node:fs";
 import * as path from "node:path";
 import { cwd } from "node:process";
+import * as turf from "@turf/turf";
 import { Clusterer } from "../app/js/tools/clusterer.js";
-
-class NodeClusterer extends Clusterer {
-    constructor() {
-        super(clustersDbscan, turfMeta, turfHelpers, clone, concave, area);
-    }
-}
 
 const __dirname = cwd();
 
@@ -31,7 +20,7 @@ async function run(program, options) {
     const str = readFileSync(path.join(__dirname, options.input), "utf8");
     /** @type {GeoJSON.FeatureCollection<GeoJSON.Point>} */
     const json = JSON.parse(str);
-    const clusterer = new NodeClusterer();
+    const clusterer = new Clusterer();
     const clustered = clusterer.cluster(json, options.maxdistance);
     const bordered = clusterer.addBorders(clustered, {
         fill: "red",
@@ -39,7 +28,7 @@ async function run(program, options) {
     });
 
     // Go through remaining points and color code them.
-    turfMeta.featureEach(bordered, (point) => {
+    turf.featureEach(bordered, (point) => {
         if (point.geometry.type === "Point") {
             const properties = point.properties ?? {};
             if (properties.dbscan === "noise") {
@@ -50,7 +39,7 @@ async function run(program, options) {
 
     writeFileSync(
         path.join(__dirname, options.output),
-        JSON.stringify(bordered)
+        JSON.stringify(bordered),
     );
 }
 
@@ -60,7 +49,7 @@ program.option("-o, --output <path>", "The path to the output file.");
 program.option(
     "-d, --maxdistance <km>",
     "The maximum distance to use in the clustering algorithm, in kilometers.",
-    "1"
+    "1",
 );
 program.action((options) => run(program, options));
 
