@@ -69,7 +69,7 @@ const COLUMNS = {
 
 export class ObsSummaryUI extends SearchUI {
     #f1;
-    /** @type {INatData.Observation[]|undefined} */
+    /** @type {import("../types.js").INatDataObs[]|undefined} */
     #results;
 
     constructor(f1 = {}) {
@@ -122,7 +122,7 @@ export class ObsSummaryUI extends SearchUI {
         const fp = this.#f1.getParams();
         fp.taxon_id = entry.taxon_id.toString();
         Object.assign(fp, extraParams);
-        /** @type {Params.PageObsDetail} */
+        /** @type {import("../types.js").ParamsPageObsDetail} */
         const args = { f1: fp, coords: selected };
         if (entry.is_branch) {
             args.branch = true;

@@ -12,7 +12,7 @@ import {
 class UI extends SearchUI {
     #f1;
     #f2;
-    /** @type {INatData.TaxonObsSummary[]|undefined} */
+    /** @type {import("../types.js").INatDataTaxonObsSummary[]|undefined} */
     #results;
 
     /**
@@ -65,12 +65,12 @@ class UI extends SearchUI {
 
         this.updateAnnotationsFields(
             "f2",
-            hdom.getFormElementValue("f2-taxon-id")
+            hdom.getFormElementValue("f2-taxon-id"),
         );
     }
 
     /**
-     * @param {INatData.TaxonObsSummary[]|undefined} results
+     * @param {import("../types.js").INatDataTaxonObsSummary[]|undefined} results
      * @returns {string}
      */
     #getCSVData(results) {
@@ -94,19 +94,19 @@ class UI extends SearchUI {
     }
 
     /**
-     * @param {INatData.TaxonObsSummary[]} speciesData
+     * @param {import("../types.js").INatDataTaxonObsSummary[]} speciesData
      */
     async #getSummaryDOM(speciesData) {
         const descrip = hdom.createElement("div");
         descrip.appendChild(
             document.createTextNode(
-                await this.#f1.getDescription(this.getAPI(), this.#f2)
-            )
+                await this.#f1.getDescription(this.getAPI(), this.#f2),
+            ),
         );
 
         const count = hdom.createElement("div");
         count.appendChild(
-            document.createTextNode(speciesData.length + " species")
+            document.createTextNode(speciesData.length + " species"),
         );
 
         const downloadLink = createDownloadLink(
@@ -117,7 +117,7 @@ class UI extends SearchUI {
                 return {
                     content: this.#getCSVData(this.#results),
                 };
-            }
+            },
         );
         const download = hdom.createElement("div");
         download.appendChild(downloadLink);
@@ -149,7 +149,7 @@ class UI extends SearchUI {
         let initArgs;
         try {
             initArgs = JSON.parse(
-                decodeURIComponent(document.location.hash).substring(1)
+                decodeURIComponent(document.location.hash).substring(1),
             );
         } catch {
             initArgs = {};
@@ -166,10 +166,10 @@ class UI extends SearchUI {
         hdom.addEventListener(
             "add-exclusions",
             "click",
-            async () => await this.addExclusions()
+            async () => await this.addExclusions(),
         );
         hdom.addEventListener("remove-exclusions", "click", () =>
-            this.removeExclusions()
+            this.removeExclusions(),
         );
 
         this.initEventListeners("f1");
@@ -253,7 +253,7 @@ class UI extends SearchUI {
             this.getAPI(),
             this.#f1,
             this.#f2,
-            this.getProgressReporter()
+            this.getProgressReporter(),
         );
         if (!this.#results) {
             this.showSearchForm();

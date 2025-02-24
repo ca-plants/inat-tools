@@ -9,7 +9,7 @@ export class DataRetriever {
      * @param {SpeciesFilter} filtInclude
      * @param {SpeciesFilter|undefined} filtExclude
      * @param {import("../types.js").ProgressReporter} progressReporter
-     * @returns {Promise<INatData.TaxonObsSummary[]>}
+     * @returns {Promise<import("../types.js").INatDataTaxonObsSummary[]>}
      */
     static async getSpeciesData(
         api,
@@ -42,13 +42,13 @@ export class DataRetriever {
      * @param {import("../types.js").INatAPI} api
      * @param {SpeciesFilter} filter
      * @param {import("../types.js").ProgressReporter} progressReporter
-     * @returns {Promise<INatData.Observation[]>}
+     * @returns {Promise<import("../types.js").INatDataObs[]>}
      */
     static async getObservationData(api, filter, progressReporter) {
         const url = filter.getURL(
             "https://api.inaturalist.org/v1/observations?verifiable=true&order_by=observed_on&per_page=500",
         );
-        /** @type {INatData.Observation[]} */
+        /** @type {import("../types.js").INatDataObs[]} */
         const rawResults = await this.#retrievePagedData(
             url,
             "species",
@@ -61,7 +61,7 @@ export class DataRetriever {
         }
 
         const query = whichPolygon(boundary);
-        /** @type {INatData.Observation[]} */
+        /** @type {import("../types.js").INatDataObs[]} */
         const filteredResults = [];
         for (const result of rawResults) {
             const obs = new INatObservation(result);
@@ -90,8 +90,8 @@ export class DataRetriever {
     }
 
     /**
-     * @param {INatData.TaxonObsSummary[]} include
-     * @param {INatData.TaxonObsSummary[]} exclude
+     * @param {import("../types.js").INatDataTaxonObsSummary[]} include
+     * @param {import("../types.js").INatDataTaxonObsSummary[]} exclude
      */
     static removeExclusions(include, exclude) {
         /** @type {Object<string,boolean>} */

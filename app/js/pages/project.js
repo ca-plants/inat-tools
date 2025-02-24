@@ -17,7 +17,7 @@ const COLUMNS = {
             return member.observations_count.toLocaleString();
         },
         undefined,
-        "c-no"
+        "c-no",
     ),
     USER_LOGIN: new ColDef(
         "Login",
@@ -26,7 +26,7 @@ const COLUMNS = {
             return hdom.createLinkElement(InatURL.getUserLink(value), value, {
                 target: "_blank",
             });
-        }
+        },
     ),
     USER_NAME: new ColDef("Name", (member) => {
         return member.user.name ?? "";
@@ -43,7 +43,7 @@ class UI extends SearchUI {
     #projData;
     /** @type {INatData.ProjectMemberData[]|undefined} */
     #projMembers;
-    /** @type {INatData.TaxonObsSummary[]|undefined} */
+    /** @type {import("../types.js").INatDataTaxonObsSummary[]|undefined} */
     #projObscuredTaxa;
 
     /**
@@ -71,7 +71,7 @@ class UI extends SearchUI {
         divResults.appendChild(this.#getResultsHeader());
 
         divResults.appendChild(
-            hdom.createElement("div", { id: "results-table" })
+            hdom.createElement("div", { id: "results-table" }),
         );
 
         hdom.clickElement("view-type-members");
@@ -81,7 +81,7 @@ class UI extends SearchUI {
         let initArgs;
         try {
             initArgs = JSON.parse(
-                decodeURIComponent(document.location.hash).substring(1)
+                decodeURIComponent(document.location.hash).substring(1),
             );
         } catch {
             initArgs = {};
@@ -100,14 +100,14 @@ class UI extends SearchUI {
         eForm.appendChild(getSubmitDiv());
 
         this.initAutoCompleteField("f1", "proj", (v) =>
-            this.getAPI().getAutoCompleteProject(v)
+            this.getAPI().getAutoCompleteProject(v),
         );
         await this.initProject("f1", this.#args.proj);
 
         hdom.addEventListener(
             "form",
             "submit",
-            async (e) => await this.onSubmit(e)
+            async (e) => await this.onSubmit(e),
         );
 
         hdom.setFocusTo("f1-proj-name");
@@ -142,7 +142,7 @@ class UI extends SearchUI {
         const projLink = hdom.createLinkElement(
             "https://www.inaturalist.org/projects/" + this.#projData.slug,
             this.#projData.title,
-            { target: "_blank" }
+            { target: "_blank" },
         );
         divOpt1.appendChild(projLink);
         hdom.appendTextValue(divOpt1, " - ");
@@ -152,7 +152,7 @@ class UI extends SearchUI {
                 this.#projData.slug
             }/members`,
             ` ${this.#projData.user_ids.length} members`,
-            { target: "_blank" }
+            { target: "_blank" },
         );
         divOpt1.appendChild(memLink);
 
@@ -172,13 +172,13 @@ class UI extends SearchUI {
                 "view-type",
                 "view-type-" + data.type,
                 data.type,
-                data.label
+                data.label,
             );
             div.appendChild(radio.radio);
             hdom.addEventListener(
                 radio.radio,
                 "click",
-                async (e) => await this.#handleViewTypeClick(e)
+                async (e) => await this.#handleViewTypeClick(e),
             );
             div.appendChild(radio.label);
             divOpt3.appendChild(div);
@@ -199,7 +199,7 @@ class UI extends SearchUI {
             this.#projMembers = await DataRetriever.getProjectMembers(
                 this.getAPI(),
                 this.#projData.slug,
-                this.getProgressReporter()
+                this.getProgressReporter(),
             );
             if (this.#projMembers === undefined) {
                 return;
@@ -243,7 +243,7 @@ class UI extends SearchUI {
                 this.getAPI(),
                 filter,
                 undefined,
-                this.getProgressReporter()
+                this.getProgressReporter(),
             );
             if (this.#projObscuredTaxa === undefined) {
                 return;
@@ -253,7 +253,7 @@ class UI extends SearchUI {
         hdom.showElement("taxa-count", true);
         hdom.setElementText(
             "taxa-count",
-            `${this.#projObscuredTaxa.length} obscured taxa`
+            `${this.#projObscuredTaxa.length} obscured taxa`,
         );
 
         return createTaxaSummaryTable(filter, this.#projObscuredTaxa);

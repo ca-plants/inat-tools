@@ -1,6 +1,6 @@
 /**
- * @param {INatData.TaxonData} taxon
- * @returns {INatData.Observation}
+ * @param {import("../../app/js/types.js").INatDataTaxon} taxon
+ * @returns {import("../../app/js/types.js").INatDataObs}
  */
 export function makeObservationData(taxon) {
     const rawObservation = {

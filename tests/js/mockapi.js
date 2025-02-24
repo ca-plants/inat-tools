@@ -25,7 +25,7 @@ class MockAPI extends INatAPI {
 
     /**
      * @param {string} id
-     * @returns {Promise<INatData.TaxonData>}
+     * @returns {Promise<import("../../app/js/types.js").INatDataTaxon>}
      */
     async getTaxonData(id) {
         const intID = parseInt(id);

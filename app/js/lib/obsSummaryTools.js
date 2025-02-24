@@ -13,7 +13,7 @@ import { INatObservation } from "./inatobservation.js";
  */
 
 /**
- * @param {INatData.Observation[]} rawResults
+ * @param {import("../types.js").INatDataObs[]} rawResults
  * @param {INatAPI} api
  * @returns {Promise<SummaryEntry[]>}
  */
@@ -78,7 +78,7 @@ export async function summarizeObservations(rawResults, api) {
         }
 
         summaryArray.push(
-            generateBranchSummary({ ...parentSummary }, childSummaries)
+            generateBranchSummary({ ...parentSummary }, childSummaries),
         );
     }
 
@@ -108,7 +108,7 @@ export async function summarizeObservations(rawResults, api) {
 }
 
 /**
- * @param {INatData.TaxonData} taxon
+ * @param {import("../types.js").INatDataTaxon} taxon
  * @param {INatAPI} api
  * @returns {SummaryEntry}
  */

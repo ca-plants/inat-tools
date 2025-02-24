@@ -36,8 +36,8 @@ const RES_BROMUS_DIANDRUS = {
 
 /**
  * @param {string} title
- * @param {INatData.TaxonObsSummary[]} include
- * @param {INatData.TaxonObsSummary[]} exclude
+ * @param {import("../../app/js/types.js").INatDataTaxonObsSummary[]} include
+ * @param {import("../../app/js/types.js").INatDataTaxonObsSummary[]} exclude
  * @param {number[]} expected
  */
 function test(title, include, exclude, expected) {
