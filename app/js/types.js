@@ -1,5 +1,5 @@
 /**
- * Types
+ * Types - INat Data
  * @typedef {{
  *  geoprivacy: string | null;
  *  id: string;
@@ -24,15 +24,33 @@
  * }} INatDataTaxon
  * @typedef {{count: number;taxon: INatDataTaxon}} INatDataTaxonObsSummary
  * @typedef {{id: string;login: string;name: string;}} INatDataUser
- * @typedef  {{
- *      f1: Params.SpeciesFilter;
+ *
+ * Types - Parameters
+ * @typedef {{
+ *      f1: ParamsSpeciesFilter;
  *      coords?: ("public" | "obscured" | "trusted")[];
  *      view?: "datehisto" | "details" | "geojson" | "usersumm";
  *      branch?: boolean;
  *  }} ParamsPageObsDetail
+ * @typedef {{
+ *  accuracy?: number;
+ *  annotations?: { type: "ev-mammal" | "plants"; value: string }[];
+ *  boundary?: GeoJSON.FeatureCollection;
+ *  establishment?: "native" | "introduced";
+ *  month?: number | number[];
+ *  obscuration?: "obscured" | "private" | "none" | "taxon";
+ *  place_id?: string;
+ *  project_id?: string;
+ *  quality_grade?: INatData.QualityGrade[];
+ *  taxon_id?: string;
+ *  user_id?: string;
+ *  year1?: number;
+ *  year2?: number;
+ * }} ParamsSpeciesFilter
  *
  * Classes
  * @typedef {import("./lib/inatapi.js").INatAPI} INatAPI
  * @typedef {import("./lib/inatobservation.js").INatObservation} INatObservation
  * @typedef {import("./lib/progressreporter.js").ProgressReporter} ProgressReporter
+ * @typedef {import("./lib/speciesfilter.js").SpeciesFilter} SpeciesFilter
  */

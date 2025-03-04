@@ -3,8 +3,8 @@ import { SpeciesFilter } from "../../app/js/lib/speciesfilter.js";
 
 /**
  * @param {string} name
- * @param {Params.SpeciesFilter} f1
- * @param {Params.SpeciesFilter|undefined} f2
+ * @param {import("../../app/js/types.js").ParamsSpeciesFilter} f1
+ * @param {import("../../app/js/types.js").ParamsSpeciesFilter|undefined} f2
  * @param {string} expected
  */
 function test(name, f1, f2, expected) {
@@ -12,7 +12,7 @@ function test(name, f1, f2, expected) {
     it(name, async () => {
         const desc = await filter.getDescription(
             new MockAPI(),
-            f2 ? new SpeciesFilter(f2) : undefined
+            f2 ? new SpeciesFilter(f2) : undefined,
         );
         expect(desc).toBe(expected);
     });
@@ -22,68 +22,68 @@ test(
     "project",
     { project_id: "1" },
     undefined,
-    'Species observed in project "projname"'
+    'Species observed in project "projname"',
 );
 test("month", { month: 3 }, undefined, "Species observed in March");
 test(
     "month range",
     { month: [10, 1] },
     undefined,
-    "Species observed in October through January"
+    "Species observed in October through January",
 );
 test(
     "year",
     { year1: 2023, year2: 2023 },
     undefined,
-    "Species observed in 2023"
+    "Species observed in 2023",
 );
 test(
     "year after",
     { year1: 2022 },
     undefined,
-    "Species observed in 2022 or later"
+    "Species observed in 2022 or later",
 );
 test(
     "year before",
     { year2: 2022 },
     undefined,
-    "Species observed in 2022 or earlier"
+    "Species observed in 2022 or earlier",
 );
 test(
     "year range",
     { year1: 2021, year2: 2023 },
     undefined,
-    "Species observed from 2021 through 2023"
+    "Species observed from 2021 through 2023",
 );
 test(
     "place",
     { place_id: "3523" },
     undefined,
-    "Species observed in Tilden Regional Park, CA, US"
+    "Species observed in Tilden Regional Park, CA, US",
 );
 test(
     "boundary",
     { boundary: { type: "FeatureCollection", features: [] } },
     undefined,
-    "Species observed in specified boundary"
+    "Species observed in specified boundary",
 );
 test(
     "place - research grade",
     { place_id: "3523", quality_grade: ["research"] },
     undefined,
-    "Species observed in Tilden Regional Park, CA, US (research grade only)"
+    "Species observed in Tilden Regional Park, CA, US (research grade only)",
 );
 test(
     "place - not research grade",
     { place_id: "3523", quality_grade: ["needs_id"] },
     undefined,
-    "Species observed in Tilden Regional Park, CA, US (needs ID only)"
+    "Species observed in Tilden Regional Park, CA, US (needs ID only)",
 );
 test(
     "taxon in place",
     { place_id: "3523", taxon_id: "56932" },
     undefined,
-    "Genus Cuscuta observed in Tilden Regional Park, CA, US"
+    "Genus Cuscuta observed in Tilden Regional Park, CA, US",
 );
 test(
     "flowering plants",
@@ -92,7 +92,7 @@ test(
         annotations: [{ type: "plants", value: "Flowering" }],
     },
     undefined,
-    "Genus Cuscuta observed when plant has flowers"
+    "Genus Cuscuta observed when plant has flowers",
 );
 test(
     "budding plants",
@@ -101,7 +101,7 @@ test(
         annotations: [{ type: "plants", value: "Flower Buds" }],
     },
     undefined,
-    "Genus Cuscuta observed when plant has flower buds"
+    "Genus Cuscuta observed when plant has flower buds",
 );
 test(
     "plants not flowering",
@@ -110,7 +110,7 @@ test(
         annotations: [{ type: "plants", value: "Not Flowering" }],
     },
     undefined,
-    "Genus Cuscuta observed when plant has no evidence of flowering"
+    "Genus Cuscuta observed when plant has no evidence of flowering",
 );
 test(
     "pig organism",
@@ -119,41 +119,41 @@ test(
         annotations: [{ type: "ev-mammal", value: "Organism" }],
     },
     undefined,
-    "Species Sus scrofa observed when organism is present"
+    "Species Sus scrofa observed when organism is present",
 );
 test(
     "insects in place",
     { taxon_id: "47158", place_id: "3523" },
     undefined,
-    "Class Insecta observed in Tilden Regional Park, CA, US"
+    "Class Insecta observed in Tilden Regional Park, CA, US",
 );
 test(
     "insects by observer in place",
     { taxon_id: "47158", place_id: "3523", user_id: "4218" },
     undefined,
-    "Class Insecta observed by testuser in Tilden Regional Park, CA, US"
+    "Class Insecta observed by testuser in Tilden Regional Park, CA, US",
 );
 test(
     "insects in place excluding insects by observer in place",
     { taxon_id: "47158", place_id: "3523" },
     { taxon_id: "47158", place_id: "3523", user_id: "4218" },
-    "Class Insecta observed in Tilden Regional Park, CA, US, excluding Class Insecta observed by testuser in Tilden Regional Park, CA, US"
+    "Class Insecta observed in Tilden Regional Park, CA, US, excluding Class Insecta observed by testuser in Tilden Regional Park, CA, US",
 );
 test(
     "place and establishment",
     { place_id: "3523", establishment: "native" },
     undefined,
-    "Species which are native observed in Tilden Regional Park, CA, US"
+    "Species which are native observed in Tilden Regional Park, CA, US",
 );
 test(
     "place and accuracy",
     { place_id: "3523", accuracy: 1000 },
     undefined,
-    "Species observed in Tilden Regional Park, CA, US with an accuracy of 1000 meters or less"
+    "Species observed in Tilden Regional Park, CA, US with an accuracy of 1000 meters or less",
 );
 test(
     "place and taxon obscured",
     { place_id: "3523", obscuration: "taxon" },
     undefined,
-    "Species observed in Tilden Regional Park, CA, US where taxon is obscured"
+    "Species observed in Tilden Regional Park, CA, US where taxon is obscured",
 );

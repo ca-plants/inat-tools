@@ -6,7 +6,7 @@ import { DateUtils } from "./dateutils.js";
 class Histogram {
     /**
      * @param {import("../types.js").INatObservation[]} observations
-     * @param {SpeciesFilter} filter
+     * @param {import("../types.js").SpeciesFilter} filter
      */
     static createSVG(observations, filter) {
         /**
@@ -120,7 +120,7 @@ class Histogram {
     /**
      * @param {Event} event
      * @param {{date:number,count:number}} value
-     * @param {SpeciesFilter} filter
+     * @param {import("../types.js").SpeciesFilter} filter
      */
     static #viewInINat(event, value, filter) {
         event.preventDefault();

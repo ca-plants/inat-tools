@@ -140,7 +140,7 @@ class ObsDetailUI extends SearchUI {
     #project_members;
 
     /**
-     * @param {Params.SpeciesFilter} f1
+     * @param {import("../types.js").ParamsSpeciesFilter} f1
      */
     constructor(f1) {
         super({ allowBoundary: true });
@@ -281,7 +281,7 @@ class ObsDetailUI extends SearchUI {
     }
 
     /**
-     * @param {Params.SpeciesFilter} params
+     * @param {import("../types.js").ParamsSpeciesFilter} params
      * @param {Results} results
      * @param {string[]} [selectedTypes]
      */

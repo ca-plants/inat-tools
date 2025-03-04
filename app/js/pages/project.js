@@ -232,7 +232,7 @@ class UI extends SearchUI {
             throw new Error();
         }
 
-        /** @type {Params.SpeciesFilter} */
+        /** @type {import("../types.js").ParamsSpeciesFilter} */
         const filterParams = {
             project_id: this.#projData.id.toString(),
             obscuration: "taxon",

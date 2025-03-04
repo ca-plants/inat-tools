@@ -84,7 +84,7 @@ export function createDownloadLink(pathPrefix, title, fileName, getData) {
 }
 
 /**
- * @param {SpeciesFilter} filter
+ * @param {import("../types.js").SpeciesFilter} filter
  * @param {import("../types.js").INatDataTaxonObsSummary[]} results
  * @returns {Element}
  */

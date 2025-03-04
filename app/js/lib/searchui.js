@@ -369,7 +369,7 @@ export class SearchUI extends UI {
      */
     initFilterFromForm(prefix) {
         /**
-         * @type {{name:string,setQueryParam:function (Params.SpeciesFilter,string):void,label:string}[]}
+         * @type {{name:string,setQueryParam:function (import("../types.js").ParamsSpeciesFilter,string):void,label:string}[]}
          */
         const FILT_AUTOCOMPLETE_FIELDS = [
             {
@@ -394,7 +394,7 @@ export class SearchUI extends UI {
             },
         ];
 
-        /** @type {Params.SpeciesFilter} */
+        /** @type {import("../types.js").ParamsSpeciesFilter} */
         const filterArgs = {};
 
         let hasErrors = false;

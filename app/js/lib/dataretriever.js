@@ -6,8 +6,8 @@ import { INatObservation } from "./inatobservation.js";
 export class DataRetriever {
     /**
      * @param {import("../types.js").INatAPI} api
-     * @param {SpeciesFilter} filtInclude
-     * @param {SpeciesFilter|undefined} filtExclude
+     * @param {import("../types.js").SpeciesFilter} filtInclude
+     * @param {import("../types.js").SpeciesFilter|undefined} filtExclude
      * @param {import("../types.js").ProgressReporter} progressReporter
      * @returns {Promise<import("../types.js").INatDataTaxonObsSummary[]>}
      */
@@ -40,7 +40,7 @@ export class DataRetriever {
 
     /**
      * @param {import("../types.js").INatAPI} api
-     * @param {SpeciesFilter} filter
+     * @param {import("../types.js").SpeciesFilter} filter
      * @param {import("../types.js").ProgressReporter} progressReporter
      * @returns {Promise<import("../types.js").INatDataObs[]>}
      */
@@ -196,7 +196,7 @@ export class DataRetriever {
     /**
      * @param {string} label
      * @param {import("../types.js").INatAPI} api
-     * @param {SpeciesFilter} filter
+     * @param {import("../types.js").SpeciesFilter} filter
      * @param {import("../types.js").ProgressReporter} progressReporter
      */
     static async #retrieveSpeciesData(label, api, filter, progressReporter) {
