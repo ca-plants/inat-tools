@@ -19,7 +19,7 @@ const MONTH_NAMES = [
 /** @type {INatData.QualityGrade[]} */
 const ALL_QUALITY_GRADES = ["needs_id", "research"];
 
-class SpeciesFilter {
+export class SpeciesFilter {
     /** @type {import("../types.js").ParamsSpeciesFilter} */
     #params = {};
 
@@ -310,34 +310,19 @@ class SpeciesFilter {
         addString("taxon_id");
         addString("user_id");
 
-        if (this.#params.year1 !== undefined) {
-            const v = this.#params.year1;
-            if (this.#params.month) {
-                // Only specific months are included; use year range list.
-                const years = [];
-                for (let year = v; year <= (this.#params.year2 ?? v); year++) {
-                    years.push(year);
-                }
-                url.searchParams.set("year", years.join());
-            } else {
-                url.searchParams.set(
-                    "d1",
-                    DateUtils.getDateString(new Date(v, 0, 1)),
-                );
-            }
+        if (params.year1 !== undefined) {
+            url.searchParams.set(
+                "d1",
+                DateUtils.getDateString(new Date(params.year1, 0, 1)),
+            );
         }
         if (this.#params.year2 !== undefined) {
-            if (!this.#params.month) {
-                url.searchParams.set(
-                    "d2",
-                    DateUtils.getDateString(
-                        new Date(this.#params.year2, 11, 31),
-                    ),
-                );
-            }
+            url.searchParams.set(
+                "d2",
+                DateUtils.getDateString(new Date(this.#params.year2, 11, 31)),
+            );
         }
 
-        console.log(url);
         return url;
     }
 
@@ -362,5 +347,3 @@ class SpeciesFilter {
         return this.#params;
     }
 }
-
-export { SpeciesFilter };

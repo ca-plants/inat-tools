@@ -15,15 +15,20 @@ function test(name, f1, expected) {
 test(
     "month and year",
     { month: 12, year1: 2023, year2: 2023 },
-    "https://www.inaturalist.org/observations?subview=grid&month=12&year=2023",
+    "https://www.inaturalist.org/observations?subview=grid&month=12&d1=2023-01-01&d2=2023-12-31",
 );
 test(
     "month and years",
     { month: 12, year1: 2021, year2: 2023 },
-    "https://www.inaturalist.org/observations?subview=grid&month=12&year=2021%2C2022%2C2023",
+    "https://www.inaturalist.org/observations?subview=grid&month=12&d1=2021-01-01&d2=2023-12-31",
 );
 test(
     "month and start year",
     { month: 12, year1: 2023 },
-    "https://www.inaturalist.org/observations?subview=grid&month=12&year=2023%2C2024%2C2025",
+    "https://www.inaturalist.org/observations?subview=grid&month=12&d1=2023-01-01",
+);
+test(
+    "month and start year",
+    { month: 11, year2: 2023 },
+    "https://www.inaturalist.org/observations?subview=grid&month=11&d2=2023-12-31",
 );
