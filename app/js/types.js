@@ -13,6 +13,9 @@
  *  taxon_geoprivacy: string;
  *  user: INatDataUser;
  * }} INatDataObs
+ * @typedef {{id: number;title: string;slug: string;user_ids: number[];}} INatDataProject
+ * @typedef {{}} INatDataProjectMember
+ * @typedef {"needs_id" | "research"} INatDataQualityGrade
  * @typedef {{
  *  id: number;
  *  parent_id: number;
@@ -41,7 +44,7 @@
  *  obscuration?: "obscured" | "private" | "none" | "taxon";
  *  place_id?: string;
  *  project_id?: string;
- *  quality_grade?: INatData.QualityGrade[];
+ *  quality_grade?: INatDataQualityGrade[];
  *  taxon_id?: string;
  *  user_id?: string;
  *  year1?: number;

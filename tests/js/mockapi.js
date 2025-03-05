@@ -17,7 +17,7 @@ class MockAPI extends INatAPI {
     }
 
     /**
-     * @returns {Promise<INatData.ProjectData>}
+     * @returns {Promise<import("../../app/js/types.js").INatDataProject>}
      */
     async getProjectData() {
         return { id: 0, title: "projname", slug: "projname", user_ids: [] };

@@ -16,7 +16,7 @@ const MONTH_NAMES = [
     "December",
 ];
 
-/** @type {INatData.QualityGrade[]} */
+/** @type {import("../types.js").INatDataQualityGrade[]} */
 const ALL_QUALITY_GRADES = ["needs_id", "research"];
 
 export class SpeciesFilter {

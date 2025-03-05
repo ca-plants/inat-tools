@@ -39,9 +39,9 @@ const COLUMNS = {
 class UI extends SearchUI {
     #args;
 
-    /** @type {INatData.ProjectData|undefined} */
+    /** @type {import("../types.js").INatDataProject|undefined} */
     #projData;
-    /** @type {INatData.ProjectMemberData[]|undefined} */
+    /** @type {import("../types.js").INatDataProjectMember[]|undefined} */
     #projMembers;
     /** @type {import("../types.js").INatDataTaxonObsSummary[]|undefined} */
     #projObscuredTaxa;

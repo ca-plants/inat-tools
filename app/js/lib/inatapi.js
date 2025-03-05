@@ -160,7 +160,7 @@ export class INatAPI {
 
     /**
      * @param {string} projID
-     * @returns {Promise<INatData.ProjectData>}
+     * @returns {Promise<import("../types.js").INatDataProject>}
      */
     async getProjectData(projID) {
         return this.#getDataByID(
