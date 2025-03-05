@@ -4,7 +4,7 @@ import { hdom } from "./hdom.js";
 import { SpeciesFilter } from "./speciesfilter.js";
 import { UI } from "./ui.js";
 
-/** @type {{id:INatData.QualityGrade,label:string}[]} */
+/** @type {{id:import("../types.js").INatDataQualityGrade,label:string}[]} */
 const QUALITY_GRADES = [
     { id: "research", label: "Research Grade" },
     { id: "needs_id", label: "Needs ID" },
@@ -369,7 +369,7 @@ export class SearchUI extends UI {
      */
     initFilterFromForm(prefix) {
         /**
-         * @type {{name:string,setQueryParam:function (Params.SpeciesFilter,string):void,label:string}[]}
+         * @type {{name:string,setQueryParam:function (import("../types.js").ParamsSpeciesFilter,string):void,label:string}[]}
          */
         const FILT_AUTOCOMPLETE_FIELDS = [
             {
@@ -394,7 +394,7 @@ export class SearchUI extends UI {
             },
         ];
 
-        /** @type {Params.SpeciesFilter} */
+        /** @type {import("../types.js").ParamsSpeciesFilter} */
         const filterArgs = {};
 
         let hasErrors = false;
@@ -461,7 +461,7 @@ export class SearchUI extends UI {
             filterArgs.year2 = parseInt(year2);
         }
 
-        /** @type {INatData.QualityGrade[]} */
+        /** @type {import("../types.js").INatDataQualityGrade[]} */
         const grades = [];
         for (const qg of QUALITY_GRADES) {
             if (hdom.isChecked(`${prefix}-${qg.id}`)) {

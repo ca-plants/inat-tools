@@ -8,8 +8,8 @@
         "newLine": "lf",
         "noEmit": true,
         "rootDir": ".",
-        "skipLibCheck": false,
+        "skipLibCheck": true,
         "strict": true
     },
-    "include": ["app", "tests", "types"]
+    "include": ["app", "scripts", "tests"]
 }

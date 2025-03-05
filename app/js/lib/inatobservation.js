@@ -2,7 +2,7 @@ class INatObservation {
     #rawObservation;
 
     /**
-     * @param {INatData.Observation} rawObservation
+     * @param {import("../types.js").INatDataObs} rawObservation
      */
     constructor(rawObservation) {
         this.#rawObservation = rawObservation;
@@ -45,7 +45,7 @@ class INatObservation {
     getObsDateString() {
         return this.#rawObservation.observed_on_details.date.replaceAll(
             "-",
-            String.fromCharCode(8209)
+            String.fromCharCode(8209),
         );
     }
 
@@ -117,7 +117,8 @@ class INatObservation {
                 return true;
         }
         console.error(
-            "unknown taxon_geoprivacy: " + this.#rawObservation.taxon_geoprivacy
+            "unknown taxon_geoprivacy: " +
+                this.#rawObservation.taxon_geoprivacy,
         );
     }
 }

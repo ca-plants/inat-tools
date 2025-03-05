@@ -1,8 +1,8 @@
 import { Cache } from "./cache.js";
 
-class QueryCancelledException extends Error {}
+export class QueryCancelledException extends Error {}
 
-class INatAPI {
+export class INatAPI {
     /** @type {number|undefined} */
     #lastCallTime;
     #cancelQuery = false;
@@ -60,7 +60,7 @@ class INatAPI {
      */
     async #getAutoComplete(str, type, nameGen) {
         const url = new URL(
-            "https://api.inaturalist.org/v1/" + type + "/autocomplete"
+            "https://api.inaturalist.org/v1/" + type + "/autocomplete",
         );
         url.searchParams.set("q", str);
         const json = await this.getJSON(url);
@@ -154,31 +154,31 @@ class INatAPI {
     async getPlaceData(placeID) {
         return this.#getDataByID(
             placeID,
-            "https://api.inaturalist.org/v1/places/"
+            "https://api.inaturalist.org/v1/places/",
         );
     }
 
     /**
      * @param {string} projID
-     * @returns {Promise<INatData.ProjectData>}
+     * @returns {Promise<import("../types.js").INatDataProject>}
      */
     async getProjectData(projID) {
         return this.#getDataByID(
             projID,
-            "https://api.inaturalist.org/v1/projects/"
+            "https://api.inaturalist.org/v1/projects/",
         );
     }
 
     /**
      * @param {string} id
-     * @returns {Promise<INatData.TaxonData>}
+     * @returns {Promise<import("../types.js").INatDataTaxon>}
      */
     async getTaxonData(id) {
         return this.#getDataByID(id, "https://api.inaturalist.org/v1/taxa/");
     }
 
     /**
-     * @param {INatData.TaxonData} taxon
+     * @param {import("../types.js").INatDataTaxon} taxon
      */
     static getTaxonName(taxon) {
         switch (taxon.rank) {
@@ -188,7 +188,7 @@ class INatAPI {
                 parts.splice(
                     2,
                     0,
-                    { subspecies: "subsp.", variety: "var." }[taxon.rank]
+                    { subspecies: "subsp.", variety: "var." }[taxon.rank],
                 );
                 return parts.join(" ");
             }
@@ -198,7 +198,7 @@ class INatAPI {
     }
 
     /**
-     * @param {INatData.TaxonData} taxon
+     * @param {import("../types.js").INatDataTaxon} taxon
      * @param {boolean} [addCommonName]
      * @returns {string}
      */
@@ -222,11 +222,9 @@ class INatAPI {
 
     /**
      * @param {string} id
-     * @returns {Promise<INatData.UserData>}
+     * @returns {Promise<import("../types.js").INatDataUser>}
      */
     async getUserData(id) {
         return this.#getDataByID(id, "https://api.inaturalist.org/v1/users/");
     }
 }
-
-export { INatAPI, QueryCancelledException };

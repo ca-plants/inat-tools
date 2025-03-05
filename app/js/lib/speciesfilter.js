@@ -16,15 +16,15 @@ const MONTH_NAMES = [
     "December",
 ];
 
-/** @type {INatData.QualityGrade[]} */
+/** @type {import("../types.js").INatDataQualityGrade[]} */
 const ALL_QUALITY_GRADES = ["needs_id", "research"];
 
-class SpeciesFilter {
-    /** @type {Params.SpeciesFilter} */
+export class SpeciesFilter {
+    /** @type {import("../types.js").ParamsSpeciesFilter} */
     #params = {};
 
     /**
-     * @param {Params.SpeciesFilter} params
+     * @param {import("../types.js").ParamsSpeciesFilter} params
      */
     constructor(params) {
         Object.assign(this.#params, params);
@@ -175,7 +175,7 @@ class SpeciesFilter {
     }
 
     /**
-     * @returns {Params.SpeciesFilter}
+     * @returns {import("../types.js").ParamsSpeciesFilter}
      */
     getParams() {
         return structuredClone(this.#params);
@@ -205,10 +205,18 @@ class SpeciesFilter {
      */
     getURL(urlStr = "https://www.inaturalist.org/observations?subview=grid") {
         /**
-         * @param {URL} url
+         * @param {"place_id"|'project_id'|"taxon_id"|"user_id"} name
+         */
+        function addString(name) {
+            if (params[name] !== undefined) {
+                url.searchParams.set(name, params[name]);
+            }
+        }
+
+        /**
          * @param {{ type: string; value: string }[]} annotations
          */
-        function setAnnotationParameters(url, annotations) {
+        function setAnnotationParameters(annotations) {
             if (!annotations) {
                 return;
             }
@@ -245,78 +253,76 @@ class SpeciesFilter {
             }
         }
 
+        const params = this.#params;
         const url = new URL(urlStr);
-        for (const [k, v] of Object.entries(this.#params)) {
-            switch (k) {
-                case "accuracy":
-                    url.searchParams.set("acc_below_or_unknown", v + 1);
-                    break;
-                case "annotations":
-                    setAnnotationParameters(url, v);
-                    break;
-                case "boundary":
-                    {
-                        const bounds = bbox(v);
-                        url.searchParams.set("swlng", bounds[0].toString());
-                        url.searchParams.set("swlat", bounds[1].toString());
-                        url.searchParams.set("nelng", bounds[2].toString());
-                        url.searchParams.set("nelat", bounds[3].toString());
-                    }
-                    break;
-                case "establishment":
-                    if (v === "native") {
-                        url.searchParams.set("native", "true");
-                    } else if (v === "introduced") {
-                        url.searchParams.set("introduced", "true");
-                    }
-                    break;
-                case "obscuration":
-                    switch (v) {
-                        case "taxon":
-                            url.searchParams.set(
-                                "taxon_geoprivacy",
-                                "obscured",
-                            );
-                            break;
-                        default:
-                            url.searchParams.set(k, v);
-                            break;
-                    }
-                    break;
-                case "year1":
-                    if (this.#params.month) {
-                        // Only specific months are included; use year range list.
-                        const years = [];
-                        for (
-                            let year = v;
-                            year <= (this.#params.year2 ?? v);
-                            year++
-                        ) {
-                            years.push(year);
-                        }
-                        url.searchParams.set("year", years.join());
-                    } else {
-                        url.searchParams.set(
-                            "d1",
-                            DateUtils.getDateString(new Date(v, 0, 1)),
-                        );
-                    }
-                    break;
-                case "year2":
-                    if (!this.#params.month) {
-                        url.searchParams.set(
-                            "d2",
-                            DateUtils.getDateString(new Date(v, 11, 31)),
-                        );
-                    }
-                    break;
-                default:
-                    if (v !== undefined) {
-                        url.searchParams.set(k, v);
-                    }
-                    break;
-            }
+        if (this.#params.accuracy !== undefined) {
+            url.searchParams.set(
+                "acc_below_or_unknown",
+                String(this.#params.accuracy + 1),
+            );
         }
+        if (this.#params.annotations !== undefined) {
+            setAnnotationParameters(this.#params.annotations);
+        }
+        if (this.#params.boundary !== undefined) {
+            const bounds = bbox(this.#params.boundary);
+            url.searchParams.set("swlng", bounds[0].toString());
+            url.searchParams.set("swlat", bounds[1].toString());
+            url.searchParams.set("nelng", bounds[2].toString());
+            url.searchParams.set("nelat", bounds[3].toString());
+        }
+        switch (this.#params.establishment) {
+            case "native":
+                url.searchParams.set("native", "true");
+                break;
+            case "introduced":
+                url.searchParams.set("introduced", "true");
+                break;
+        }
+        if (this.#params.month !== undefined) {
+            const m = this.#params.month;
+            url.searchParams.set(
+                "month",
+                typeof m === "number" ? m.toString() : m.join(","),
+            );
+        }
+        switch (this.#params.obscuration) {
+            case "taxon":
+                url.searchParams.set("taxon_geoprivacy", "obscured");
+                break;
+            case "none":
+            case "obscured":
+            case "private":
+                url.searchParams.set("obscuration", this.#params.obscuration);
+                break;
+        }
+
+        addString("place_id");
+        addString("project_id");
+
+        if (params.quality_grade !== undefined) {
+            url.searchParams.set(
+                "quality_grade",
+                params.quality_grade.join(","),
+            );
+        }
+
+        addString("taxon_id");
+        addString("user_id");
+
+        if (params.year1 !== undefined) {
+            url.searchParams.set(
+                "d1",
+                DateUtils.getDateString(new Date(params.year1, 0, 1)),
+            );
+        }
+        if (this.#params.year2 !== undefined) {
+            url.searchParams.set(
+                "d2",
+                DateUtils.getDateString(new Date(this.#params.year2, 11, 31)),
+            );
+        }
+
         return url;
     }
 
@@ -341,5 +347,3 @@ class SpeciesFilter {
         return this.#params;
     }
 }
-
-export { SpeciesFilter };

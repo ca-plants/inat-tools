@@ -29,7 +29,7 @@ const DETAIL_COLS = {
             return hdom.createLinkElement(obs.getURL(), value, {
                 target: "_blank",
             });
-        }
+        },
     ),
     TAXON: new ColDef("Taxon", (obs) => obs.getTaxonName()),
     OBSERVER: new ColDef(
@@ -39,9 +39,9 @@ const DETAIL_COLS = {
             return hdom.createLinkElement(
                 InatURL.getUserLink(obs.getUserLogin()),
                 value,
-                { target: "_blank" }
+                { target: "_blank" },
             );
-        }
+        },
     ),
     LOCATION: new ColDef(
         "Location",
@@ -57,7 +57,7 @@ const DETAIL_COLS = {
             return hdom.createLinkElement(url, value, {
                 target: "_blank",
             });
-        }
+        },
     ),
     COORDS: new ColDef("Coords", (obs) => {
         return obs.getCoordType();
@@ -71,7 +71,7 @@ const DETAIL_COLS = {
 const SUMMARY_COLS = {
     OBSERVER_LOGIN: new ColDef("Login", (summ) => summ.login),
     OBSERVER_NAME: new ColDef("Name", (summ) =>
-        summ.display_name === summ.login ? "" : summ.display_name
+        summ.display_name === summ.login ? "" : summ.display_name,
     ),
     OBSERVER: new ColDef(
         "Observer",
@@ -80,9 +80,9 @@ const SUMMARY_COLS = {
             return hdom.createLinkElement(
                 InatURL.getUserLink(summ.login),
                 value,
-                { target: "_blank" }
+                { target: "_blank" },
             );
-        }
+        },
     ),
     NUM_OBS: new ColDef(
         "Total",
@@ -90,7 +90,7 @@ const SUMMARY_COLS = {
         (value, summ, ui) => {
             return ui.getObserverINatLink(summ, value);
         },
-        "right"
+        "right",
     ),
     NUM_PUBLIC: new ColDef(
         "Public",
@@ -98,7 +98,7 @@ const SUMMARY_COLS = {
         (value, summ, ui) => {
             return ui.getObserverINatLink(summ, value, ["public"]);
         },
-        "right"
+        "right",
     ),
     NUM_TRUSTED: new ColDef(
         "Trusted",
@@ -106,7 +106,7 @@ const SUMMARY_COLS = {
         (value, summ, ui) => {
             return ui.getObserverINatLink(summ, value, ["trusted"]);
         },
-        "right"
+        "right",
     ),
     NUM_OBSCURED: new ColDef(
         "Obscured",
@@ -114,7 +114,7 @@ const SUMMARY_COLS = {
         (value, summ, ui) => {
             return ui.getObserverINatLink(summ, value, ["obscured"]);
         },
-        "right"
+        "right",
     ),
     PROJECT: new ColDef("Proj Mem", (summ, ui) => {
         return ui.getMembershipStatus(summ.id);
@@ -125,9 +125,9 @@ class ObsDetailUI extends SearchUI {
     /** @type {number|undefined} */
     #taxon_id;
     #f1;
-    /** @type {INatData.TaxonData|undefined} */
+    /** @type {import("../types.js").INatDataTaxon|undefined} */
     #taxon_data;
-    /** @type {INatData.Observation[]|undefined} */
+    /** @type {import("../types.js").INatDataObs[]|undefined} */
     #rawResults;
     /** @type {Results} */
     #processedResults = {
@@ -140,7 +140,7 @@ class ObsDetailUI extends SearchUI {
     #project_members;
 
     /**
-     * @param {Params.SpeciesFilter} f1
+     * @param {import("../types.js").ParamsSpeciesFilter} f1
      */
     constructor(f1) {
         super({ allowBoundary: true });
@@ -158,7 +158,7 @@ class ObsDetailUI extends SearchUI {
                 !(child instanceof HTMLElement) ||
                 !["results-summary", RESULT_FORM_ID].includes(
                     // @ts-ignore
-                    child.getAttribute("id")
+                    child.getAttribute("id"),
                 )
             ) {
                 childrenToDelete.push(child);
@@ -281,7 +281,7 @@ class ObsDetailUI extends SearchUI {
     }
 
     /**
-     * @param {Params.SpeciesFilter} params
+     * @param {import("../types.js").ParamsSpeciesFilter} params
      * @param {Results} results
      * @param {string[]} [selectedTypes]
      */
@@ -297,7 +297,7 @@ class ObsDetailUI extends SearchUI {
                 }
             }
             const url = new URL(
-                "https://www.inaturalist.org/observations?subview=grid"
+                "https://www.inaturalist.org/observations?subview=grid",
             );
             const idList = selectedIDs.join(",");
             if (idList.length >= 10813) {
@@ -356,9 +356,9 @@ class ObsDetailUI extends SearchUI {
     }
 
     static async getInstance() {
-        /** @type {Params.PageObsDetail} */
+        /** @type {import("../types.js").ParamsPageObsDetail} */
         const initArgs = JSON.parse(
-            decodeURIComponent(document.location.hash).substring(1)
+            decodeURIComponent(document.location.hash).substring(1),
         );
         const ui = new ObsDetailUI(initArgs.f1);
         await ui.initInstance(initArgs.coords, initArgs.view, initArgs.branch);
@@ -410,7 +410,7 @@ class ObsDetailUI extends SearchUI {
         const url = this.getINatObservationURL(
             params,
             userSumm.results,
-            selectedTypes
+            selectedTypes,
         );
         if (url === "") {
             return count.toString();
@@ -490,7 +490,7 @@ class ObsDetailUI extends SearchUI {
         }
         this.#processedResults = this.summarizeResults(
             this.#rawResults,
-            hdom.isChecked("branch")
+            hdom.isChecked("branch"),
         );
         this.updateCoordOptions(this.getSelectedTypes());
         this.updateDisplay();
@@ -584,7 +584,7 @@ class ObsDetailUI extends SearchUI {
         this.#rawResults = await DataRetriever.getObservationData(
             api,
             this.#f1,
-            this.getProgressReporter()
+            this.getProgressReporter(),
         );
         if (!this.#rawResults) {
             // If retrieval failed, make sure the search form is displayed.
@@ -593,7 +593,7 @@ class ObsDetailUI extends SearchUI {
         }
         this.#processedResults = this.summarizeResults(
             this.#rawResults,
-            !!includeDescendants
+            !!includeDescendants,
         );
 
         hdom.showElement("search-crit", false);
@@ -605,7 +605,7 @@ class ObsDetailUI extends SearchUI {
             const members = await DataRetriever.getProjectMembers(
                 api,
                 projectID,
-                this.getProgressReporter()
+                this.getProgressReporter(),
             );
             this.#project_members = members ? {} : undefined;
             if (this.#project_members) {
@@ -627,7 +627,7 @@ class ObsDetailUI extends SearchUI {
             style: "flex:3;min-width:20rem",
         });
         divDesc.appendChild(
-            document.createTextNode(await filter.getDescription(api))
+            document.createTextNode(await filter.getDescription(api)),
         );
         resultsSummary.appendChild(divDesc);
         const link = getNeedsAttributeLink(filter);
@@ -639,7 +639,7 @@ class ObsDetailUI extends SearchUI {
             resultsSummary.appendChild(divLink);
         }
         resultsSummary.appendChild(
-            this.createChangeFilterButton((e) => this.changeFilter(e))
+            this.createChangeFilterButton((e) => this.changeFilter(e)),
         );
 
         const form = hdom.createElement("form", { id: RESULT_FORM_ID });
@@ -657,14 +657,14 @@ class ObsDetailUI extends SearchUI {
         divIncludeOpts.appendChild(divDescendants);
         const cbDescendants = hdom.createCheckBox(
             "branch",
-            !!includeDescendants
+            !!includeDescendants,
         );
         hdom.addEventListener(cbDescendants, "click", () =>
-            this.handleBranchClick()
+            this.handleBranchClick(),
         );
         divDescendants.appendChild(cbDescendants);
         divDescendants.appendChild(
-            hdom.createLabelElement("branch", "Show descendants")
+            hdom.createLabelElement("branch", "Show descendants"),
         );
 
         const radios = hdom.createElement("div", {
@@ -686,7 +686,7 @@ class ObsDetailUI extends SearchUI {
             hdom.createLinkElement("", "View in iNaturalist", {
                 target: "_blank",
                 id: "viewininat",
-            })
+            }),
         );
 
         const optionDiv = hdom.createElement("div", { class: "options" });
@@ -703,7 +703,7 @@ class ObsDetailUI extends SearchUI {
             ? hdom.getElement("disp-" + view)
             : hdom.getElement("disp-details");
         hdom.clickElement(
-            initialView instanceof HTMLElement ? initialView : "disp-details"
+            initialView instanceof HTMLElement ? initialView : "disp-details",
         );
     }
 
@@ -713,9 +713,9 @@ class ObsDetailUI extends SearchUI {
 
         const svg = Histogram.createSVG(
             this.#processedResults.observations.filter((obs) =>
-                coordTypes.includes(obs.getCoordType())
+                coordTypes.includes(obs.getCoordType()),
             ),
-            this.#f1
+            this.#f1,
         );
 
         svg.setAttribute("id", "svg-datehisto");
@@ -769,14 +769,14 @@ class ObsDetailUI extends SearchUI {
             [
                 { value: "geojson", label: "GeoJSON" },
                 { value: "gpx", label: "GPX" },
-            ]
+            ],
         );
         hdom.appendChildren(typeDiv, Object.values(dlOptions));
         const dlLink = createDownloadLink(
             this.getPathPrefix(),
             "Download",
             "observations.geojson",
-            () => this.#getDownloadData()
+            () => this.#getDownloadData(),
         );
         const dlDiv = hdom.createElement("div", "buttons");
         dlDiv.appendChild(typeDiv);
@@ -787,7 +787,7 @@ class ObsDetailUI extends SearchUI {
         urlGJ.hash =
             "data=data:application/json," +
             encodeURIComponent(
-                this.#getDownloadData(undefined, "geojson").content
+                this.#getDownloadData(undefined, "geojson").content,
             );
         const eBtnGeoJSONIO = hdom.createLinkElement(
             urlGJ,
@@ -795,13 +795,13 @@ class ObsDetailUI extends SearchUI {
             {
                 id: "geojson-io-link",
                 target: "_blank",
-            }
+            },
         );
         eButtons.appendChild(eBtnGeoJSONIO);
 
         eResults.appendChild(eButtons);
         hdom.addEventListener("download-type", "change", () =>
-            this.#updateGeoJSONFormat()
+            this.#updateGeoJSONFormat(),
         );
 
         const eDivText = hdom.createElement("div", { class: "section" });
@@ -824,7 +824,7 @@ class ObsDetailUI extends SearchUI {
         const sortedSummary = Object.values(summary).sort(
             (a, b) =>
                 ObsDetailUI.#getObsCount(b.results, selectedTypes) -
-                ObsDetailUI.#getObsCount(a.results, selectedTypes)
+                ObsDetailUI.#getObsCount(a.results, selectedTypes),
         );
 
         const cols = [SUMMARY_COLS.OBSERVER];
@@ -881,7 +881,7 @@ class ObsDetailUI extends SearchUI {
                 return {
                     content: ColDef.getCSVData(sortedSummary, csvCols, this),
                 };
-            }
+            },
         );
         divHeader.appendChild(downloadLink);
 
@@ -892,7 +892,7 @@ class ObsDetailUI extends SearchUI {
     }
 
     /**
-     * @param {INatData.Observation[]} rawResults
+     * @param {import("../types.js").INatDataObs[]} rawResults
      * @param {boolean} includeDescendants
      * @returns {Results}
      */
@@ -1012,7 +1012,7 @@ class ObsDetailUI extends SearchUI {
     #updateGeoJSONFormat() {
         hdom.setFormElementValue(
             "geojson-value",
-            this.#getDownloadData(2).content
+            this.#getDownloadData(2).content,
         );
 
         // Update links based on selected type.
@@ -1027,13 +1027,13 @@ class ObsDetailUI extends SearchUI {
     }
 
     #updateHash() {
-        /** @type {Params.PageObsDetail} */
+        /** @type {import("../types.js").ParamsPageObsDetail} */
         const params = {
             f1: this.#f1.getParams(),
             coords: this.getSelectedTypes(),
             // @ts-ignore
             view: hdom.getFormElementValue(
-                hdom.getFormElement(RESULT_FORM_ID, "displayopt")
+                hdom.getFormElement(RESULT_FORM_ID, "displayopt"),
             ),
         };
         if (hdom.isChecked("branch")) {
@@ -1047,7 +1047,7 @@ class ObsDetailUI extends SearchUI {
     #updateViewInINaturalistLink() {
         const url = this.getINatObservationURL(
             this.#f1.getParams(),
-            this.#processedResults
+            this.#processedResults,
         );
         const link = hdom.getElement("viewininat");
         if (link instanceof HTMLAnchorElement) {
@@ -1082,7 +1082,7 @@ function getNeedsAttributeLink(filter) {
         delete params.annotations;
         delete params.quality_grade;
         const url = new URL(
-            "https://www.inaturalist.org/observations/identify"
+            "https://www.inaturalist.org/observations/identify",
         );
         url.searchParams.set("reviewed", "any");
         url.searchParams.set("quality_grade", "needs_id,research");
@@ -1091,7 +1091,7 @@ function getNeedsAttributeLink(filter) {
         const link = hdom.createLinkElement(
             filter.getURL(url),
             `Observations with no ${descrip} annotation`,
-            { target: "_blank" }
+            { target: "_blank" },
         );
         const div = hdom.createElement("div");
         div.appendChild(link);

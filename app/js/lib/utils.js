@@ -4,7 +4,7 @@ import { hdom } from "./hdom.js";
  * label:string,
  * class?:string,
  * colspan?:number,
- * value:function(INatData.TaxonObsSummary):string}[]} */
+ * value:function(import("../types.js").INatDataTaxonObsSummary):string}[]} */
 export const TAXA_SUMMARY_COLUMNS = [
     {
         label: "Name",
@@ -26,7 +26,7 @@ export const TAXA_SUMMARY_COLUMNS = [
                 }
                 const words = phrase.split(" ");
                 const capWords = words.map((w) =>
-                    w ? w[0].toUpperCase() + w.substring(1) : ""
+                    w ? w[0].toUpperCase() + w.substring(1) : "",
                 );
                 return capWords.join(" ");
             }
@@ -84,13 +84,13 @@ export function createDownloadLink(pathPrefix, title, fileName, getData) {
 }
 
 /**
- * @param {SpeciesFilter} filter
- * @param {INatData.TaxonObsSummary[]} results
+ * @param {import("../types.js").SpeciesFilter} filter
+ * @param {import("../types.js").INatDataTaxonObsSummary[]} results
  * @returns {Element}
  */
 export function createTaxaSummaryTable(filter, results) {
     /**
-     * @param {INatData.TaxonObsSummary} result
+     * @param {import("../types.js").INatDataTaxonObsSummary} result
      */
     function getTaxonSummary(result) {
         /**
@@ -112,7 +112,7 @@ export function createTaxaSummaryTable(filter, results) {
         for (let index = 0; index < 2; index++) {
             getCol(
                 TAXA_SUMMARY_COLUMNS[index].value(result),
-                TAXA_SUMMARY_COLUMNS[index].class
+                TAXA_SUMMARY_COLUMNS[index].class,
             );
         }
 
@@ -120,7 +120,7 @@ export function createTaxaSummaryTable(filter, results) {
         detailURL.hash = JSON.stringify({ f1: obsParams, branch: true });
         const eLinkText = hdom.createElement("span");
         eLinkText.appendChild(
-            document.createTextNode(TAXA_SUMMARY_COLUMNS[2].value(result))
+            document.createTextNode(TAXA_SUMMARY_COLUMNS[2].value(result)),
         );
         const eLinkLabel = hdom.createElement("span", "sm-label");
         eLinkLabel.appendChild(document.createTextNode(" observations"));
@@ -166,7 +166,7 @@ export function createTaxaSummaryTable(filter, results) {
     const obsParams = filter.getParams();
     const detailURL = new URL(
         "./obsdetail.html",
-        new URL(document.location.toString())
+        new URL(document.location.toString()),
     );
     for (const result of results) {
         tbody.appendChild(getTaxonSummary(result));
