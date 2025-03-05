@@ -228,7 +228,6 @@ export class ObsSummaryUI extends SearchUI {
             this.onSubmit(e),
         );
 
-        this.initEventListeners("f1");
         await this.initForm("f1", this.#f1);
 
         hdom.setFocusTo("f1-proj-name");

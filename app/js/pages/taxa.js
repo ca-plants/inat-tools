@@ -172,10 +172,8 @@ class UI extends SearchUI {
             this.removeExclusions(),
         );
 
-        this.initEventListeners("f1");
         await this.initForm("f1", this.#f1);
 
-        this.initEventListeners("f2");
         await this.initForm("f2", this.#f2);
 
         if (this.#f2 !== undefined) {

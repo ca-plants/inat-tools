@@ -516,6 +516,8 @@ export class SearchUI extends UI {
         // Add location options.
         createLocationElements(prefix, this.#options);
 
+        this.initEventListeners(prefix);
+
         await this.setFormValues(prefix, filter);
     }
 
