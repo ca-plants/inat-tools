@@ -190,9 +190,7 @@ export class SearchUI extends UI {
                     // Clear ID.
                     setValue(config, "");
                     const value = target.value;
-                    const list = DOMUtils.getRequiredElement(
-                        config.getListID(),
-                    );
+                    const list = hdom.getElement(config.getListID());
                     if (!(list instanceof HTMLDataListElement)) {
                         throw new Error();
                     }
@@ -511,6 +509,39 @@ export class SearchUI extends UI {
      * @param {SpeciesFilter} filter
      */
     async initForm(prefix, filter = new SpeciesFilter({})) {
+        addMonthSelects(prefix, this);
+
+        initMiscFields(prefix, filter);
+
+        // Add location options.
+        initLocations(prefix, this.#options, filter);
+
+        await this.setFormValues(prefix, filter);
+    }
+
+    /**
+     * @param {string} prefix
+     * @param {string|undefined} projId
+     */
+    async initProject(prefix, projId) {
+        // Check for project.
+        hdom.setFormElementValue(prefix + "-proj-id", projId);
+        if (!projId) {
+            return;
+        }
+        // Look up name based on ID.
+        const projectData = await this.getAPI().getProjectData(projId);
+        if (!projectData) {
+            return;
+        }
+        hdom.setFormElementValue(prefix + "-proj-name", projectData.title);
+    }
+
+    /**
+     * @param {string} prefix
+     * @param {SpeciesFilter} filter
+     */
+    async setFormValues(prefix, filter) {
         /**
          * @param {SpeciesFilter} filter
          * @param {SearchUI} ui
@@ -527,25 +558,6 @@ export class SearchUI extends UI {
             hdom.setFormElementValue(prefix + "-month1", m1);
             hdom.setFormElementValue(prefix + "-month2", m2);
             ui.setMonthLock(prefix, m1 === m2);
-        }
-
-        /**
-         * @param {SpeciesFilter} filter
-         */
-        function initYear(filter) {
-            const years = filter.getYears();
-            const year1 = years.year1;
-            const year2 = years.year2;
-            hdom.setFormElementValue(
-                prefix + "-year1",
-                year1 ? year1.toString() : "",
-            );
-            hdom.setFormElementValue(
-                prefix + "-year2",
-                year2 ? year2.toString() : "",
-            );
-            SearchUI.setYearMinMax(prefix + "-year");
-            SearchUI.setYearMode(prefix + "-year");
         }
 
         /**
@@ -621,19 +633,33 @@ export class SearchUI extends UI {
             }
         }
 
-        addMonthSelects(prefix, this);
-
-        initMiscFields(prefix, filter);
+        /**
+         * @param {SpeciesFilter} filter
+         */
+        function initYear(filter) {
+            const years = filter.getYears();
+            const year1 = years.year1;
+            const year2 = years.year2;
+            hdom.setFormElementValue(
+                prefix + "-year1",
+                year1 ? year1.toString() : "",
+            );
+            hdom.setFormElementValue(
+                prefix + "-year2",
+                year2 ? year2.toString() : "",
+            );
+            SearchUI.setYearMinMax(prefix + "-year");
+            SearchUI.setYearMode(prefix + "-year");
+        }
 
         await this.initProject(prefix, filter.getProjectID());
         await initPlace(this.getAPI(), filter);
 
-        // Add location options.
-        initLocations(prefix, this.#options, filter);
-
         await initObserver(this.getAPI(), filter);
         await initTaxon(this.getAPI(), filter);
+
         await this.updateAnnotationsFields(prefix, filter.getTaxonID());
+
         initMonth(filter, this);
         initYear(filter);
 
@@ -650,24 +676,6 @@ export class SearchUI extends UI {
             const locType = filter.getBoundary() ? "boundary" : "place";
             hdom.clickElement(prefix + "-loc-type-" + locType);
         }
-    }
-
-    /**
-     * @param {string} prefix
-     * @param {string|undefined} projId
-     */
-    async initProject(prefix, projId) {
-        // Check for project.
-        hdom.setFormElementValue(prefix + "-proj-id", projId);
-        if (!projId) {
-            return;
-        }
-        // Look up name based on ID.
-        const projectData = await this.getAPI().getProjectData(projId);
-        if (!projectData) {
-            return;
-        }
-        hdom.setFormElementValue(prefix + "-proj-name", projectData.title);
     }
 
     /**
