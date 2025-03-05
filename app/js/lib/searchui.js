@@ -509,12 +509,12 @@ export class SearchUI extends UI {
      * @param {SpeciesFilter} filter
      */
     async initForm(prefix, filter = new SpeciesFilter({})) {
-        addMonthSelects(prefix, this);
+        createMonthSelects(prefix, this);
 
         initMiscFields(prefix, filter);
 
         // Add location options.
-        initLocations(prefix, this.#options, filter);
+        createLocationElements(prefix, this.#options);
 
         await this.setFormValues(prefix, filter);
     }
@@ -675,6 +675,14 @@ export class SearchUI extends UI {
             // Select location type.
             const locType = filter.getBoundary() ? "boundary" : "place";
             hdom.clickElement(prefix + "-loc-type-" + locType);
+
+            const boundary = filter.getBoundary();
+            if (boundary) {
+                hdom.setFormElementValue(
+                    prefix + "-boundary-text",
+                    JSON.stringify(boundary),
+                );
+            }
         }
     }
 
@@ -761,9 +769,79 @@ export class SearchUI extends UI {
 
 /**
  * @param {string} prefix
+ * @param {SearchUIOptions} options
+ */
+function createLocationElements(prefix, options) {
+    if (!options.allowBoundary) {
+        return;
+    }
+
+    const locationsDiv = hdom.getElement(prefix + "-locations");
+
+    const boundaryDiv = hdom.createElement("div", {
+        id: prefix + "-locations-boundary",
+    });
+    const boundaryTextDiv = hdom.createElement("div", {
+        class: "form-input",
+    });
+    boundaryTextDiv.appendChild(hdom.createElement("label"));
+    boundaryTextDiv.appendChild(
+        hdom.createElement("textarea", {
+            id: prefix + "-boundary-text",
+            rows: 1,
+            readonly: "",
+        }),
+    );
+    boundaryDiv.appendChild(boundaryTextDiv);
+    const boundaryFileDiv = hdom.createElement("div", {
+        class: "form-input",
+    });
+    boundaryFileDiv.appendChild(hdom.createElement("label"));
+    const boundaryUpload = hdom.createInputElement({
+        id: prefix + "-boundary-file",
+        type: "file",
+        title: "Upload GeoJSON with boundary",
+    });
+    hdom.addEventListener(
+        boundaryUpload,
+        "change",
+        async (e) => await handleBoundaryChange(e, prefix),
+    );
+    boundaryFileDiv.appendChild(boundaryUpload);
+    boundaryDiv.appendChild(boundaryFileDiv);
+    locationsDiv.appendChild(boundaryDiv);
+
+    const locationTypeDiv = hdom.createElement("div", "form-input");
+    locationTypeDiv.appendChild(
+        hdom
+            .createElement("label")
+            .appendChild(document.createTextNode("Location")),
+    );
+    const radioData = [
+        { type: "place", label: "Place" },
+        { type: "boundary", label: "Boundary" },
+    ];
+    for (const data of radioData) {
+        const radio = hdom.createRadioElement(
+            prefix + "-loc-type",
+            prefix + "-loc-type-" + data.type,
+            data.type,
+            data.label,
+        );
+        locationTypeDiv.appendChild(radio.radio);
+        hdom.addEventListener(radio.radio, "click", () =>
+            handleLocationTypeClick(prefix),
+        );
+        locationTypeDiv.appendChild(radio.label);
+    }
+    locationsDiv.insertBefore(locationTypeDiv, locationsDiv.firstChild);
+}
+
+/**
+ * @param {string} prefix
  * @param {SearchUI} ui
  */
-function addMonthSelects(prefix, ui) {
+function createMonthSelects(prefix, ui) {
     const options = [{}].concat(
         DateUtils.MONTH_NAMES.map((n, index) => {
             return { value: String(index + 1), label: n };
@@ -861,82 +939,6 @@ function handleLocationTypeClick(prefix) {
     const type = getLocationType(prefix);
     hdom.showElement(prefix + "-locations-boundary", type === "boundary");
     hdom.showElement(prefix + "-locations-place", type === "place");
-}
-
-/**
- * @param {string} prefix
- * @param {SearchUIOptions} options
- * @param {SpeciesFilter} filter
- */
-function initLocations(prefix, options, filter) {
-    const locationsDiv = hdom.getElement(prefix + "-locations");
-
-    if (options.allowBoundary) {
-        const boundaryDiv = hdom.createElement("div", {
-            id: prefix + "-locations-boundary",
-        });
-        const boundaryTextDiv = hdom.createElement("div", {
-            class: "form-input",
-        });
-        boundaryTextDiv.appendChild(hdom.createElement("label"));
-        boundaryTextDiv.appendChild(
-            hdom.createElement("textarea", {
-                id: prefix + "-boundary-text",
-                rows: 1,
-                readonly: "",
-            }),
-        );
-        boundaryDiv.appendChild(boundaryTextDiv);
-        const boundaryFileDiv = hdom.createElement("div", {
-            class: "form-input",
-        });
-        boundaryFileDiv.appendChild(hdom.createElement("label"));
-        const boundaryUpload = hdom.createInputElement({
-            id: prefix + "-boundary-file",
-            type: "file",
-            title: "Upload GeoJSON with boundary",
-        });
-        hdom.addEventListener(
-            boundaryUpload,
-            "change",
-            async (e) => await handleBoundaryChange(e, prefix),
-        );
-        boundaryFileDiv.appendChild(boundaryUpload);
-        boundaryDiv.appendChild(boundaryFileDiv);
-        locationsDiv.appendChild(boundaryDiv);
-        const boundary = filter.getBoundary();
-        if (boundary) {
-            hdom.setFormElementValue(
-                prefix + "-boundary-text",
-                JSON.stringify(boundary),
-            );
-        }
-
-        const locationTypeDiv = hdom.createElement("div", "form-input");
-        locationTypeDiv.appendChild(
-            hdom
-                .createElement("label")
-                .appendChild(document.createTextNode("Location")),
-        );
-        const radioData = [
-            { type: "place", label: "Place" },
-            { type: "boundary", label: "Boundary" },
-        ];
-        for (const data of radioData) {
-            const radio = hdom.createRadioElement(
-                prefix + "-loc-type",
-                prefix + "-loc-type-" + data.type,
-                data.type,
-                data.label,
-            );
-            locationTypeDiv.appendChild(radio.radio);
-            hdom.addEventListener(radio.radio, "click", () =>
-                handleLocationTypeClick(prefix),
-            );
-            locationTypeDiv.appendChild(radio.label);
-        }
-        locationsDiv.insertBefore(locationTypeDiv, locationsDiv.firstChild);
-    }
 }
 
 /**
