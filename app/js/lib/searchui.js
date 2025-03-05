@@ -477,12 +477,12 @@ export class SearchUI extends UI {
             filterArgs.establishment = establishment;
         }
 
-        const accuracy = hdom.getFormElementValue("accuracy");
+        const accuracy = hdom.getFormElementValue(`${prefix}-accuracy`);
         if (accuracy !== "") {
             filterArgs.accuracy = parseInt(accuracy);
         }
 
-        const taxonObscured = hdom.isChecked("taxon-obscured");
+        const taxonObscured = hdom.isChecked(`${prefix}-taxon-obscured`);
         if (taxonObscured) {
             filterArgs.obscuration = "taxon";
         }
@@ -511,7 +511,7 @@ export class SearchUI extends UI {
     async initForm(prefix, filter = new SpeciesFilter({})) {
         createMonthSelects(prefix, this);
 
-        initMiscFields(prefix, filter);
+        createMiscFields(prefix);
 
         // Add location options.
         createLocationElements(prefix, this.#options);
@@ -670,6 +670,18 @@ export class SearchUI extends UI {
                 qualityGrades.includes(qg.id),
             );
         }
+
+        hdom.setFormElementValue(
+            prefix + "-establishment",
+            filter.getEstablishment() ?? "",
+        );
+
+        hdom.setFormElementValue(`${prefix}-accuracy`, filter.getMinAccuracy());
+
+        hdom.setCheckBoxState(
+            `${prefix}-taxon-obscured`,
+            filter.getParams().obscuration === "taxon",
+        );
 
         if (this.#options.allowBoundary) {
             // Select location type.
@@ -839,6 +851,59 @@ function createLocationElements(prefix, options) {
 
 /**
  * @param {string} prefix
+ */
+function createMiscFields(prefix) {
+    const divForm = hdom.getElement(prefix + "-misc");
+
+    // Add Quality Grade checkboxes.
+    const divQuality = hdom.createElement("div");
+    for (const cb of QUALITY_GRADES) {
+        const id = `${prefix}-${cb.id}`;
+        divQuality.appendChild(hdom.createCheckBox(id, false));
+        divQuality.appendChild(hdom.createLabelElement(id, cb.label));
+    }
+    divForm.appendChild(divQuality);
+
+    // Add establishment select.
+    const establishment = hdom.createSelectElementWithLabel(
+        prefix + "-establishment",
+        "Establishment",
+        [
+            { value: "", label: "Any" },
+            { value: "native", label: "Native" },
+            { value: "introduced", label: "Introduced" },
+        ],
+    );
+    const divEst = hdom.createElement("div", "form-input");
+    divEst.appendChild(establishment.label);
+    divEst.appendChild(establishment.select);
+    divForm.appendChild(divEst);
+
+    const divAccuracy = hdom.createElement("div", "form-input");
+    divAccuracy.appendChild(
+        hdom.createLabelElement(`${prefix}-accuracy`, "Accuracy"),
+    );
+    divAccuracy.appendChild(
+        hdom.createIntegerInput(`${prefix}-accuracy`, undefined, 99999),
+    );
+    divAccuracy.appendChild(
+        hdom.createTextElement("span", {}, " meters or less"),
+    );
+    divForm.appendChild(divAccuracy);
+
+    // Add "taxon obscured" option.
+    const divObscured = hdom.createElement("div");
+    divObscured.appendChild(
+        hdom.createCheckBox(`${prefix}-taxon-obscured`, false),
+    );
+    divObscured.appendChild(
+        hdom.createLabelElement(`${prefix}-taxon-obscured`, "Taxon obscured"),
+    );
+    divForm.appendChild(divObscured);
+}
+
+/**
+ * @param {string} prefix
  * @param {SearchUI} ui
  */
 function createMonthSelects(prefix, ui) {
@@ -975,67 +1040,4 @@ function handleMonth2Change(e, ui) {
         hdom.getFormElementValue(target) ===
             hdom.getFormElementValue(prefix + "-month1"),
     );
-}
-
-/**
- * @param {string} prefix
- * @param {SpeciesFilter} filter
- */
-function initMiscFields(prefix, filter) {
-    const filterParams = filter.getParams();
-
-    const divForm = hdom.getElement(prefix + "-misc");
-
-    // Add Quality Grade checkboxes.
-    const divQuality = hdom.createElement("div");
-    for (const cb of QUALITY_GRADES) {
-        const id = `${prefix}-${cb.id}`;
-        divQuality.appendChild(
-            hdom.createCheckBox(id, filter.getQualityGrade().includes(cb.id)),
-        );
-        divQuality.appendChild(hdom.createLabelElement(id, cb.label));
-    }
-    divForm.appendChild(divQuality);
-
-    // Add establishment select.
-    const establishment = hdom.createSelectElementWithLabel(
-        prefix + "-establishment",
-        "Establishment",
-        [
-            { value: "", label: "Any" },
-            { value: "native", label: "Native" },
-            { value: "introduced", label: "Introduced" },
-        ],
-    );
-    const divEst = hdom.createElement("div", "form-input");
-    divEst.appendChild(establishment.label);
-    divEst.appendChild(establishment.select);
-    divForm.appendChild(divEst);
-    hdom.setFormElementValue(
-        prefix + "-establishment",
-        filter.getEstablishment() ?? "",
-    );
-
-    const divAccuracy = hdom.createElement("div", "form-input");
-    divAccuracy.appendChild(hdom.createLabelElement("accuracy", "Accuracy"));
-    divAccuracy.appendChild(
-        hdom.createIntegerInput("accuracy", filter.getMinAccuracy(), 99999),
-    );
-    divAccuracy.appendChild(
-        hdom.createTextElement("span", {}, " meters or less"),
-    );
-    divForm.appendChild(divAccuracy);
-
-    // Add "taxon obscured" option.
-    const divObscured = hdom.createElement("div");
-    divObscured.appendChild(
-        hdom.createCheckBox(
-            "taxon-obscured",
-            filterParams.obscuration === "taxon",
-        ),
-    );
-    divObscured.appendChild(
-        hdom.createLabelElement("taxon-obscured", "Taxon obscured"),
-    );
-    divForm.appendChild(divObscured);
 }
