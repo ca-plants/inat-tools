@@ -33,34 +33,11 @@ class UI extends SearchUI {
         // If the exclusion filter is empty, initialize it to be the same as the inclusion filter.
         const f = this.initFilterFromForm("f2");
         if (!f || f.isEmpty()) {
-            const form = hdom.getElement("form");
-            if (!(form instanceof HTMLFormElement)) {
+            const f1 = this.initFilterFromForm("f1");
+            if (!f1) {
                 throw new Error();
             }
-            const elements = form.elements;
-            for (const element of elements) {
-                const id = element.getAttribute("id");
-                if (id === null || !id.startsWith("f1-")) {
-                    continue;
-                }
-                const type = element.tagName;
-                if (type === "FIELDSET") {
-                    continue;
-                }
-                const f2Id = "f2" + id.substring(2);
-                if (element instanceof HTMLInputElement) {
-                    switch (element.type) {
-                        case "checkbox":
-                            hdom.setCheckBoxState(f2Id, hdom.isChecked(id));
-                            continue;
-                        case "file":
-                            continue;
-                        default:
-                            break;
-                    }
-                }
-                hdom.setFormElementValue(f2Id, hdom.getFormElementValue(id));
-            }
+            this.setFormValues("f2", f1);
         }
 
         this.updateAnnotationsFields(

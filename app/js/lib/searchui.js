@@ -226,7 +226,7 @@ export class SearchUI extends UI {
         const prefix = valueElementID.split("-")[0];
         await this.updateAnnotationsFields(
             prefix,
-            DOMUtils.getFormElementValue(valueElementID),
+            hdom.getFormElementValue(valueElementID),
         );
     }
 
@@ -364,6 +364,7 @@ export class SearchUI extends UI {
 
     /**
      * @param {string} prefix
+     * @returns {SpeciesFilter|undefined}
      */
     initFilterFromForm(prefix) {
         /**
@@ -416,7 +417,7 @@ export class SearchUI extends UI {
                 if (input instanceof HTMLInputElement) {
                     if (input.value) {
                         input.setCustomValidity("Invalid " + field.label + ".");
-                        DOMUtils.setFocusTo(input);
+                        hdom.setFocusTo(input);
                         hasErrors = true;
                     } else {
                         input.setCustomValidity("");
