@@ -10,14 +10,16 @@ import {
 } from "../lib/utils.js";
 
 /**
- * @typedef {{f1?:import("../types.js").ParamsSpeciesFilter,f2?:import("../types.js").ParamsSpeciesFilter,compareType?:CompareType}} HashParams
- * @typedef {"exclude"|"subtract"} CompareType
+ * @typedef {{
+ * f1?:import("../types.js").ParamsSpeciesFilter,
+ * f2?:import("../types.js").ParamsSpeciesFilter,
+ * compareType?:import("../types.js").EnumCompareType}} HashParams
  */
 
 class UI extends SearchUI {
     #f1;
     #f2;
-    /** @type {CompareType} */
+    /** @type {import("../types.js").EnumCompareType} */
     #compareType;
 
     /** @type {import("../types.js").INatDataTaxonObsSummary[]|undefined} */
@@ -26,7 +28,7 @@ class UI extends SearchUI {
     /**
      * @param {import("../types.js").ParamsSpeciesFilter} f1
      * @param {import("../types.js").ParamsSpeciesFilter} [f2]
-     * @param {CompareType} [compareType="exclude"]
+     * @param {import("../types.js").EnumCompareType} [compareType="exclude"]
      */
     constructor(f1 = {}, f2, compareType = "exclude") {
         super();
@@ -206,6 +208,8 @@ class UI extends SearchUI {
         }
         this.#f1 = f1;
         this.#f2 = hasExclusions ? this.initFilterFromForm("f2") : undefined;
+        // @ts-ignore
+        this.#compareType = hdom.getFormElementValue("comp-exclude");
 
         const errorMsg = checkFilters(this.#f1, this.#f2);
         if (errorMsg) {
@@ -246,6 +250,7 @@ class UI extends SearchUI {
             this.getAPI(),
             this.#f1,
             this.#f2,
+            this.#compareType,
             this.getProgressReporter(),
         );
         if (!this.#results) {

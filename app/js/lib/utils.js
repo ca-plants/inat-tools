@@ -54,6 +54,13 @@ export const TAXA_SUMMARY_COLUMNS = [
             return result.count.toString();
         },
     },
+    {
+        label: "Diff",
+        class: "",
+        value: (result) => {
+            return result.diff === undefined ? "" : result.diff.toString();
+        },
+    },
 ];
 
 /**
@@ -135,6 +142,12 @@ export function createTaxaSummaryTable(filter, results) {
             target: "_blank",
         });
         getCol(eLinkInat, TAXA_SUMMARY_COLUMNS[3].class);
+
+        // Add difference column for subtract comparison.
+        getCol(
+            TAXA_SUMMARY_COLUMNS[4].value(result),
+            TAXA_SUMMARY_COLUMNS[4].class,
+        );
 
         return tr;
     }
