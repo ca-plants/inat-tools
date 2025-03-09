@@ -190,9 +190,7 @@ export class SearchUI extends UI {
                     // Clear ID.
                     setValue(config, "");
                     const value = target.value;
-                    const list = DOMUtils.getRequiredElement(
-                        config.getListID(),
-                    );
+                    const list = hdom.getElement(config.getListID());
                     if (!(list instanceof HTMLDataListElement)) {
                         throw new Error();
                     }
@@ -228,7 +226,7 @@ export class SearchUI extends UI {
         const prefix = valueElementID.split("-")[0];
         await this.updateAnnotationsFields(
             prefix,
-            DOMUtils.getFormElementValue(valueElementID),
+            hdom.getFormElementValue(valueElementID),
         );
     }
 
@@ -366,6 +364,7 @@ export class SearchUI extends UI {
 
     /**
      * @param {string} prefix
+     * @returns {SpeciesFilter|undefined}
      */
     initFilterFromForm(prefix) {
         /**
@@ -418,7 +417,7 @@ export class SearchUI extends UI {
                 if (input instanceof HTMLInputElement) {
                     if (input.value) {
                         input.setCustomValidity("Invalid " + field.label + ".");
-                        DOMUtils.setFocusTo(input);
+                        hdom.setFocusTo(input);
                         hasErrors = true;
                     } else {
                         input.setCustomValidity("");
@@ -479,12 +478,12 @@ export class SearchUI extends UI {
             filterArgs.establishment = establishment;
         }
 
-        const accuracy = hdom.getFormElementValue("accuracy");
+        const accuracy = hdom.getFormElementValue(`${prefix}-accuracy`);
         if (accuracy !== "") {
             filterArgs.accuracy = parseInt(accuracy);
         }
 
-        const taxonObscured = hdom.isChecked("taxon-obscured");
+        const taxonObscured = hdom.isChecked(`${prefix}-taxon-obscured`);
         if (taxonObscured) {
             filterArgs.obscuration = "taxon";
         }
@@ -511,6 +510,41 @@ export class SearchUI extends UI {
      * @param {SpeciesFilter} filter
      */
     async initForm(prefix, filter = new SpeciesFilter({})) {
+        createMonthSelects(prefix, this);
+
+        createMiscFields(prefix);
+
+        // Add location options.
+        createLocationElements(prefix, this.#options);
+
+        this.initEventListeners(prefix);
+
+        await this.setFormValues(prefix, filter);
+    }
+
+    /**
+     * @param {string} prefix
+     * @param {string|undefined} projId
+     */
+    async initProject(prefix, projId) {
+        // Check for project.
+        hdom.setFormElementValue(prefix + "-proj-id", projId);
+        if (!projId) {
+            return;
+        }
+        // Look up name based on ID.
+        const projectData = await this.getAPI().getProjectData(projId);
+        if (!projectData) {
+            return;
+        }
+        hdom.setFormElementValue(prefix + "-proj-name", projectData.title);
+    }
+
+    /**
+     * @param {string} prefix
+     * @param {SpeciesFilter} filter
+     */
+    async setFormValues(prefix, filter) {
         /**
          * @param {SpeciesFilter} filter
          * @param {SearchUI} ui
@@ -527,25 +561,6 @@ export class SearchUI extends UI {
             hdom.setFormElementValue(prefix + "-month1", m1);
             hdom.setFormElementValue(prefix + "-month2", m2);
             ui.setMonthLock(prefix, m1 === m2);
-        }
-
-        /**
-         * @param {SpeciesFilter} filter
-         */
-        function initYear(filter) {
-            const years = filter.getYears();
-            const year1 = years.year1;
-            const year2 = years.year2;
-            hdom.setFormElementValue(
-                prefix + "-year1",
-                year1 ? year1.toString() : "",
-            );
-            hdom.setFormElementValue(
-                prefix + "-year2",
-                year2 ? year2.toString() : "",
-            );
-            SearchUI.setYearMinMax(prefix + "-year");
-            SearchUI.setYearMode(prefix + "-year");
         }
 
         /**
@@ -621,19 +636,33 @@ export class SearchUI extends UI {
             }
         }
 
-        addMonthSelects(prefix, this);
-
-        initMiscFields(prefix, filter);
+        /**
+         * @param {SpeciesFilter} filter
+         */
+        function initYear(filter) {
+            const years = filter.getYears();
+            const year1 = years.year1;
+            const year2 = years.year2;
+            hdom.setFormElementValue(
+                prefix + "-year1",
+                year1 ? year1.toString() : "",
+            );
+            hdom.setFormElementValue(
+                prefix + "-year2",
+                year2 ? year2.toString() : "",
+            );
+            SearchUI.setYearMinMax(prefix + "-year");
+            SearchUI.setYearMode(prefix + "-year");
+        }
 
         await this.initProject(prefix, filter.getProjectID());
         await initPlace(this.getAPI(), filter);
 
-        // Add location options.
-        initLocations(prefix, this.#options, filter);
-
         await initObserver(this.getAPI(), filter);
         await initTaxon(this.getAPI(), filter);
+
         await this.updateAnnotationsFields(prefix, filter.getTaxonID());
+
         initMonth(filter, this);
         initYear(filter);
 
@@ -645,29 +674,31 @@ export class SearchUI extends UI {
             );
         }
 
+        hdom.setFormElementValue(
+            prefix + "-establishment",
+            filter.getEstablishment() ?? "",
+        );
+
+        hdom.setFormElementValue(`${prefix}-accuracy`, filter.getMinAccuracy());
+
+        hdom.setCheckBoxState(
+            `${prefix}-taxon-obscured`,
+            filter.getParams().obscuration === "taxon",
+        );
+
         if (this.#options.allowBoundary) {
             // Select location type.
             const locType = filter.getBoundary() ? "boundary" : "place";
             hdom.clickElement(prefix + "-loc-type-" + locType);
-        }
-    }
 
-    /**
-     * @param {string} prefix
-     * @param {string|undefined} projId
-     */
-    async initProject(prefix, projId) {
-        // Check for project.
-        hdom.setFormElementValue(prefix + "-proj-id", projId);
-        if (!projId) {
-            return;
+            const boundary = filter.getBoundary();
+            if (boundary) {
+                hdom.setFormElementValue(
+                    prefix + "-boundary-text",
+                    JSON.stringify(boundary),
+                );
+            }
         }
-        // Look up name based on ID.
-        const projectData = await this.getAPI().getProjectData(projId);
-        if (!projectData) {
-            return;
-        }
-        hdom.setFormElementValue(prefix + "-proj-name", projectData.title);
     }
 
     /**
@@ -753,9 +784,132 @@ export class SearchUI extends UI {
 
 /**
  * @param {string} prefix
+ * @param {SearchUIOptions} options
+ */
+function createLocationElements(prefix, options) {
+    if (!options.allowBoundary) {
+        return;
+    }
+
+    const locationsDiv = hdom.getElement(prefix + "-locations");
+
+    const boundaryDiv = hdom.createElement("div", {
+        id: prefix + "-locations-boundary",
+    });
+    const boundaryTextDiv = hdom.createElement("div", {
+        class: "form-input",
+    });
+    boundaryTextDiv.appendChild(hdom.createElement("label"));
+    boundaryTextDiv.appendChild(
+        hdom.createElement("textarea", {
+            id: prefix + "-boundary-text",
+            rows: 1,
+            readonly: "",
+        }),
+    );
+    boundaryDiv.appendChild(boundaryTextDiv);
+    const boundaryFileDiv = hdom.createElement("div", {
+        class: "form-input",
+    });
+    boundaryFileDiv.appendChild(hdom.createElement("label"));
+    const boundaryUpload = hdom.createInputElement({
+        id: prefix + "-boundary-file",
+        type: "file",
+        title: "Upload GeoJSON with boundary",
+    });
+    hdom.addEventListener(
+        boundaryUpload,
+        "change",
+        async (e) => await handleBoundaryChange(e, prefix),
+    );
+    boundaryFileDiv.appendChild(boundaryUpload);
+    boundaryDiv.appendChild(boundaryFileDiv);
+    locationsDiv.appendChild(boundaryDiv);
+
+    const locationTypeDiv = hdom.createElement("div", "form-input");
+    locationTypeDiv.appendChild(
+        hdom
+            .createElement("label")
+            .appendChild(document.createTextNode("Location")),
+    );
+    const radioData = [
+        { type: "place", label: "Place" },
+        { type: "boundary", label: "Boundary" },
+    ];
+    for (const data of radioData) {
+        const radio = hdom.createRadioElement(
+            prefix + "-loc-type",
+            prefix + "-loc-type-" + data.type,
+            data.type,
+            data.label,
+        );
+        locationTypeDiv.appendChild(radio.radio);
+        hdom.addEventListener(radio.radio, "click", () =>
+            handleLocationTypeClick(prefix),
+        );
+        locationTypeDiv.appendChild(radio.label);
+    }
+    locationsDiv.insertBefore(locationTypeDiv, locationsDiv.firstChild);
+}
+
+/**
+ * @param {string} prefix
+ */
+function createMiscFields(prefix) {
+    const divForm = hdom.getElement(prefix + "-misc");
+
+    // Add Quality Grade checkboxes.
+    const divQuality = hdom.createElement("div");
+    for (const cb of QUALITY_GRADES) {
+        const id = `${prefix}-${cb.id}`;
+        divQuality.appendChild(hdom.createCheckBox(id, false));
+        divQuality.appendChild(hdom.createLabelElement(id, cb.label));
+    }
+    divForm.appendChild(divQuality);
+
+    // Add establishment select.
+    const establishment = hdom.createSelectElementWithLabel(
+        prefix + "-establishment",
+        "Establishment",
+        [
+            { value: "", label: "Any" },
+            { value: "native", label: "Native" },
+            { value: "introduced", label: "Introduced" },
+        ],
+    );
+    const divEst = hdom.createElement("div", "form-input");
+    divEst.appendChild(establishment.label);
+    divEst.appendChild(establishment.select);
+    divForm.appendChild(divEst);
+
+    const divAccuracy = hdom.createElement("div", "form-input");
+    divAccuracy.appendChild(
+        hdom.createLabelElement(`${prefix}-accuracy`, "Accuracy"),
+    );
+    divAccuracy.appendChild(
+        hdom.createIntegerInput(`${prefix}-accuracy`, undefined, 99999),
+    );
+    divAccuracy.appendChild(
+        hdom.createTextElement("span", {}, " meters or less"),
+    );
+    divForm.appendChild(divAccuracy);
+
+    // Add "taxon obscured" option.
+    const divObscured = hdom.createElement("div");
+    divObscured.appendChild(
+        hdom.createCheckBox(`${prefix}-taxon-obscured`, false),
+    );
+    divObscured.appendChild(
+        hdom.createLabelElement(`${prefix}-taxon-obscured`, "Taxon obscured"),
+    );
+    divForm.appendChild(divObscured);
+}
+
+/**
+ * @param {string} prefix
  * @param {SearchUI} ui
  */
-function addMonthSelects(prefix, ui) {
+function createMonthSelects(prefix, ui) {
     const options = [{}].concat(
         DateUtils.MONTH_NAMES.map((n, index) => {
             return { value: String(index + 1), label: n };
@@ -856,82 +1010,6 @@ function handleLocationTypeClick(prefix) {
 }
 
 /**
- * @param {string} prefix
- * @param {SearchUIOptions} options
- * @param {SpeciesFilter} filter
- */
-function initLocations(prefix, options, filter) {
-    const locationsDiv = hdom.getElement(prefix + "-locations");
-
-    if (options.allowBoundary) {
-        const boundaryDiv = hdom.createElement("div", {
-            id: prefix + "-locations-boundary",
-        });
-        const boundaryTextDiv = hdom.createElement("div", {
-            class: "form-input",
-        });
-        boundaryTextDiv.appendChild(hdom.createElement("label"));
-        boundaryTextDiv.appendChild(
-            hdom.createElement("textarea", {
-                id: prefix + "-boundary-text",
-                rows: 1,
-                readonly: "",
-            }),
-        );
-        boundaryDiv.appendChild(boundaryTextDiv);
-        const boundaryFileDiv = hdom.createElement("div", {
-            class: "form-input",
-        });
-        boundaryFileDiv.appendChild(hdom.createElement("label"));
-        const boundaryUpload = hdom.createInputElement({
-            id: prefix + "-boundary-file",
-            type: "file",
-            title: "Upload GeoJSON with boundary",
-        });
-        hdom.addEventListener(
-            boundaryUpload,
-            "change",
-            async (e) => await handleBoundaryChange(e, prefix),
-        );
-        boundaryFileDiv.appendChild(boundaryUpload);
-        boundaryDiv.appendChild(boundaryFileDiv);
-        locationsDiv.appendChild(boundaryDiv);
-        const boundary = filter.getBoundary();
-        if (boundary) {
-            hdom.setFormElementValue(
-                prefix + "-boundary-text",
-                JSON.stringify(boundary),
-            );
-        }
-
-        const locationTypeDiv = hdom.createElement("div", "form-input");
-        locationTypeDiv.appendChild(
-            hdom
-                .createElement("label")
-                .appendChild(document.createTextNode("Location")),
-        );
-        const radioData = [
-            { type: "place", label: "Place" },
-            { type: "boundary", label: "Boundary" },
-        ];
-        for (const data of radioData) {
-            const radio = hdom.createRadioElement(
-                prefix + "-loc-type",
-                prefix + "-loc-type-" + data.type,
-                data.type,
-                data.label,
-            );
-            locationTypeDiv.appendChild(radio.radio);
-            hdom.addEventListener(radio.radio, "click", () =>
-                handleLocationTypeClick(prefix),
-            );
-            locationTypeDiv.appendChild(radio.label);
-        }
-        locationsDiv.insertBefore(locationTypeDiv, locationsDiv.firstChild);
-    }
-}
-
-/**
  * @param {Event} e
  * @param {SearchUI} ui
  */
@@ -965,67 +1043,4 @@ function handleMonth2Change(e, ui) {
         hdom.getFormElementValue(target) ===
             hdom.getFormElementValue(prefix + "-month1"),
     );
-}
-
-/**
- * @param {string} prefix
- * @param {SpeciesFilter} filter
- */
-function initMiscFields(prefix, filter) {
-    const filterParams = filter.getParams();
-
-    const divForm = hdom.getElement(prefix + "-misc");
-
-    // Add Quality Grade checkboxes.
-    const divQuality = hdom.createElement("div");
-    for (const cb of QUALITY_GRADES) {
-        const id = `${prefix}-${cb.id}`;
-        divQuality.appendChild(
-            hdom.createCheckBox(id, filter.getQualityGrade().includes(cb.id)),
-        );
-        divQuality.appendChild(hdom.createLabelElement(id, cb.label));
-    }
-    divForm.appendChild(divQuality);
-
-    // Add establishment select.
-    const establishment = hdom.createSelectElementWithLabel(
-        prefix + "-establishment",
-        "Establishment",
-        [
-            { value: "", label: "Any" },
-            { value: "native", label: "Native" },
-            { value: "introduced", label: "Introduced" },
-        ],
-    );
-    const divEst = hdom.createElement("div", "form-input");
-    divEst.appendChild(establishment.label);
-    divEst.appendChild(establishment.select);
-    divForm.appendChild(divEst);
-    hdom.setFormElementValue(
-        prefix + "-establishment",
-        filter.getEstablishment() ?? "",
-    );
-
-    const divAccuracy = hdom.createElement("div", "form-input");
-    divAccuracy.appendChild(hdom.createLabelElement("accuracy", "Accuracy"));
-    divAccuracy.appendChild(
-        hdom.createIntegerInput("accuracy", filter.getMinAccuracy(), 99999),
-    );
-    divAccuracy.appendChild(
-        hdom.createTextElement("span", {}, " meters or less"),
-    );
-    divForm.appendChild(divAccuracy);
-
-    // Add "taxon obscured" option.
-    const divObscured = hdom.createElement("div");
-    divObscured.appendChild(
-        hdom.createCheckBox(
-            "taxon-obscured",
-            filterParams.obscuration === "taxon",
-        ),
-    );
-    divObscured.appendChild(
-        hdom.createLabelElement("taxon-obscured", "Taxon obscured"),
-    );
-    divForm.appendChild(divObscured);
 }

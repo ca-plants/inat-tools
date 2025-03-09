@@ -510,7 +510,6 @@ class ObsDetailUI extends SearchUI {
             await this.onSubmit();
         });
 
-        this.initEventListeners("f1");
         await this.initForm("f1", this.#f1);
 
         await this.onSubmit(selArray, view, branch);
