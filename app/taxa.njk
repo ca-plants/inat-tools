@@ -15,7 +15,7 @@ js: taxa
 
                 <div class="flex-fullwidth">
                     <div>Include:</div>
-                    <div><input type="button" id="add-exclusions" value="Add Exclusions"></div>
+                    <div><input type="button" id="add-comparison" value="Compare"></div>
                 </div>
 
                 {{ searchform.create_search_form("f1") }}
@@ -25,8 +25,11 @@ js: taxa
             <div id="f2" class="filter section" hidden>
 
                 <div class="flex-fullwidth">
-                    <div>Exclude:</div>
-                    <div><input type="button" id="remove-exclusions" value="Remove"></div>
+                    <div class="form-input">
+                    <input type="radio" name="compare-type" id="comp-exclude" value="exclude"><label for="comp-exclude">Exclude</label>
+                    <input type="radio" name="compare-type" id="comp-subtract" value="subtract"><label for="comp-subtract">Subtract</label>
+                    </div>
+                    <div><input type="button" id="remove-comparison" value="Remove"></div>
                 </div>
 
                 {{ searchform.create_search_form("f2") }}
