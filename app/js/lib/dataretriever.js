@@ -232,7 +232,6 @@ export class DataRetriever {
         for (const result of include) {
             const name = result.taxon.name;
             const compareCount = compareIndex.get(name)?.count;
-            console.log(compareCount);
             result.diff = result.count - (compareCount ?? 0);
             results.push(result);
         }

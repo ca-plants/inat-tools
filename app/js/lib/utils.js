@@ -56,7 +56,7 @@ export const TAXA_SUMMARY_COLUMNS = [
     },
     {
         label: "Diff",
-        class: "",
+        class: "right",
         value: (result) => {
             return result.diff === undefined ? "" : result.diff.toString();
         },
@@ -93,9 +93,10 @@ export function createDownloadLink(pathPrefix, title, fileName, getData) {
 /**
  * @param {import("../types.js").SpeciesFilter} filter
  * @param {import("../types.js").INatDataTaxonObsSummary[]} results
+ * @param {boolean} [showDiffs=false]
  * @returns {Element}
  */
-export function createTaxaSummaryTable(filter, results) {
+export function createTaxaSummaryTable(filter, results, showDiffs = false) {
     /**
      * @param {import("../types.js").INatDataTaxonObsSummary} result
      */
@@ -143,11 +144,12 @@ export function createTaxaSummaryTable(filter, results) {
         });
         getCol(eLinkInat, TAXA_SUMMARY_COLUMNS[3].class);
 
-        // Add difference column for subtract comparison.
-        getCol(
-            TAXA_SUMMARY_COLUMNS[4].value(result),
-            TAXA_SUMMARY_COLUMNS[4].class,
-        );
+        if (showDiffs) {
+            getCol(
+                TAXA_SUMMARY_COLUMNS[4].value(result),
+                TAXA_SUMMARY_COLUMNS[4].class,
+            );
+        }
 
         return tr;
     }
@@ -158,7 +160,12 @@ export function createTaxaSummaryTable(filter, results) {
     table.appendChild(thead);
     const tr = hdom.createElement("tr");
     thead.appendChild(tr);
-    for (const col of TAXA_SUMMARY_COLUMNS) {
+    for (
+        let index = 0;
+        index < TAXA_SUMMARY_COLUMNS.length - (showDiffs ? 0 : 1);
+        index++
+    ) {
+        const col = TAXA_SUMMARY_COLUMNS[index];
         /** @type {Object<string,string>} */
         const attributes = {};
         if (col.class) {

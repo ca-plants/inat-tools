@@ -258,11 +258,18 @@ class UI extends SearchUI {
             return;
         }
 
+        const showDiffs = this.#f2 && this.#compareType === "subtract";
+        const results = showDiffs
+            ? this.#results.filter((result) => result.diff === 0)
+            : this.#results;
+
         // Show summary.
-        divResults.appendChild(await this.#getSummaryDOM(this.#results));
+        divResults.appendChild(await this.#getSummaryDOM(results));
 
         // Show taxa.
-        divResults.appendChild(createTaxaSummaryTable(this.#f1, this.#results));
+        divResults.appendChild(
+            createTaxaSummaryTable(this.#f1, results, showDiffs),
+        );
     }
 }
 
