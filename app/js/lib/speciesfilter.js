@@ -50,9 +50,10 @@ export class SpeciesFilter {
 
     /**
      * @param {import("../types.js").INatAPI} api
-     * @param {SpeciesFilter} [exclusions]
+     * @param {SpeciesFilter} [comparisonFilter]
+     * @param {import("../types.js").EnumCompareType} [compareType]
      */
-    async getDescription(api, exclusions) {
+    async getDescription(api, comparisonFilter, compareType) {
         let descrip = "Species";
 
         if (this.#params.taxon_id) {
@@ -156,8 +157,13 @@ export class SpeciesFilter {
             descrip += " where taxon is obscured";
         }
 
-        if (exclusions) {
-            descrip += ", excluding " + (await exclusions.getDescription(api));
+        if (comparisonFilter) {
+            descrip += ", excluding ";
+            if (compareType === "subtract") {
+                descrip +=
+                    " species with a different number of observations in ";
+            }
+            descrip += await comparisonFilter.getDescription(api);
         }
         return descrip;
     }

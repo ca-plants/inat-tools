@@ -89,7 +89,11 @@ class UI extends SearchUI {
         const descrip = hdom.createElement("div");
         descrip.appendChild(
             document.createTextNode(
-                await this.#f1.getDescription(this.getAPI(), this.#f2),
+                await this.#f1.getDescription(
+                    this.getAPI(),
+                    this.#f2,
+                    this.#compareType,
+                ),
             ),
         );
 
