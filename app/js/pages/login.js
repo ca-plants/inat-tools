@@ -20,11 +20,19 @@ class LoginUI {
         await db.put(OBJECT_STORE, "code_verifier", code_verifier);
         await db.put(OBJECT_STORE, "client_id", client_id);
 
+        // Save URL to return to.
+        const queryString = new URLSearchParams(document.location.search);
+        const referrer = queryString.get("url");
+        await db.put(OBJECT_STORE, "referrer", referrer);
+
         const loginURL = new URL("https://www.inaturalist.org/oauth/authorize");
         loginURL.searchParams.set("code_challenge_method", "S256");
         loginURL.searchParams.set("response_type", "code");
         loginURL.searchParams.set("client_id", client_id);
-        loginURL.searchParams.set("redirect_uri", document.location.toString());
+        loginURL.searchParams.set(
+            "redirect_uri",
+            document.location.origin + document.location.pathname,
+        );
         loginURL.searchParams.set("code_challenge", code_challenge);
         document.location = loginURL.toString();
     }
@@ -39,16 +47,16 @@ class LoginUI {
         const url = new URL(document.location.toString());
         hdom.getElement("error-text").appendChild(
             document.createTextNode(
-                url.searchParams.get("error_description") ?? ""
-            )
+                url.searchParams.get("error_description") ?? "",
+            ),
         );
         hdom.addEventListener(
             "error-retry",
             "click",
-            async () => await this.authorize()
+            async () => await this.authorize(),
         );
         hdom.addEventListener("error-cancel", "click", () =>
-            this.returnToSender()
+            this.returnToSender(),
         );
     }
 
@@ -57,7 +65,7 @@ class LoginUI {
         hdom.addEventListener(
             "logout-button",
             "click",
-            async () => await this.doLogout()
+            async () => await this.doLogout(),
         );
     }
 
@@ -108,7 +116,7 @@ class LoginUI {
 
             const response = await fetch(
                 "https://www.inaturalist.org/users/api_token",
-                headers
+                headers,
             );
             return await response.json();
         }
@@ -118,14 +126,10 @@ class LoginUI {
         const code_verifier = await db.get(OBJECT_STORE, "code_verifier");
         const client_id = await db.get(OBJECT_STORE, "client_id");
 
-        const url = new URL(document.location.toString());
-        const orig_url = url.searchParams.get("url");
-        if (orig_url === null) {
-            throw new Error();
-        }
+        const orig_url = await db.get(OBJECT_STORE, "referrer");
         const redirect_uri = new URL(
             document.location.pathname,
-            document.location.origin
+            document.location.origin,
         );
         redirect_uri.searchParams.set("url", orig_url);
 
@@ -181,7 +185,7 @@ class LoginUI {
         hdom.addEventListener(
             "login",
             "click",
-            async () => await this.handleLocalLogin()
+            async () => await this.handleLocalLogin(),
         );
         hdom.setFocusTo("client_id");
     }
