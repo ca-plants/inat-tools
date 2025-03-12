@@ -1,5 +1,5 @@
 import { Cache } from "../lib/cache.js";
-import { DOMUtils } from "../lib/domutils.js";
+import { hdom } from "../lib/hdom.js";
 import { UI } from "../lib/ui.js";
 
 class CacheUI extends UI {
@@ -28,15 +28,15 @@ class CacheUI extends UI {
 
     static async init() {
         const ui = new CacheUI();
-        DOMUtils.addEventListener(
+        hdom.addEventListener(
             "clear-all",
             "click",
-            async () => await ui.clearAll()
+            async () => await ui.clearAll(),
         );
-        DOMUtils.addEventListener(
+        hdom.addEventListener(
             "clear-expired",
             "click",
-            async () => await ui.clearExpired()
+            async () => await ui.clearExpired(),
         );
         await ui.showCache();
     }
@@ -78,7 +78,7 @@ class CacheUI extends UI {
              * @param {Object.<string,string>|string} [atts]
              */
             function getCol(value, atts) {
-                const td = DOMUtils.createElement("td", atts);
+                const td = hdom.createElement("td", atts);
                 if (value instanceof Node) {
                     td.appendChild(value);
                 } else {
@@ -92,13 +92,13 @@ class CacheUI extends UI {
 
             const className = cache.isExpired(data) ? "expired" : undefined;
 
-            const tr = DOMUtils.createElement("tr", className);
+            const tr = hdom.createElement("tr", className);
 
             getCol(url.pathname, { class: "overflow", title: key });
             getCol(formatDateTime(data.date));
             getCol(formatDateTime(data.expires));
 
-            const copy = DOMUtils.createElement("img", {
+            const copy = hdom.createElement("img", {
                 src: ui.getPathPrefix() + "img/icon/clipboard.svg",
                 title: "Copy to clipboard",
             });
@@ -106,7 +106,7 @@ class CacheUI extends UI {
                 await ui.copyValue(e, key);
             });
 
-            const del = DOMUtils.createElement("img", {
+            const del = hdom.createElement("img", {
                 src: ui.getPathPrefix() + "img/icon/trash.svg",
                 title: "Remove from cache",
             });
@@ -114,7 +114,7 @@ class CacheUI extends UI {
                 await ui.removeValue(e, key);
             });
 
-            const actions = DOMUtils.createElement("div", { class: "center" });
+            const actions = hdom.createElement("div", { class: "center" });
             actions.appendChild(del);
             actions.appendChild(copy);
             getCol(actions);
@@ -122,21 +122,21 @@ class CacheUI extends UI {
             return tr;
         }
 
-        const table = DOMUtils.createElement("table", {
+        const table = hdom.createElement("table", {
             style: "max-width:100%;",
         });
 
-        const thead = DOMUtils.createElement("thead");
+        const thead = hdom.createElement("thead");
         table.appendChild(thead);
-        const tr = DOMUtils.createElement("tr");
+        const tr = hdom.createElement("tr");
         thead.appendChild(tr);
         for (const col of ["Key", "Cached", "Expires", "Actions"]) {
-            const th = DOMUtils.createElement("th");
+            const th = hdom.createElement("th");
             tr.appendChild(th);
             th.appendChild(document.createTextNode(col));
         }
 
-        const tbody = DOMUtils.createElement("tbody");
+        const tbody = hdom.createElement("tbody");
         table.appendChild(tbody);
 
         const cache = await Cache.getInstance();
@@ -146,8 +146,7 @@ class CacheUI extends UI {
             tbody.appendChild(await getRow(key, this));
         }
 
-        const results = DOMUtils.getRequiredElement("results");
-        DOMUtils.removeChildren(results);
+        const results = hdom.removeChildren("results");
         results.appendChild(table);
     }
 }

@@ -144,7 +144,7 @@ export class hdom {
         eLink.appendChild(
             eLinkText instanceof Node
                 ? eLinkText
-                : document.createTextNode(eLinkText.toString())
+                : document.createTextNode(eLinkText.toString()),
         );
         return eLink;
     }
@@ -182,7 +182,7 @@ export class hdom {
                     ? {
                           value: option.value,
                       }
-                    : {}
+                    : {},
             );
             if (option.label) {
                 this.setTextValue(optionEl, option.label);
@@ -308,6 +308,18 @@ export class hdom {
             return true;
         }
         return document.getElementById(e) !== null;
+    }
+
+    /**
+     * @param {string|Element} e
+     * @returns {boolean}
+     */
+    static isVisible(e) {
+        const elem = this.getElement(e);
+        if (!elem || !(elem instanceof HTMLElement)) {
+            return false;
+        }
+        return elem.style.display !== "none";
     }
 
     /**
