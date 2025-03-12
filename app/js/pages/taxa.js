@@ -108,7 +108,7 @@ class UI extends SearchUI {
             "species.csv",
             () => {
                 return {
-                    content: this.#getCSVData(this.#results),
+                    content: this.#getCSVData(speciesData),
                 };
             },
         );
@@ -272,7 +272,7 @@ class UI extends SearchUI {
 
         // Show taxa.
         divResults.appendChild(
-            createTaxaSummaryTable(this.#f1, results, showDiffs),
+            createTaxaSummaryTable(this.#f1, results, false),
         );
     }
 }
