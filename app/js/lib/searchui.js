@@ -502,7 +502,9 @@ export class SearchUI extends UI {
         if (hasErrors) {
             return;
         }
-        return new SpeciesFilter(filterArgs);
+
+        const f = new SpeciesFilter(filterArgs);
+        return f.isEmpty() ? undefined : f;
     }
 
     /**

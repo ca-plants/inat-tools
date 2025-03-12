@@ -1,4 +1,7 @@
 /**
+ * Enums
+ * @typedef {"exclude"|"subtract"} EnumCompareType
+ *
  * Types - INat Data
  * @typedef {{
  *  geoprivacy: string | null;
@@ -25,7 +28,7 @@
  *  rank_level: number;
  *  ancestor_ids: number[];
  * }} INatDataTaxon
- * @typedef {{count: number;taxon: INatDataTaxon}} INatDataTaxonObsSummary
+ * @typedef {{taxon: INatDataTaxon,count: number;diff?:number}} INatDataTaxonObsSummary
  * @typedef {{id: string;login: string;name: string;}} INatDataUser
  *
  * Types - Parameters

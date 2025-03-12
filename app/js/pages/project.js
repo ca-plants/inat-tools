@@ -243,6 +243,7 @@ class UI extends SearchUI {
                 this.getAPI(),
                 filter,
                 undefined,
+                undefined,
                 this.getProgressReporter(),
             );
             if (this.#projObscuredTaxa === undefined) {

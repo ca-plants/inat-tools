@@ -6,7 +6,7 @@ const OBJECT_STORE = "cache";
 
 const SETTINGS = { cacheExpirationMillis: 1000 * 60 * 60 };
 
-class Cache {
+export class Cache {
     /** @type Cache */
     static #instance;
 
@@ -83,7 +83,9 @@ class Cache {
      * @returns {boolean}
      */
     isExpired(entry) {
-        return entry.expires.valueOf() <= Date.now();
+        return (
+            entry.expires !== undefined && entry.expires.valueOf() <= Date.now()
+        );
     }
 
     /**
@@ -99,5 +101,3 @@ class Cache {
         });
     }
 }
-
-export { Cache };

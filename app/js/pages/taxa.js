@@ -9,26 +9,38 @@ import {
     TAXA_SUMMARY_COLUMNS,
 } from "../lib/utils.js";
 
+/**
+ * @typedef {{
+ * f1?:import("../types.js").ParamsSpeciesFilter,
+ * f2?:import("../types.js").ParamsSpeciesFilter,
+ * compareType?:import("../types.js").EnumCompareType}} HashParams
+ */
+
 class UI extends SearchUI {
     #f1;
     #f2;
+    /** @type {import("../types.js").EnumCompareType} */
+    #compareType;
+
     /** @type {import("../types.js").INatDataTaxonObsSummary[]|undefined} */
     #results;
 
     /**
-     * @param {object} f1
-     * @param {object} f2
+     * @param {import("../types.js").ParamsSpeciesFilter} f1
+     * @param {import("../types.js").ParamsSpeciesFilter} [f2]
+     * @param {import("../types.js").EnumCompareType} [compareType="exclude"]
      */
-    constructor(f1 = {}, f2) {
+    constructor(f1 = {}, f2, compareType = "exclude") {
         super();
         this.#f1 = new SpeciesFilter(f1);
         this.#f2 = f2 === undefined ? undefined : new SpeciesFilter(f2);
+        this.#compareType = compareType === "subtract" ? "subtract" : "exclude";
     }
 
-    async addExclusions() {
+    async addComparisons() {
         hdom.removeClass("search-crit", "no-exclude");
         hdom.showElement("f2", true);
-        hdom.showElement("add-exclusions", false);
+        hdom.showElement("add-comparison", false);
 
         // If the exclusion filter is empty, initialize it to be the same as the inclusion filter.
         const f = this.initFilterFromForm("f2");
@@ -77,7 +89,11 @@ class UI extends SearchUI {
         const descrip = hdom.createElement("div");
         descrip.appendChild(
             document.createTextNode(
-                await this.#f1.getDescription(this.getAPI(), this.#f2),
+                await this.#f1.getDescription(
+                    this.getAPI(),
+                    this.#f2,
+                    this.#compareType,
+                ),
             ),
         );
 
@@ -92,7 +108,7 @@ class UI extends SearchUI {
             "species.csv",
             () => {
                 return {
-                    content: this.#getCSVData(this.#results),
+                    content: this.#getCSVData(speciesData),
                 };
             },
         );
@@ -123,6 +139,7 @@ class UI extends SearchUI {
     }
 
     static async getUI() {
+        /** @type {HashParams} */
         let initArgs;
         try {
             initArgs = JSON.parse(
@@ -131,7 +148,7 @@ class UI extends SearchUI {
         } catch {
             initArgs = {};
         }
-        const ui = new UI(initArgs.f1, initArgs.f2);
+        const ui = new UI(initArgs.f1, initArgs.f2, initArgs.compareType);
         await ui.init();
     }
 
@@ -141,22 +158,28 @@ class UI extends SearchUI {
         // Add handlers for form.
         hdom.addEventListener("form", "submit", (e) => this.onSubmit(e));
         hdom.addEventListener(
-            "add-exclusions",
+            "add-comparison",
             "click",
-            async () => await this.addExclusions(),
+            async () => await this.addComparisons(),
         );
-        hdom.addEventListener("remove-exclusions", "click", () =>
-            this.removeExclusions(),
+        hdom.addEventListener("remove-comparison", "click", () =>
+            this.removeComparisons(),
         );
 
         await this.initForm("f1", this.#f1);
-
         await this.initForm("f2", this.#f2);
 
+        // Set the comparison type.
+
+        hdom.setFormElementValue(
+            hdom.getFormElement(hdom.getElement("form"), "compare-type"),
+            this.#compareType,
+        );
+
         if (this.#f2 !== undefined) {
-            await this.addExclusions();
+            await this.addComparisons();
         } else {
-            this.removeExclusions();
+            this.removeComparisons();
         }
 
         hdom.setFocusTo("f1-proj-name");
@@ -189,6 +212,8 @@ class UI extends SearchUI {
         }
         this.#f1 = f1;
         this.#f2 = hasExclusions ? this.initFilterFromForm("f2") : undefined;
+        // @ts-ignore
+        this.#compareType = hdom.getFormElementValue("comp-exclude");
 
         const errorMsg = checkFilters(this.#f1, this.#f2);
         if (errorMsg) {
@@ -196,22 +221,23 @@ class UI extends SearchUI {
             return;
         }
 
-        /** @typedef {{f1:SpeciesFilter,f2?:SpeciesFilter}} HashParams */
-
-        /** @type HashParams */
-        const params = { f1: this.#f1 };
+        /** @type {HashParams} */
+        const params = { f1: this.#f1.getParams() };
         if (this.#f2 !== undefined) {
-            params.f2 = this.#f2;
+            params.f2 = this.#f2.getParams();
+            if (this.#compareType !== "exclude") {
+                params.compareType = this.#compareType;
+            }
         }
 
         document.location.hash = JSON.stringify(params);
         await this.showResults();
     }
 
-    removeExclusions() {
+    removeComparisons() {
         hdom.addClass("search-crit", "no-exclude");
         hdom.showElement("f2", false);
-        hdom.showElement("add-exclusions", true);
+        hdom.showElement("add-comparison", true);
     }
 
     async showResults() {
@@ -228,6 +254,7 @@ class UI extends SearchUI {
             this.getAPI(),
             this.#f1,
             this.#f2,
+            this.#compareType,
             this.getProgressReporter(),
         );
         if (!this.#results) {
@@ -235,11 +262,18 @@ class UI extends SearchUI {
             return;
         }
 
+        const showDiffs = this.#f2 && this.#compareType === "subtract";
+        const results = showDiffs
+            ? this.#results.filter((result) => result.diff === 0)
+            : this.#results;
+
         // Show summary.
-        divResults.appendChild(await this.#getSummaryDOM(this.#results));
+        divResults.appendChild(await this.#getSummaryDOM(results));
 
         // Show taxa.
-        divResults.appendChild(createTaxaSummaryTable(this.#f1, this.#results));
+        divResults.appendChild(
+            createTaxaSummaryTable(this.#f1, results, false),
+        );
     }
 }
 

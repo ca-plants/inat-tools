@@ -7,14 +7,16 @@ export class DataRetriever {
     /**
      * @param {import("../types.js").INatAPI} api
      * @param {import("../types.js").SpeciesFilter} filtInclude
-     * @param {import("../types.js").SpeciesFilter|undefined} filtExclude
+     * @param {import("../types.js").SpeciesFilter|undefined} filtCompare
+     * @param {import("../types.js").EnumCompareType|undefined} compareType
      * @param {import("../types.js").ProgressReporter} progressReporter
      * @returns {Promise<import("../types.js").INatDataTaxonObsSummary[]>}
      */
     static async getSpeciesData(
         api,
         filtInclude,
-        filtExclude,
+        filtCompare,
+        compareType,
         progressReporter,
     ) {
         const include = await this.#retrieveSpeciesData(
@@ -23,19 +25,23 @@ export class DataRetriever {
             filtInclude,
             progressReporter,
         );
-        if (!filtExclude) {
+        if (!filtCompare) {
             return include;
         }
 
-        // Record excluded taxa.
-        const exclude = await this.#retrieveSpeciesData(
-            "exclusions",
+        // Record comparison taxa.
+        const compare = await this.#retrieveSpeciesData(
+            "comparison species",
             api,
-            filtExclude,
+            filtCompare,
             progressReporter,
         );
 
-        return this.removeExclusions(include, exclude);
+        if (compareType === "exclude") {
+            return this.removeExclusions(include, compare);
+        }
+
+        return this.subtract(include, compare);
     }
 
     /**
@@ -92,6 +98,7 @@ export class DataRetriever {
     /**
      * @param {import("../types.js").INatDataTaxonObsSummary[]} include
      * @param {import("../types.js").INatDataTaxonObsSummary[]} exclude
+     * @return {import("../types.js").INatDataTaxonObsSummary[]}
      */
     static removeExclusions(include, exclude) {
         /** @type {Object<string,boolean>} */
@@ -205,5 +212,29 @@ export class DataRetriever {
             "https://api.inaturalist.org/v1/observations/species_counts?verifiable=true",
         );
         return await this.#retrievePagedData(url, label, api, progressReporter);
+    }
+
+    /**
+     * @param {import("../types.js").INatDataTaxonObsSummary[]} include
+     * @param {import("../types.js").INatDataTaxonObsSummary[]} compare
+     * @return {import("../types.js").INatDataTaxonObsSummary[]}
+     */
+    static subtract(include, compare) {
+        // Index the comparison set.
+        /** @type {Map<string,import("../types.js").INatDataTaxonObsSummary>} */
+        const compareIndex = new Map();
+        for (const result of compare) {
+            compareIndex.set(result.taxon.name, result);
+        }
+
+        // Remove excluded taxa from result set.
+        const results = [];
+        for (const result of include) {
+            const name = result.taxon.name;
+            const compareCount = compareIndex.get(name)?.count;
+            result.diff = result.count - (compareCount ?? 0);
+            results.push(result);
+        }
+        return results;
     }
 }
