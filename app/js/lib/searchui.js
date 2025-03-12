@@ -1,5 +1,4 @@
 import { DateUtils } from "./dateutils.js";
-import { DOMUtils } from "./domutils.js";
 import { hdom } from "./hdom.js";
 import { SpeciesFilter } from "./speciesfilter.js";
 import { UI } from "./ui.js";
@@ -353,10 +352,10 @@ export class SearchUI extends UI {
             eSelect.addEventListener("change", (e) =>
                 handleYearModeChange(e.target),
             );
-            DOMUtils.addEventListener(prefix + "-year1", "change", (e) =>
+            hdom.addEventListener(prefix + "-year1", "change", (e) =>
                 handleYearChange(e.target),
             );
-            DOMUtils.addEventListener(prefix + "-year2", "change", (e) =>
+            hdom.addEventListener(prefix + "-year2", "change", (e) =>
                 handleYearChange(e.target),
             );
         }
@@ -433,12 +432,12 @@ export class SearchUI extends UI {
         }
 
         // If annotation fields are visible, include them.
-        if (DOMUtils.isVisible(prefix + "-annotation-filter")) {
+        if (hdom.isVisible(prefix + "-annotation-filter")) {
             /** @type {{ type: "ev-mammal" | "plants"; value: string }[]} */
             const annotations = [];
             for (const type of ANNOTATION_TYPES) {
-                if (DOMUtils.isVisible(prefix + "-ann-type-" + type)) {
-                    const value = DOMUtils.getFormElementValue(
+                if (hdom.isVisible(prefix + "-ann-type-" + type)) {
+                    const value = hdom.getFormElementValue(
                         prefix + "-ann-" + type,
                     );
                     if (value !== "Any" && value !== undefined) {
@@ -718,8 +717,8 @@ export class SearchUI extends UI {
         const d1 = document.getElementById(prefix + "1");
         const d2 = document.getElementById(prefix + "2");
         if (d1 && d2) {
-            const d1Val = DOMUtils.getFormElementValue(d1);
-            const d2Val = DOMUtils.getFormElementValue(d2);
+            const d1Val = hdom.getFormElementValue(d1);
+            const d2Val = hdom.getFormElementValue(d2);
             d1.setAttribute(
                 "max",
                 d2Val ? d2Val : DateUtils.getCurrentYear().toString(),
