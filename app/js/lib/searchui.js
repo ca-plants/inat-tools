@@ -831,9 +831,6 @@ function convertQueryStringToFilterParams(qs) {
             case "subview":
             case "view":
                 break;
-            default:
-                console.log(key);
-                break;
         }
     }
 
