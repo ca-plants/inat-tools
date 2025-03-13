@@ -362,7 +362,9 @@ export class SearchUI extends UI {
 
         const eSetURL = document.getElementById(prefix + "-set-from-url");
         if (eSetURL) {
-            eSetURL.addEventListener("click", () => handleSetFromURL(prefix));
+            eSetURL.addEventListener("click", () =>
+                handleSetFromURL(this, prefix),
+            );
         }
     }
 
@@ -789,6 +791,56 @@ export class SearchUI extends UI {
 }
 
 /**
+ * @param {URLSearchParams} qs
+ * @returns {import("../types.js").ParamsSpeciesFilter}
+ */
+function convertQueryStringToFilterParams(qs) {
+    /** @type {import("../types.js").ParamsSpeciesFilter} */
+    const params = {};
+
+    for (const [key, value] of qs.entries()) {
+        switch (key) {
+            case "acc_below_or_unknown":
+                params.accuracy = parseFloat(value);
+                break;
+            case "introduced":
+                params.establishment = "introduced";
+                break;
+            case "month":
+                params.month = value.split(",").map((v) => parseInt(v));
+                break;
+            case "native":
+                params.establishment = "native";
+                break;
+            case "place_id":
+                params.place_id = value;
+                break;
+            case "project_id":
+                params.project_id = value;
+                break;
+            case "quality_grade":
+                // @ts-ignore
+                params.quality_grade = value.split(",");
+                break;
+            case "taxon_id":
+                params.taxon_id = value;
+                break;
+            case "user_id":
+                params.user_id = value;
+                break;
+            case "subview":
+            case "view":
+                break;
+            default:
+                console.log(key);
+                break;
+        }
+    }
+
+    return params;
+}
+
+/**
  * @param {string} prefix
  * @param {SearchUIOptions} options
  */
@@ -1052,15 +1104,18 @@ function handleMonth2Change(e, ui) {
 }
 
 /**
+ * @param {SearchUI} ui
  * @param {string} prefix
  */
-function handleSetFromURL(prefix) {
+function handleSetFromURL(ui, prefix) {
     /**
      * @param {HTMLDialogElement} eDlg
      */
     function createDialog(eDlg) {
         const eForm = hdom.createElement("form");
-        eForm.addEventListener("submit", (e) => setFromURL(e, eDlg, prefix));
+        eForm.addEventListener("submit", (e) =>
+            setFromURL(e, ui, eDlg, prefix),
+        );
         eDlg.appendChild(eForm);
 
         const inputId = prefix + "-set-url-value";
@@ -1111,10 +1166,11 @@ function handleSetFromURL(prefix) {
 
 /**
  * @param {Event} e
+ * @param {SearchUI} ui
  * @param {HTMLDialogElement} eDlg
  * @param {string} prefix
  */
-function setFromURL(e, eDlg, prefix) {
+function setFromURL(e, ui, eDlg, prefix) {
     e.preventDefault();
     const value = hdom.getFormElementValue(prefix + "-set-url-value");
     let searchParams;
@@ -1125,9 +1181,8 @@ function setFromURL(e, eDlg, prefix) {
         searchParams = new URLSearchParams(value);
     }
 
-    for (const param of searchParams.keys()) {
-        console.log(`${param} = ${searchParams.get(param)}`);
-    }
+    const params = convertQueryStringToFilterParams(searchParams);
+    ui.setFormValues(prefix, new SpeciesFilter(params));
 
     eDlg.close();
 }
