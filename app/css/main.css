@@ -67,6 +67,15 @@ th {
     vertical-align: bottom;
 }
 
+/* Modal Dialogs */
+dialog form input {
+    margin-bottom: .2rem;
+}
+
+dialog form input[type="text"] {
+    width: 100%
+}
+
 /* Responsive Table */
 table {
     margin: auto;

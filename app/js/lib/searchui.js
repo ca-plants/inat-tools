@@ -359,6 +359,11 @@ export class SearchUI extends UI {
                 handleYearChange(e.target),
             );
         }
+
+        const eSetURL = document.getElementById(prefix + "-set-from-url");
+        if (eSetURL) {
+            eSetURL.addEventListener("click", () => handleSetFromURL(prefix));
+        }
     }
 
     /**
@@ -1044,4 +1049,85 @@ function handleMonth2Change(e, ui) {
         hdom.getFormElementValue(target) ===
             hdom.getFormElementValue(prefix + "-month1"),
     );
+}
+
+/**
+ * @param {string} prefix
+ */
+function handleSetFromURL(prefix) {
+    /**
+     * @param {HTMLDialogElement} eDlg
+     */
+    function createDialog(eDlg) {
+        const eForm = hdom.createElement("form");
+        eForm.addEventListener("submit", (e) => setFromURL(e, eDlg, prefix));
+        eDlg.appendChild(eForm);
+
+        const inputId = prefix + "-set-url-value";
+        const eLabel = hdom.createLabelElement(
+            inputId,
+            "Enter the iNaturalist URL or query string from which to create the filter",
+        );
+        const eInput = hdom.createInputElement({
+            type: "text",
+            id: inputId,
+            required: "",
+            autofocus: "",
+        });
+        eForm.appendChild(eLabel);
+        eForm.appendChild(eInput);
+
+        const divBtn = hdom.createElement("div", "flex-fullwidth");
+
+        const btnCancel = hdom.createInputElement({
+            type: "button",
+            value: "Cancel",
+        });
+        btnCancel.addEventListener("click", () => eDlg.close());
+
+        const btnSubmit = hdom.createInputElement({
+            type: "submit",
+            value: "Submit",
+        });
+
+        divBtn.appendChild(btnCancel);
+        divBtn.appendChild(btnSubmit);
+        eForm.appendChild(divBtn);
+
+        hdom.getElement(prefix).appendChild(eDlg);
+    }
+
+    const id = prefix + "-set-url-dlg";
+    let eDlg = document.getElementById(id);
+    if (!eDlg) {
+        // Create dialog element if it is not there.
+        eDlg = hdom.createElement("dialog", { id: id });
+        // @ts-ignore
+        createDialog(eDlg);
+    }
+    // @ts-ignore
+    eDlg.showModal();
+}
+
+/**
+ * @param {Event} e
+ * @param {HTMLDialogElement} eDlg
+ * @param {string} prefix
+ */
+function setFromURL(e, eDlg, prefix) {
+    e.preventDefault();
+    const value = hdom.getFormElementValue(prefix + "-set-url-value");
+    let searchParams;
+    if (URL.canParse(value)) {
+        const url = new URL(value);
+        searchParams = url.searchParams;
+    } else {
+        searchParams = new URLSearchParams(value);
+    }
+
+    for (const param of searchParams.keys()) {
+        console.log(`${param} = ${searchParams.get(param)}`);
+    }
+
+    eDlg.close();
 }
