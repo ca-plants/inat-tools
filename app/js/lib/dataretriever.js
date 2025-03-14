@@ -52,7 +52,8 @@ export class DataRetriever {
      */
     static async getObservationData(api, filter, progressReporter) {
         const url = filter.getURL(
-            "https://api.inaturalist.org/v1/observations?verifiable=true&order_by=observed_on&per_page=500",
+            "https://api.inaturalist.org/v2/observations?verifiable=true&order_by=observed_on&per_page=500&" +
+                `fields=(geoprivacy:!t,id:!t,location:!t,observed_on_details:!t,place_guess:!t,private_location:!t,private_place_guess:!t,quality_grade:!t,taxon:${TAXON_FIELDS},taxon_geoprivacy:!t,user:(id:!t,login:!t,name:!t))`,
         );
         /** @type {import("../types.js").INatDataObs[]} */
         const rawResults = await this.#retrievePagedData(
