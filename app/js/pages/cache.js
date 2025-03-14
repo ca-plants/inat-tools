@@ -75,7 +75,7 @@ class CacheUI extends UI {
         async function getRow(key, ui) {
             /**
              * @param {Node|string} value
-             * @param {Object.<string,string>|string} [atts]
+             * @param {Object<string,string>|string} [atts]
              */
             function getCol(value, atts) {
                 const td = hdom.createElement("td", atts);
@@ -97,6 +97,7 @@ class CacheUI extends UI {
             getCol(url.pathname, { class: "overflow", title: key });
             getCol(formatDateTime(data.date));
             getCol(formatDateTime(data.expires));
+            getCol(JSON.stringify(data.value).length.toLocaleString(), "right");
 
             const copy = hdom.createElement("img", {
                 src: ui.getPathPrefix() + "img/icon/clipboard.svg",
@@ -130,7 +131,7 @@ class CacheUI extends UI {
         table.appendChild(thead);
         const tr = hdom.createElement("tr");
         thead.appendChild(tr);
-        for (const col of ["Key", "Cached", "Expires", "Actions"]) {
+        for (const col of ["Key", "Cached", "Expires", "Size", "Actions"]) {
             const th = hdom.createElement("th");
             tr.appendChild(th);
             th.appendChild(document.createTextNode(col));
