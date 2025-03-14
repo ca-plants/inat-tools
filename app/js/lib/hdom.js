@@ -70,7 +70,7 @@ export class hdom {
     /**
      * @param {string} name
      * @param {Object<string,string|number>|string} [attributes]
-     * @returns {Element}
+     * @returns {HTMLElement}
      */
     static createElement(name, attributes) {
         const e = document.createElement(name);
@@ -211,7 +211,7 @@ export class hdom {
      * @param {string} name
      * @param {Object<string,string>} attributes
      * @param {string} text
-     * @returns {Element}
+     * @returns {HTMLElement}
      */
     static createTextElement(name, attributes, text) {
         const elem = this.createElement(name, attributes);
