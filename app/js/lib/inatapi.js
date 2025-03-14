@@ -1,5 +1,8 @@
 import { Cache } from "./cache.js";
 
+export const TAXON_FIELDS =
+    "(id:!t,parent_id:!t,name:!t,preferred_common_name:!t,rank:!t,rank_level:!t,ancestor_ids:!t)";
+
 export class QueryCancelledException extends Error {}
 
 export class INatAPI {
@@ -174,11 +177,7 @@ export class INatAPI {
      * @returns {Promise<import("../types.js").INatDataTaxon>}
      */
     async getTaxonData(id) {
-        return this.#getDataByID(
-            id,
-            "taxa",
-            "(id:!t,parent_id:!t,name:!t,preferred_common_name:!t,rank:!t,rank_level:!t,ancestor_ids:!t)",
-        );
+        return this.#getDataByID(id, "taxa", TAXON_FIELDS);
     }
 
     /**

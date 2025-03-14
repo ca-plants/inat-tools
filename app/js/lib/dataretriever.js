@@ -1,6 +1,6 @@
 import whichPolygon from "which-polygon";
 import { Cache } from "./cache.js";
-import { QueryCancelledException } from "./inatapi.js";
+import { QueryCancelledException, TAXON_FIELDS } from "./inatapi.js";
 import { INatObservation } from "./inatobservation.js";
 
 export class DataRetriever {
@@ -205,11 +205,12 @@ export class DataRetriever {
      * @param {import("../types.js").INatAPI} api
      * @param {import("../types.js").SpeciesFilter} filter
      * @param {import("../types.js").ProgressReporter} progressReporter
+     * @returns {Promise<import("../types.js").INatDataTaxonObsSummary[]>}
      */
     static async #retrieveSpeciesData(label, api, filter, progressReporter) {
         // Include verifiable=true; this seems to be consistent with iNat web UI default.
         const url = filter.getURL(
-            "https://api.inaturalist.org/v1/observations/species_counts?verifiable=true",
+            `https://api.inaturalist.org/v2/observations/species_counts?verifiable=true&fields=(taxon:${TAXON_FIELDS},count:!t)`,
         );
         return await this.#retrievePagedData(url, label, api, progressReporter);
     }
