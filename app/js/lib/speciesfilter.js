@@ -1,5 +1,6 @@
 import { bbox } from "@turf/bbox";
 import { DateUtils } from "./dateutils.js";
+import { INatAPI } from "./inatapi.js";
 
 const MONTH_NAMES = [
     "January",
@@ -58,7 +59,7 @@ export class SpeciesFilter {
 
         if (this.#params.taxon_id) {
             const taxon = await api.getTaxonData(this.#params.taxon_id);
-            descrip = api.getTaxonFormName(taxon, false);
+            descrip = INatAPI.getTaxonFormName(taxon, false);
         }
         if (this.#params.establishment) {
             descrip += " which are " + this.#params.establishment;

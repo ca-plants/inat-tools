@@ -266,10 +266,7 @@ export class ObsSummaryUI extends SearchUI {
             this.showSearchForm();
             return;
         }
-        const results = await summarizeObservations(
-            this.#results,
-            this.getAPI(),
-        );
+        const results = await summarizeObservations(this.#results);
 
         // Show summary.
         divResults.appendChild(await this.#getSummaryDOM(results));

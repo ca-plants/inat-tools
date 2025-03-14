@@ -3,6 +3,19 @@ import { Cache } from "./cache.js";
 export const TAXON_FIELDS =
     "(id:!t,parent_id:!t,name:!t,preferred_common_name:!t,rank:!t,rank_level:!t,ancestor_ids:!t)";
 
+const URL_AC_PLACE = new URL(
+    "https://api.inaturalist.org/v2/places?fields=(id:!t,display_name:!t)",
+);
+const URL_AC_PROJECT = new URL(
+    "https://api.inaturalist.org/v2/projects?fields=(id:!t,title:!t)",
+);
+const URL_AC_TAXA = new URL(
+    "https://api.inaturalist.org/v2/taxa/autocomplete?fields=(id:!t,name:!t,preferred_common_name:!t,rank:!t,rank_level:!t)",
+);
+const URL_AC_USERS = new URL(
+    "https://api.inaturalist.org/v2/users/autocomplete?fields=(id:!t,login:!t)",
+);
+
 export class QueryCancelledException extends Error {}
 
 export class INatAPI {
@@ -56,53 +69,88 @@ export class INatAPI {
     }
 
     /**
-     * @param {string} str
-     * @param {string} type
-     * @param {string|function(any):string} nameGen
-     * @returns {Promise<Object<string,string>>}
+     * @template T
+     * @param {T[]} raw
+     * @param {function(T):string} fnGetDisplayName
+     * @param {function(T):number} fnGetDisplayID
+     * @returns {Promise<Object<string,number>>}
      */
-    async #getAutoComplete(str, type, nameGen) {
-        const url = new URL(
-            "https://api.inaturalist.org/v1/" + type + "/autocomplete",
-        );
+    async #getAutoCompleteProcessed(raw, fnGetDisplayName, fnGetDisplayID) {
+        /** @type {Object<string,number>} */
+        const processed = {};
+        return raw.reduce((processed, raw) => {
+            processed[fnGetDisplayName(raw)] = fnGetDisplayID(raw);
+            return processed;
+        }, processed);
+    }
+
+    /**
+     * @template T
+     * @param {URL} url
+     * @param {string} str
+     * @returns {Promise<T[]>}
+     */
+    async #getAutoCompleteRaw(url, str) {
         url.searchParams.set("q", str);
+        /** @type {{results:T[]}} */
         const json = await this.getJSON(url);
-        /** @type {Object<string,string>} */
-        const results = {};
-        for (const result of json.results) {
-            results[
-                typeof nameGen === "string" ? result[nameGen] : nameGen(result)
-            ] = result.id;
-        }
-        return results;
+        return json.results;
     }
 
     /**
      * @param {string} str
+     * @returns {Promise<Object<string,number>>}
      */
     async getAutoCompleteObserver(str) {
-        return this.#getAutoComplete(str, "users", "login_exact");
+        /** @type {{id:number,login:string}[]} */
+        const raw = await this.#getAutoCompleteRaw(URL_AC_USERS, str);
+        return this.#getAutoCompleteProcessed(
+            raw,
+            (r) => r.login,
+            (r) => r.id,
+        );
     }
 
     /**
      * @param {string} str
+     * @returns {Promise<Object<string,number>>}
      */
     async getAutoCompletePlace(str) {
-        return this.#getAutoComplete(str, "places", "display_name");
+        /** @type {{id:number,display_name:string}[]} */
+        const raw = await this.#getAutoCompleteRaw(URL_AC_PLACE, str);
+        return this.#getAutoCompleteProcessed(
+            raw,
+            (r) => r.display_name,
+            (r) => r.id,
+        );
     }
 
     /**
      * @param {string} str
+     * @returns {Promise<Object<string,number>>}
      */
     async getAutoCompleteProject(str) {
-        return this.#getAutoComplete(str, "projects", "title");
+        /** @type {{id:number,title:string}[]} */
+        const raw = await this.#getAutoCompleteRaw(URL_AC_PROJECT, str);
+        return this.#getAutoCompleteProcessed(
+            raw,
+            (r) => r.title,
+            (r) => r.id,
+        );
     }
 
     /**
      * @param {string} str
+     * @returns {Promise<Object<string,number>>}
      */
     async getAutoCompleteTaxon(str) {
-        return this.#getAutoComplete(str, "taxa", this.getTaxonFormName);
+        /** @type {{id:number,name:string,preferred_common_name:string,rank:string,rank_level:number}[]} */
+        const raw = await this.#getAutoCompleteRaw(URL_AC_TAXA, str);
+        return this.#getAutoCompleteProcessed(
+            raw,
+            (r) => INatAPI.getTaxonFormName(r),
+            (r) => r.id,
+        );
     }
 
     /**
@@ -181,7 +229,7 @@ export class INatAPI {
     }
 
     /**
-     * @param {import("../types.js").INatDataTaxon} taxon
+     * @param {{name:string,rank:string}} taxon
      * @returns {string}
      */
     static getTaxonName(taxon) {
@@ -202,11 +250,11 @@ export class INatAPI {
     }
 
     /**
-     * @param {import("../types.js").INatDataTaxon} taxon
+     * @param {{name:string,preferred_common_name:string,rank:string,rank_level:number}} taxon
      * @param {boolean} [addCommonName]
      * @returns {string}
      */
-    getTaxonFormName(taxon, addCommonName = true) {
+    static getTaxonFormName(taxon, addCommonName = true) {
         let commonName = addCommonName
             ? taxon["preferred_common_name"]
             : undefined;

@@ -14,10 +14,9 @@ import { INatObservation } from "./inatobservation.js";
 
 /**
  * @param {import("../types.js").INatDataObs[]} rawResults
- * @param {INatAPI} api
  * @returns {Promise<SummaryEntry[]>}
  */
-export async function summarizeObservations(rawResults, api) {
+export async function summarizeObservations(rawResults) {
     /** @type {Map<string,SummaryEntry>} */
     const summaries = new Map();
 
@@ -29,7 +28,7 @@ export async function summarizeObservations(rawResults, api) {
         const obs = new INatObservation(result);
         let taxonSummary = summaries.get(name);
         if (!taxonSummary) {
-            taxonSummary = createTaxonSummary(result.taxon, api);
+            taxonSummary = createTaxonSummary(result.taxon);
             summaries.set(name, taxonSummary);
         }
         taxonSummary.count++;
@@ -109,17 +108,16 @@ export async function summarizeObservations(rawResults, api) {
 
 /**
  * @param {import("../types.js").INatDataTaxon} taxon
- * @param {INatAPI} api
  * @returns {SummaryEntry}
  */
-function createTaxonSummary(taxon, api) {
+function createTaxonSummary(taxon) {
     return {
         name: INatAPI.getTaxonName(taxon),
         is_branch: false,
         taxon_id: taxon.id,
         parent_id: taxon.parent_id,
         ancestor_ids: taxon.ancestor_ids,
-        displayName: api.getTaxonFormName(taxon, false),
+        displayName: INatAPI.getTaxonFormName(taxon, false),
         rank: taxon.rank,
         count: 0,
         countObscured: 0,

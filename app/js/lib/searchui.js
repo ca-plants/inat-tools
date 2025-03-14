@@ -1,5 +1,6 @@
 import { DateUtils } from "./dateutils.js";
 import { hdom } from "./hdom.js";
+import { INatAPI } from "./inatapi.js";
 import { SpeciesFilter } from "./speciesfilter.js";
 import { UI } from "./ui.js";
 
@@ -22,7 +23,7 @@ export class AutoCompleteConfig {
     /**
      * @param {string} listID
      * @param {string} valueID
-     * @param {function (string): Promise<Object<string,string>>} fnRetrieve
+     * @param {function (string): Promise<Object<string,number>>} fnRetrieve
      * @param {function (string): void|undefined} [fnHandleChange]
      */
     constructor(listID, valueID, fnRetrieve, fnHandleChange) {
@@ -240,10 +241,9 @@ export class SearchUI extends UI {
     }
 
     /**
-     *
      * @param {string} prefix
      * @param {string} name
-     * @param {function(string):Promise<Object<string,string>>} fnRetrieve
+     * @param {function(string):Promise<Object<string,number>>} fnRetrieve
      * @param {(function(string):void)|undefined} [fnHandleChange]
      */
     initAutoCompleteField(prefix, name, fnRetrieve, fnHandleChange) {
@@ -317,7 +317,7 @@ export class SearchUI extends UI {
             }
         }
 
-        /** @type{{name:string,fnRetrieve:function(string):Promise<Object<string,string>>,fnHandleChange?:function(string):void}[]} */
+        /** @type{{name:string,fnRetrieve:function(string):Promise<Object<string,number>>,fnHandleChange?:function(string):void}[]} */
         const fields = [
             {
                 name: "observer",
@@ -629,7 +629,7 @@ export class SearchUI extends UI {
             }
             hdom.setFormElementValue(
                 prefix + "-taxon-name",
-                api.getTaxonFormName(taxonData),
+                INatAPI.getTaxonFormName(taxonData),
             );
 
             // Set value of any annotations.
