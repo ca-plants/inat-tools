@@ -105,16 +105,17 @@ export class INatAPI {
     /**
      * @param {string} id
      * @param {string} url
+     * @param {string} fields
      */
-    async #getDataByID(id, url) {
+    async #getDataByID(id, url, fields) {
         const cache = await Cache.getInstance();
-        const key = url + id;
+        const key = `https://api.inaturalist.org/v2/${url}/${id}?fields=${fields}`;
         // Check cache first.
         let data = await cache.get(key);
         if (data) {
             return data;
         }
-        const json = await this.getJSON(new URL(key));
+        const json = await this.getJSON(key);
         data = json.results[0];
         // Add to cache.
         await cache.put(key, data);
@@ -150,12 +151,10 @@ export class INatAPI {
 
     /**
      * @param {string} placeID
+     * @returns {Promise<import("../types.js").INatDataPlace>}
      */
     async getPlaceData(placeID) {
-        return this.#getDataByID(
-            placeID,
-            "https://api.inaturalist.org/v1/places/",
-        );
+        return this.#getDataByID(placeID, "places", "(display_name:!t)");
     }
 
     /**
@@ -165,7 +164,8 @@ export class INatAPI {
     async getProjectData(projID) {
         return this.#getDataByID(
             projID,
-            "https://api.inaturalist.org/v1/projects/",
+            "projects",
+            "(id:!t,title:!t,slug:!t,user_ids:!t)",
         );
     }
 
@@ -174,11 +174,16 @@ export class INatAPI {
      * @returns {Promise<import("../types.js").INatDataTaxon>}
      */
     async getTaxonData(id) {
-        return this.#getDataByID(id, "https://api.inaturalist.org/v1/taxa/");
+        return this.#getDataByID(
+            id,
+            "taxa",
+            "(id:!t,parent_id:!t,name:!t,preferred_common_name:!t,rank:!t,rank_level:!t,ancestor_ids:!t)",
+        );
     }
 
     /**
      * @param {import("../types.js").INatDataTaxon} taxon
+     * @returns {string}
      */
     static getTaxonName(taxon) {
         switch (taxon.rank) {
@@ -225,6 +230,6 @@ export class INatAPI {
      * @returns {Promise<import("../types.js").INatDataUser>}
      */
     async getUserData(id) {
-        return this.#getDataByID(id, "https://api.inaturalist.org/v1/users/");
+        return this.#getDataByID(id, "users", "(id:!t,login:!t,name:!t)");
     }
 }

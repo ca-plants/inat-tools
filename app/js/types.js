@@ -16,6 +16,7 @@
  *  taxon_geoprivacy: string;
  *  user: INatDataUser;
  * }} INatDataObs
+ * @typedef {{display_name:string}} INatDataPlace
  * @typedef {{id: number;title: string;slug: string;user_ids: number[];}} INatDataProject
  * @typedef {{}} INatDataProjectMember
  * @typedef {"needs_id" | "research"} INatDataQualityGrade
