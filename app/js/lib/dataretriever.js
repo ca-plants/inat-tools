@@ -80,12 +80,15 @@ export class DataRetriever {
 
     /**
      * @param {import("../types.js").INatAPI} api
-     * @param {string} id
+     * @param {number|string} id
      * @param {import("../types.js").ProgressReporter} progressReporter
+     * @returns {Promise<import("../types.js").INatDataProjectMember[]>}
      */
     static async getProjectMembers(api, id, progressReporter) {
         const url = new URL(
-            "https://api.inaturalist.org/v1/projects/" + id + "/members",
+            "https://api.inaturalist.org/v2/projects/" +
+                id +
+                "/members?fields=(user_id:!t,role:!t,observations_count:!t,user:(login:!t,name:!t))",
         );
         return await this.#retrievePagedData(
             url,

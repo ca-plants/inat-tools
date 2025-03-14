@@ -97,7 +97,12 @@ class CacheUI extends UI {
             getCol(url.pathname, { class: "overflow", title: key });
             getCol(formatDateTime(data.date));
             getCol(formatDateTime(data.expires));
-            getCol(JSON.stringify(data.value).length.toLocaleString(), "right");
+            getCol(
+                data.value === undefined
+                    ? "undefined"
+                    : JSON.stringify(data.value).length.toLocaleString(),
+                "right",
+            );
 
             const copy = hdom.createElement("img", {
                 src: ui.getPathPrefix() + "img/icon/clipboard.svg",

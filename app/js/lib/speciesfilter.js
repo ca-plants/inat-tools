@@ -191,6 +191,9 @@ export class SpeciesFilter {
         return this.#params.place_id;
     }
 
+    /**
+     * @returns {string|undefined}
+     */
     getProjectID() {
         return this.#params.project_id;
     }

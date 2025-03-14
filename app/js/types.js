@@ -18,7 +18,7 @@
  * }} INatDataObs
  * @typedef {{display_name:string}} INatDataPlace
  * @typedef {{id: number;title: string;slug: string;user_ids: number[];}} INatDataProject
- * @typedef {{}} INatDataProjectMember
+ * @typedef {{user_id:number,role:string,observations_count:number,user:{login:string,name:string}}} INatDataProjectMember
  * @typedef {"needs_id" | "research"} INatDataQualityGrade
  * @typedef {{
  *  id: number;
