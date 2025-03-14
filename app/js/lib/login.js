@@ -4,7 +4,7 @@ import { DB } from "./db.js";
 
 const OBJECT_STORE = "login";
 
-class Login {
+export class Login {
     /** @type {DB} */
     static #db;
 
@@ -68,11 +68,12 @@ class Login {
      */
     static async setToken(token, api) {
         // Retrieve user info.
-        /** @type {{results:Object<string,{}>[]}} */
+        /** @type {{results:{login:string}[]}} */
         const json = await api.getJSON(
-            "https://api.inaturalist.org/v1/users/me",
+            "https://api.inaturalist.org/v2/users/me?fields=(login:!t)",
             token,
         );
+        console.log(json);
 
         const db = await this.#getDB();
         const d = Date.now();
@@ -86,5 +87,3 @@ class Login {
         await this.#clearCache();
     }
 }
-
-export { Login };
