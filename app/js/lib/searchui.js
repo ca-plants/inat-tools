@@ -129,7 +129,7 @@ export class SearchUI extends UI {
      * @param {Event} e
      * @param {AutoCompleteConfig} config
      */
-    async #debounce(e, config, timeout = 400) {
+    async #debounce(e, config, timeout = 200) {
         if (!(e instanceof InputEvent) || !e.inputType) {
             // Ignore events with no inputType (e.g., the event triggered after we set value).
             return;
