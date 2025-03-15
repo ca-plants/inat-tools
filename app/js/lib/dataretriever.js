@@ -1,6 +1,6 @@
 import whichPolygon from "which-polygon";
 import { Cache } from "./cache.js";
-import { QueryCancelledException } from "./inatapi.js";
+import { QueryCancelledException, TAXON_FIELDS } from "./inatapi.js";
 import { INatObservation } from "./inatobservation.js";
 
 export class DataRetriever {
@@ -52,7 +52,8 @@ export class DataRetriever {
      */
     static async getObservationData(api, filter, progressReporter) {
         const url = filter.getURL(
-            "https://api.inaturalist.org/v1/observations?verifiable=true&order_by=observed_on&per_page=500",
+            "https://api.inaturalist.org/v2/observations?verifiable=true&order_by=observed_on&per_page=500&" +
+                `fields=(geoprivacy:!t,id:!t,location:!t,observed_on_details:!t,place_guess:!t,private_location:!t,private_place_guess:!t,quality_grade:!t,taxon:${TAXON_FIELDS},taxon_geoprivacy:!t,user:(id:!t,login:!t,name:!t))`,
         );
         /** @type {import("../types.js").INatDataObs[]} */
         const rawResults = await this.#retrievePagedData(
@@ -80,12 +81,15 @@ export class DataRetriever {
 
     /**
      * @param {import("../types.js").INatAPI} api
-     * @param {string} id
+     * @param {number|string} id
      * @param {import("../types.js").ProgressReporter} progressReporter
+     * @returns {Promise<import("../types.js").INatDataProjectMember[]>}
      */
     static async getProjectMembers(api, id, progressReporter) {
         const url = new URL(
-            "https://api.inaturalist.org/v1/projects/" + id + "/members",
+            "https://api.inaturalist.org/v2/projects/" +
+                id +
+                "/members?fields=(user_id:!t,role:!t,observations_count:!t,user:(login:!t,name:!t))",
         );
         return await this.#retrievePagedData(
             url,
@@ -205,11 +209,12 @@ export class DataRetriever {
      * @param {import("../types.js").INatAPI} api
      * @param {import("../types.js").SpeciesFilter} filter
      * @param {import("../types.js").ProgressReporter} progressReporter
+     * @returns {Promise<import("../types.js").INatDataTaxonObsSummary[]>}
      */
     static async #retrieveSpeciesData(label, api, filter, progressReporter) {
         // Include verifiable=true; this seems to be consistent with iNat web UI default.
         const url = filter.getURL(
-            "https://api.inaturalist.org/v1/observations/species_counts?verifiable=true",
+            `https://api.inaturalist.org/v2/observations/species_counts?verifiable=true&fields=(taxon:${TAXON_FIELDS},count:!t)`,
         );
         return await this.#retrievePagedData(url, label, api, progressReporter);
     }

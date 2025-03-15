@@ -10,6 +10,7 @@ import { createTaxaSummaryTable } from "../lib/utils.js";
  * @typedef {{proj?:string,submit?:boolean}} QueryArgs
  */
 
+/** @type {Object<string,ColDef<import("../types.js").INatDataProjectMember>>} */
 const COLUMNS = {
     PROJ_OBS: new ColDef(
         "# Obs",
@@ -198,7 +199,7 @@ class UI extends SearchUI {
         if (this.#projMembers === undefined) {
             this.#projMembers = await DataRetriever.getProjectMembers(
                 this.getAPI(),
-                this.#projData.slug,
+                this.#projData.id,
                 this.getProgressReporter(),
             );
             if (this.#projMembers === undefined) {
