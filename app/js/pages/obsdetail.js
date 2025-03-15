@@ -8,6 +8,7 @@ import { SearchUI } from "../lib/searchui.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { createDownloadLink } from "../lib/utils.js";
 import { InatURL } from "../lib/inaturl.js";
+import { Map } from "../lib/map.js";
 
 /** @typedef {{role:string}} ProjectMember */
 /** @typedef {{countObscured:number,countPublic:number,countTrusted:number,observations:INatObservation[]}} Results */
@@ -174,19 +175,6 @@ class ObsDetailUI extends SearchUI {
      * @returns {{content:string,fileName:string}}
      */
     #getDownloadData(indent, type) {
-        /**
-         * @param {INatObservation} obs
-         * @returns {object}
-         */
-        function propsDefault(obs) {
-            return {
-                taxon_name: obs.getTaxonName(),
-                url: obs.getURL(),
-                date: obs.getObsDateString(),
-                observer: obs.getUserDisplayName(),
-            };
-        }
-
         if (type === undefined) {
             type = hdom.getFormElementValue("download-type");
         }
@@ -195,6 +183,30 @@ class ObsDetailUI extends SearchUI {
             return {
                 content: this.#getGPX(indent),
                 fileName: "observations.gpx",
+            };
+        }
+
+        const gj = this.#getGeoJSON();
+        return {
+            content: JSON.stringify(gj, undefined, indent),
+            fileName: "observations.geojson",
+        };
+    }
+
+    /**
+     * @returns {GeoJSON.FeatureCollection}
+     */
+    #getGeoJSON() {
+        /**
+         * @param {INatObservation} obs
+         * @returns {Object<string,string>}
+         */
+        function propsDefault(obs) {
+            return {
+                taxon_name: obs.getTaxonName(),
+                url: obs.getURL(),
+                date: obs.getObsDateString(),
+                observer: obs.getUserDisplayName(),
             };
         }
 
@@ -223,11 +235,7 @@ class ObsDetailUI extends SearchUI {
             features.push(feature);
         }
 
-        const gj = { type: "FeatureCollection", features: features };
-        return {
-            content: JSON.stringify(gj, undefined, indent),
-            fileName: "observations.geojson",
-        };
+        return { type: "FeatureCollection", features: features };
     }
 
     /**
@@ -670,15 +678,15 @@ class ObsDetailUI extends SearchUI {
             class: "displayoptions",
         });
         const displayOptions = [
-            { id: "details" },
-            { id: "maps" },
-            { id: "datehisto" },
-            { id: "usersumm" },
+            { id: "details", label: "Details" },
+            { id: "mapdata", label: "Map Data" },
+            { id: "datehisto", label: "Date Histogram" },
+            { id: "usersumm", label: "Summary by Observer" },
+            { id: "map", label: "Map" },
         ];
-        addDisplayOption("details", "Details", this);
-        addDisplayOption("maps", "Map Data", this);
-        addDisplayOption("datehisto", "Date Histogram", this);
-        addDisplayOption("usersumm", "Summary by Observer", this);
+        displayOptions.forEach((opt) =>
+            addDisplayOption(opt.id, opt.label, this),
+        );
 
         const iNatDiv = hdom.createElement("div");
         iNatDiv.appendChild(
@@ -754,7 +762,24 @@ class ObsDetailUI extends SearchUI {
         this.#wrapResults(eResults, eTable);
     }
 
-    showMaps() {
+    showMap() {
+        const eResults = this.clearResults();
+
+        const divMap = hdom.createElement("div", {
+            id: "map",
+        });
+        eResults.appendChild(divMap);
+        divMap.style.setProperty(
+            "height",
+            `${window.screen.availHeight - divMap.offsetTop - 8}px`,
+        );
+
+        const gj = this.#getGeoJSON();
+        const map = new Map();
+        map.fitBounds(gj);
+    }
+
+    showMapData() {
         const eResults = this.clearResults();
 
         const eButtons = hdom.createElement("div", {
@@ -981,8 +1006,11 @@ class ObsDetailUI extends SearchUI {
             case "datehisto":
                 this.showDateHistogram();
                 break;
-            case "maps":
-                this.showMaps();
+            case "map":
+                this.showMap();
+                break;
+            case "mapdata":
+                this.showMapData();
                 break;
             case "usersumm":
                 this.showUserSumm();
