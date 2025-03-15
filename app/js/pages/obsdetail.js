@@ -777,6 +777,7 @@ class ObsDetailUI extends SearchUI {
         const gj = this.#getGeoJSON();
         const map = new Map();
         map.fitBounds(gj);
+        map.addObservations(gj);
     }
 
     showMapData() {
