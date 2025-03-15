@@ -25,7 +25,6 @@ export class Map {
             // @ts-ignore
             const feature = layer.feature;
             const properties = feature.properties;
-            console.log(properties);
             const div = hdom.createElement("div");
             let first = true;
             for (const property of ["taxon_name", "date", "observer"]) {

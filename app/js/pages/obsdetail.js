@@ -524,12 +524,23 @@ class ObsDetailUI extends SearchUI {
     }
 
     onResize() {
-        const svg = document.getElementById("svg-datehisto");
-        if (!svg) {
-            return;
+        const mode = getDisplayMode();
+        switch (mode) {
+            case "datehisto":
+                {
+                    const svg = document.getElementById("svg-datehisto");
+                    if (!svg) {
+                        return;
+                    }
+                    const height =
+                        window.innerHeight - svg.getBoundingClientRect().top;
+                    svg.setAttribute("style", `height:${height}px;`);
+                }
+                break;
+            case "map":
+                setMapHeight();
+                break;
         }
-        const height = window.innerHeight - svg.getBoundingClientRect().top;
-        svg.setAttribute("style", `height:${height}px;`);
     }
 
     /**
@@ -769,10 +780,7 @@ class ObsDetailUI extends SearchUI {
             id: "map",
         });
         eResults.appendChild(divMap);
-        divMap.style.setProperty(
-            "height",
-            `${window.screen.availHeight - divMap.offsetTop - 8}px`,
-        );
+        setMapHeight();
 
         const gj = this.#getGeoJSON();
         const map = new Map();
@@ -1002,8 +1010,7 @@ class ObsDetailUI extends SearchUI {
     }
 
     updateDisplay() {
-        const elem = hdom.getFormElement(RESULT_FORM_ID, "displayopt");
-        switch (hdom.getFormElementValue(elem)) {
+        switch (getDisplayMode()) {
             case "datehisto":
                 this.showDateHistogram();
                 break;
@@ -1095,6 +1102,12 @@ class ObsDetailUI extends SearchUI {
     }
 }
 
+function getDisplayMode() {
+    return hdom.getFormElementValue(
+        hdom.getFormElement(RESULT_FORM_ID, "displayopt"),
+    );
+}
+
 /**
  * @param {SpeciesFilter} filter
  * @returns {Element|undefined}
@@ -1137,6 +1150,14 @@ function getNeedsAttributeLink(filter) {
             }
         }
     }
+}
+
+function setMapHeight() {
+    const divMap = hdom.getElement("map");
+    divMap.style.setProperty(
+        "height",
+        `${window.screen.availHeight - divMap.offsetTop - 8}px`,
+    );
 }
 
 (async function () {

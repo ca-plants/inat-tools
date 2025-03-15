@@ -1,6 +1,6 @@
 export class hdom {
     /**
-     * @param {string|Element} e
+     * @param {string|HTMLElement} e
      * @param {string} className
      */
     static addClass(e, className) {
@@ -9,7 +9,7 @@ export class hdom {
     }
 
     /**
-     * @param {string|Element} e
+     * @param {string|HTMLElement} e
      * @param {string} type
      * @param {function(Event):void} fn
      * @returns {Element}
@@ -41,7 +41,7 @@ export class hdom {
     }
 
     /**
-     * @param {string|Element} e
+     * @param {string|HTMLElement} e
      */
     static clickElement(e) {
         const elem = this.getElement(e);
@@ -171,7 +171,7 @@ export class hdom {
     /**
      * @param {string} id
      * @param {{value?:string,label?:string}[]} options
-     * @returns {Element}
+     * @returns {HTMLElement}
      */
     static createSelectElement(id, options) {
         const select = this.createElement("select", { id: id });
@@ -196,7 +196,7 @@ export class hdom {
      * @param {string} id
      * @param {string} label
      * @param {{value?:string,label?:string}[]} options
-     * @returns {{label:Element,select:Element}}
+     * @returns {{label:HTMLElement,select:HTMLElement}}
      */
     static createSelectElementWithLabel(id, label, options) {
         const labelEl = this.createElement("label", { for: id });
@@ -220,7 +220,7 @@ export class hdom {
     }
 
     /**
-     * @param {string|Element} e
+     * @param {string|HTMLElement} e
      * @param {boolean} [enable=true]
      */
     static enableElement(e, enable = true) {
@@ -234,8 +234,8 @@ export class hdom {
     }
 
     /**
-     * @param {string|Element} e
-     * @returns {Element}
+     * @param {string|HTMLElement} e
+     * @returns {HTMLElement}
      */
     static getElement(e) {
         if (typeof e === "string") {
@@ -249,7 +249,7 @@ export class hdom {
     }
 
     /**
-     * @param {string|Element} form
+     * @param {string|HTMLElement} form
      * @param {string} elName
      * @returns {HTMLFormElement|RadioNodeList}
      */
@@ -288,7 +288,7 @@ export class hdom {
     }
 
     /**
-     * @param {string|Element} e
+     * @param {string|HTMLElement} e
      * @returns {boolean}
      */
     static isChecked(e) {
@@ -300,7 +300,7 @@ export class hdom {
     }
 
     /**
-     * @param {string|Element} e
+     * @param {string|HTMLElement} e
      * @returns {boolean}
      */
     static isElement(e) {
@@ -311,7 +311,7 @@ export class hdom {
     }
 
     /**
-     * @param {string|Element} e
+     * @param {string|HTMLElement} e
      * @returns {boolean}
      */
     static isVisible(e) {
@@ -323,8 +323,8 @@ export class hdom {
     }
 
     /**
-     * @param {string|Element} e
-     * @returns {Element}
+     * @param {string|HTMLElement} e
+     * @returns {HTMLElement}
      */
     static removeChildren(e) {
         const elem = this.getElement(e);
@@ -335,7 +335,7 @@ export class hdom {
     }
 
     /**
-     * @param {string|Element} e
+     * @param {string|HTMLElement} e
      * @param {string} className
      */
     static removeClass(e, className) {
@@ -344,7 +344,7 @@ export class hdom {
     }
 
     /**
-     * @param {string|Element} e
+     * @param {string|HTMLElement} e
      * @param {boolean} state
      */
     static setCheckBoxState(e, state) {
@@ -356,7 +356,7 @@ export class hdom {
     }
 
     /**
-     * @param {string|Element} e
+     * @param {string|HTMLElement} e
      * @param {string} text
      */
     static setElementText(e, text) {
@@ -369,7 +369,7 @@ export class hdom {
     }
 
     /**
-     * @param {string|Element} e
+     * @param {string|HTMLElement} e
      */
     static setFocusTo(e) {
         const elem = this.getElement(e);
@@ -381,7 +381,7 @@ export class hdom {
     }
 
     /**
-     * @param {string|Element|RadioNodeList} e
+     * @param {string|HTMLElement|RadioNodeList} e
      * @param {string|number|undefined|null} value
      */
     static setFormElementValue(e, value) {
@@ -407,7 +407,7 @@ export class hdom {
     }
 
     /**
-     * @param {string|Element} e
+     * @param {string|HTMLElement} e
      * @param {string} text
      */
     static setHTMLValue(e, text) {
@@ -416,7 +416,7 @@ export class hdom {
     }
 
     /**
-     * @param {string|Element} e
+     * @param {string|HTMLElement} e
      * @param {string} text
      */
     static setTextValue(e, text) {
@@ -425,11 +425,11 @@ export class hdom {
     }
 
     /**
-     * @param {string|Element|EventTarget|null} e
+     * @param {string|HTMLElement|EventTarget|null} e
      * @param {boolean} [show=true]
      */
     static showElement(e, show = true) {
-        if (typeof e !== "string" && !(e instanceof Element)) {
+        if (typeof e !== "string" && !(e instanceof HTMLElement)) {
             return;
         }
         const elem = this.getElement(e);
