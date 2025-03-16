@@ -8,6 +8,7 @@ import { SearchUI } from "../lib/searchui.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { createDownloadLink } from "../lib/utils.js";
 import { InatURL } from "../lib/inaturl.js";
+import { Map, MAP_SOURCES } from "../lib/map.js";
 
 /** @typedef {{role:string}} ProjectMember */
 /** @typedef {{countObscured:number,countPublic:number,countTrusted:number,observations:INatObservation[]}} Results */
@@ -174,19 +175,6 @@ class ObsDetailUI extends SearchUI {
      * @returns {{content:string,fileName:string}}
      */
     #getDownloadData(indent, type) {
-        /**
-         * @param {INatObservation} obs
-         * @returns {object}
-         */
-        function propsDefault(obs) {
-            return {
-                taxon_name: obs.getTaxonName(),
-                url: obs.getURL(),
-                date: obs.getObsDateString(),
-                observer: obs.getUserDisplayName(),
-            };
-        }
-
         if (type === undefined) {
             type = hdom.getFormElementValue("download-type");
         }
@@ -195,6 +183,30 @@ class ObsDetailUI extends SearchUI {
             return {
                 content: this.#getGPX(indent),
                 fileName: "observations.gpx",
+            };
+        }
+
+        const gj = this.#getGeoJSON();
+        return {
+            content: JSON.stringify(gj, undefined, indent),
+            fileName: "observations.geojson",
+        };
+    }
+
+    /**
+     * @returns {GeoJSON.FeatureCollection}
+     */
+    #getGeoJSON() {
+        /**
+         * @param {INatObservation} obs
+         * @returns {Object<string,string>}
+         */
+        function propsDefault(obs) {
+            return {
+                taxon_name: obs.getTaxonName(),
+                url: obs.getURL(),
+                date: obs.getObsDateString(),
+                observer: obs.getUserDisplayName(),
             };
         }
 
@@ -223,11 +235,7 @@ class ObsDetailUI extends SearchUI {
             features.push(feature);
         }
 
-        const gj = { type: "FeatureCollection", features: features };
-        return {
-            content: JSON.stringify(gj, undefined, indent),
-            fileName: "observations.geojson",
-        };
+        return { type: "FeatureCollection", features: features };
     }
 
     /**
@@ -516,12 +524,23 @@ class ObsDetailUI extends SearchUI {
     }
 
     onResize() {
-        const svg = document.getElementById("svg-datehisto");
-        if (!svg) {
-            return;
+        const mode = getDisplayMode();
+        switch (mode) {
+            case "datehisto":
+                {
+                    const svg = document.getElementById("svg-datehisto");
+                    if (!svg) {
+                        return;
+                    }
+                    const height =
+                        window.innerHeight - svg.getBoundingClientRect().top;
+                    svg.setAttribute("style", `height:${height}px;`);
+                }
+                break;
+            case "map":
+                setMapHeight();
+                break;
         }
-        const height = window.innerHeight - svg.getBoundingClientRect().top;
-        svg.setAttribute("style", `height:${height}px;`);
     }
 
     /**
@@ -537,7 +556,7 @@ class ObsDetailUI extends SearchUI {
          */
         function addDisplayOption(value, label, ui) {
             const id = "disp-" + value;
-            const div = hdom.createElement("div");
+            const div = hdom.createElement("div", "radio");
             const rb = hdom.createInputElement({
                 type: "radio",
                 id: id,
@@ -652,7 +671,7 @@ class ObsDetailUI extends SearchUI {
         });
         divIncludeOpts.appendChild(checkBoxes);
 
-        const divDescendants = hdom.createElement("div");
+        const divDescendants = hdom.createElement("div", "checkbox");
         divIncludeOpts.appendChild(divDescendants);
         const cbDescendants = hdom.createCheckBox(
             "branch",
@@ -670,15 +689,15 @@ class ObsDetailUI extends SearchUI {
             class: "displayoptions",
         });
         const displayOptions = [
-            { id: "details" },
-            { id: "maps" },
-            { id: "datehisto" },
-            { id: "usersumm" },
+            { id: "details", label: "Details" },
+            { id: "mapdata", label: "Map Data" },
+            { id: "datehisto", label: "Date Histogram" },
+            { id: "usersumm", label: "Summary by Observer" },
+            { id: "map", label: "Map" },
         ];
-        addDisplayOption("details", "Details", this);
-        addDisplayOption("maps", "Map Data", this);
-        addDisplayOption("datehisto", "Date Histogram", this);
-        addDisplayOption("usersumm", "Summary by Observer", this);
+        displayOptions.forEach((opt) =>
+            addDisplayOption(opt.id, opt.label, this),
+        );
 
         const iNatDiv = hdom.createElement("div");
         iNatDiv.appendChild(
@@ -754,7 +773,38 @@ class ObsDetailUI extends SearchUI {
         this.#wrapResults(eResults, eTable);
     }
 
-    showMaps() {
+    showMap() {
+        const eResults = this.clearResults();
+
+        const divMapOptions = hdom.createElement("div", "section");
+        eResults.appendChild(divMapOptions);
+
+        const options = Object.entries(MAP_SOURCES).map((source) => {
+            return { value: source[0], label: source[1].label };
+        });
+        const selectSource = hdom.createSelectElement("map-source", options);
+        divMapOptions.appendChild(selectSource);
+
+        const divMap = hdom.createElement("div", {
+            class: "section",
+            id: "map",
+        });
+        eResults.appendChild(divMap);
+        setMapHeight();
+
+        const source = "stadia";
+        const gj = this.#getGeoJSON();
+        const map = new Map(source);
+        map.fitBounds(gj);
+        map.addObservations(gj);
+
+        hdom.setFormElementValue(selectSource, source);
+        selectSource.addEventListener("change", () => {
+            map.setSource(hdom.getFormElementValue(selectSource));
+        });
+    }
+
+    showMapData() {
         const eResults = this.clearResults();
 
         const eButtons = hdom.createElement("div", {
@@ -948,7 +998,7 @@ class ObsDetailUI extends SearchUI {
             if (count === 0) {
                 return;
             }
-            const div = hdom.createElement("div");
+            const div = hdom.createElement("div", "checkbox");
             const id = "sel-" + label;
             const cb = hdom.createInputElement({
                 type: "checkbox",
@@ -976,13 +1026,15 @@ class ObsDetailUI extends SearchUI {
     }
 
     updateDisplay() {
-        const elem = hdom.getFormElement(RESULT_FORM_ID, "displayopt");
-        switch (hdom.getFormElementValue(elem)) {
+        switch (getDisplayMode()) {
             case "datehisto":
                 this.showDateHistogram();
                 break;
-            case "maps":
-                this.showMaps();
+            case "map":
+                this.showMap();
+                break;
+            case "mapdata":
+                this.showMapData();
                 break;
             case "usersumm":
                 this.showUserSumm();
@@ -1066,6 +1118,12 @@ class ObsDetailUI extends SearchUI {
     }
 }
 
+function getDisplayMode() {
+    return hdom.getFormElementValue(
+        hdom.getFormElement(RESULT_FORM_ID, "displayopt"),
+    );
+}
+
 /**
  * @param {SpeciesFilter} filter
  * @returns {Element|undefined}
@@ -1108,6 +1166,14 @@ function getNeedsAttributeLink(filter) {
             }
         }
     }
+}
+
+function setMapHeight() {
+    const divMap = hdom.getElement("map");
+    divMap.style.setProperty(
+        "height",
+        `${window.screen.availHeight - divMap.offsetTop - 8}px`,
+    );
 }
 
 (async function () {
