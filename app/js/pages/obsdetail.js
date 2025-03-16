@@ -556,7 +556,7 @@ class ObsDetailUI extends SearchUI {
          */
         function addDisplayOption(value, label, ui) {
             const id = "disp-" + value;
-            const div = hdom.createElement("div");
+            const div = hdom.createElement("div", "radio");
             const rb = hdom.createInputElement({
                 type: "radio",
                 id: id,
@@ -671,7 +671,7 @@ class ObsDetailUI extends SearchUI {
         });
         divIncludeOpts.appendChild(checkBoxes);
 
-        const divDescendants = hdom.createElement("div");
+        const divDescendants = hdom.createElement("div", "checkbox");
         divIncludeOpts.appendChild(divDescendants);
         const cbDescendants = hdom.createCheckBox(
             "branch",
@@ -982,7 +982,7 @@ class ObsDetailUI extends SearchUI {
             if (count === 0) {
                 return;
             }
-            const div = hdom.createElement("div");
+            const div = hdom.createElement("div", "checkbox");
             const id = "sel-" + label;
             const cb = hdom.createInputElement({
                 type: "checkbox",
