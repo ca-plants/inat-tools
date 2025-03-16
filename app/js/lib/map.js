@@ -5,7 +5,7 @@ import { hdom } from "./hdom.js";
  * @typedef {{label:string,url:string,attribution:string}} MapSource
  */
 
-/** @type {Object<string,MapSource}> */
+/** @type {Object<string,MapSource>}> */
 export const MAP_SOURCES = {
     geoapifycarto: {
         label: "Geoapify Carto",
@@ -25,6 +25,12 @@ export const MAP_SOURCES = {
         attribution:
             '&copy; <a href="https://opentopomap.org/" target="_blank">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank">CC-BY-SA</a>) | © OpenStreetMap <a href="https://www.openstreetmap.org/copyright" target="_blank">contributors</a>',
     },
+    stadia: {
+        label: "Stadia",
+        url: "https://tiles.stadiamaps.com/tiles/alidade_smooth/{z}/{x}/{y}{r}.png",
+        attribution:
+            '&copy; <a href="https://stadiamaps.com/" target="_blank">Stadia Maps</a>, &copy; <a href="https://openmaptiles.org/" target="_blank">OpenMapTiles</a> &copy; <a href="https://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>',
+    },
 };
 
 export class Map {
@@ -32,9 +38,12 @@ export class Map {
     /** @type {import("leaflet").TileLayer|undefined} */
     #tileLayer;
 
-    constructor() {
+    /**
+     * @param {string} source
+     */
+    constructor(source) {
         this.#map = L.map("map");
-        this.setSource("geoapifycarto");
+        this.setSource(source);
     }
 
     /**

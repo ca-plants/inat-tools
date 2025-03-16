@@ -792,11 +792,13 @@ class ObsDetailUI extends SearchUI {
         eResults.appendChild(divMap);
         setMapHeight();
 
+        const source = "stadia";
         const gj = this.#getGeoJSON();
-        const map = new Map();
+        const map = new Map(source);
         map.fitBounds(gj);
         map.addObservations(gj);
 
+        hdom.setFormElementValue(selectSource, source);
         selectSource.addEventListener("change", () => {
             map.setSource(hdom.getFormElementValue(selectSource));
         });
