@@ -37,6 +37,8 @@ export class Map {
     #map;
     /** @type {import("leaflet").TileLayer|undefined} */
     #tileLayer;
+    /** @type {import("leaflet").GeoJSON|undefined} */
+    #featureLayer;
 
     /**
      * @param {string} source
@@ -51,16 +53,12 @@ export class Map {
      */
     addObservations(gj) {
         /**
-         * @param {import("leaflet").Layer} layer
-         * @returns {HTMLElement}
+         * @param {HTMLElement} div
+         * @param {import("geojson").GeoJsonProperties} properties
          */
-        function popup(layer) {
-            /** @type {import("geojson").Feature} */
-            // @ts-ignore
-            const feature = layer.feature;
-            const properties = feature.properties;
-            const div = hdom.createElement("div");
+        function createPointPopup(div, properties) {
             let first = true;
+            console.log(properties);
             for (const property of ["taxon_name", "date", "observer"]) {
                 if (!properties) {
                     continue;
@@ -84,9 +82,101 @@ export class Map {
                         break;
                 }
             }
+        }
+
+        /**
+         * @param {HTMLElement} div
+         * @param {import("geojson").GeoJsonProperties} properties
+         */
+        function createPolygonPopup(div, properties) {
+            let first = true;
+            for (const property of ["pop_num", "hectares", "cluster"]) {
+                if (!properties) {
+                    continue;
+                }
+                if (!first) {
+                    div.appendChild(hdom.createElement("br"));
+                }
+                first = false;
+                switch (property) {
+                    case "cluster":
+                        hdom.appendTextValue(
+                            div,
+                            `Cluster ${properties.cluster}`,
+                        );
+                        break;
+                    case "hectares":
+                        hdom.appendTextValue(
+                            div,
+                            `${properties.hectares} hectares`,
+                        );
+                        break;
+                    case "pop_num":
+                        hdom.appendTextValue(
+                            div,
+                            `Population #${properties.pop_num + 1} of ${maxPopNum + 1}`,
+                        );
+                        break;
+                }
+            }
+        }
+
+        /**
+         * @param {import("leaflet").Layer} layer
+         * @returns {HTMLElement}
+         */
+        function popup(layer) {
+            /** @type {import("geojson").Feature} */
+            // @ts-ignore
+            const feature = layer.feature;
+            const properties = feature.properties;
+            const div = hdom.createElement("div");
+            switch (feature.geometry.type) {
+                case "Point":
+                    createPointPopup(div, properties);
+                    break;
+                case "Polygon":
+                    createPolygonPopup(div, properties);
+                    break;
+            }
             return div;
         }
-        L.geoJSON(gj).bindPopup(popup).addTo(this.#map);
+
+        /** Find the largest population number. */
+        const maxPopNum = gj.features.reduce((n, f) => {
+            if (
+                f.geometry.type === "Polygon" &&
+                f.properties &&
+                f.properties.pop_num > n
+            ) {
+                return f.properties.pop_num;
+            }
+            return n;
+        }, -1);
+
+        this.#featureLayer = L.geoJSON(gj, {
+            pointToLayer: (f, latLng) => {
+                console.log(f.properties);
+                /** @type {import("leaflet").CircleMarkerOptions} */
+                const circleMarkerOptions = {
+                    radius: 4,
+                    opacity: 0.25,
+                    color: "red",
+                    fillColor: "red",
+                };
+                if (maxPopNum >= 0 && f.properties.dbscan === "noise") {
+                    return L.circleMarker(latLng, circleMarkerOptions);
+                }
+                return L.marker(latLng);
+            },
+        }).bindPopup(popup);
+        this.#featureLayer.addTo(this.#map);
+    }
+
+    clearFeatures() {
+        if (this.#featureLayer) {
+            this.#featureLayer.clearLayers();
+        }
     }
 
     /**

@@ -87,7 +87,7 @@ export class Clusterer {
     }
 
     /**
-     * @param {GeoJSON.FeatureCollection<import("geojson").Point>} geojson
+     * @param {GeoJSON.FeatureCollection<import("geojson").Geometry>} geojson
      * @param {number} [maxDistance]
      * @returns {import("geojson").FeatureCollection}
      */

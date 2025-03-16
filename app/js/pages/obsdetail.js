@@ -9,6 +9,7 @@ import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { createDownloadLink } from "../lib/utils.js";
 import { InatURL } from "../lib/inaturl.js";
 import { Map, MAP_SOURCES } from "../lib/map.js";
+import { Clusterer } from "../tools/clusterer.js";
 
 /** @typedef {{role:string}} ProjectMember */
 /** @typedef {{countObscured:number,countPublic:number,countTrusted:number,observations:INatObservation[]}} Results */
@@ -779,8 +780,16 @@ class ObsDetailUI extends SearchUI {
         const divTypeOptions = hdom.createElement("div", "flex");
         divMapOptions.appendChild(divTypeOptions);
         const types = [
-            { value: "obs", label: "Observations", handler: setMapTypeObs },
-            { value: "pop", label: "Populations", handler: setMapTypePop },
+            {
+                value: "obs",
+                label: "Observations",
+                handler: () => setMapTypeObs(map, gj),
+            },
+            {
+                value: "pop",
+                label: "Populations",
+                handler: () => setMapTypePop(map, gj),
+            },
         ];
         for (const type of types) {
             divTypeOptions.appendChild(
@@ -822,10 +831,9 @@ class ObsDetailUI extends SearchUI {
         setMapHeight();
 
         const source = "stadia";
-        const gj = this.#getGeoJSON();
         const map = new Map(source);
+        const gj = this.#getGeoJSON();
         map.fitBounds(gj);
-        map.addObservations(gj);
 
         hdom.setFormElementValue(selectSource, source);
         selectSource.addEventListener("change", () => {
@@ -1246,13 +1254,30 @@ function setMapHeight() {
     );
 }
 
-function setMapTypeObs() {
+/**
+ * @param {Map} map
+ * @param {import("geojson").FeatureCollection} gj
+ */
+function setMapTypeObs(map, gj) {
     hdom.showElement("mt-pop-options", false);
+    map.clearFeatures();
+    map.addObservations(gj);
 }
 
-function setMapTypePop() {
+/**
+ * @param {Map} map
+ * @param {import("geojson").FeatureCollection} gj
+ */
+function setMapTypePop(map, gj) {
     hdom.showElement("mt-pop-options", true);
     hdom.setFocusTo("mt-pop-distance");
+    map.clearFeatures();
+
+    const clusterer = new Clusterer();
+    const clustered = clusterer.cluster(gj, 1);
+    const bordered = clusterer.addBorders(clustered);
+
+    map.addObservations(bordered);
 }
 
 (async function () {
