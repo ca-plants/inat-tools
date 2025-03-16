@@ -89,7 +89,7 @@ export class hdom {
     }
 
     /**
-     * @param {Object.<string,string|number>|string} attributes
+     * @param {Object<string,string|number>|string} attributes
      * @returns {HTMLInputElement}
      */
     static createInputElement(attributes) {

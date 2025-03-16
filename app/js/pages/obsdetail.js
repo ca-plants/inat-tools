@@ -556,18 +556,9 @@ class ObsDetailUI extends SearchUI {
          */
         function addDisplayOption(value, label, ui) {
             const id = "disp-" + value;
-            const div = hdom.createElement("div", "radio");
-            const rb = hdom.createInputElement({
-                type: "radio",
-                id: id,
-                value: value,
-                name: "displayopt",
-            });
-            rb.addEventListener("click", () => ui.updateDisplay());
-            const lbl = hdom.createElement("label", { for: id });
-            lbl.appendChild(document.createTextNode(label));
-            div.appendChild(rb);
-            div.appendChild(lbl);
+            const div = createRadioDiv("displayopt", id, value, label, () =>
+                ui.updateDisplay(),
+            );
             radios.appendChild(div);
         }
 
@@ -699,7 +690,7 @@ class ObsDetailUI extends SearchUI {
             addDisplayOption(opt.id, opt.label, this),
         );
 
-        const iNatDiv = hdom.createElement("div");
+        const iNatDiv = hdom.createElement("div", "right");
         iNatDiv.appendChild(
             hdom.createLinkElement("", "View in iNaturalist", {
                 target: "_blank",
@@ -776,7 +767,7 @@ class ObsDetailUI extends SearchUI {
     showMap() {
         const eResults = this.clearResults();
 
-        const divMapOptions = hdom.createElement("div", "section");
+        const divMapOptions = hdom.createElement("div", "section options");
         eResults.appendChild(divMapOptions);
 
         const options = Object.entries(MAP_SOURCES).map((source) => {
@@ -784,6 +775,44 @@ class ObsDetailUI extends SearchUI {
         });
         const selectSource = hdom.createSelectElement("map-source", options);
         divMapOptions.appendChild(selectSource);
+
+        const divTypeOptions = hdom.createElement("div", "flex");
+        divMapOptions.appendChild(divTypeOptions);
+        const types = [
+            { value: "obs", label: "Observations", handler: setMapTypeObs },
+            { value: "pop", label: "Populations", handler: setMapTypePop },
+        ];
+        for (const type of types) {
+            divTypeOptions.appendChild(
+                createRadioDiv(
+                    "map-type",
+                    `mt-${type.value}`,
+                    type.value,
+                    type.label,
+                    type.handler,
+                ),
+            );
+        }
+
+        const divPopOptions = hdom.createElement("div", {
+            id: "mt-pop-options",
+        });
+        divMapOptions.appendChild(divPopOptions);
+        divPopOptions.appendChild(
+            createTextInputDiv(
+                {
+                    id: "mt-pop-distance",
+                    type: "number",
+                    step: ".01",
+                    inputmode: "numeric",
+                    min: 0.01,
+                    max: 10,
+                    style: "width:4rem",
+                    value: 1,
+                },
+                "Max distance (km)",
+            ),
+        );
 
         const divMap = hdom.createElement("div", {
             class: "section",
@@ -802,6 +831,8 @@ class ObsDetailUI extends SearchUI {
         selectSource.addEventListener("change", () => {
             map.setSource(hdom.getFormElementValue(selectSource));
         });
+
+        hdom.clickElement("mt-obs");
     }
 
     showMapData() {
@@ -1118,6 +1149,45 @@ class ObsDetailUI extends SearchUI {
     }
 }
 
+/**
+ * @param {string} name
+ * @param {string} id
+ * @param {string} value
+ * @param {string} label
+ * @param {function(Event):void} [fnClickHandler]
+ * @returns {HTMLElement}
+ */
+function createRadioDiv(name, id, value, label, fnClickHandler) {
+    const div = hdom.createElement("div", "radio");
+    const rb = hdom.createInputElement({
+        type: "radio",
+        id: id,
+        value: value,
+        name: name,
+    });
+    const lbl = hdom.createLabelElement(id, label);
+    div.appendChild(rb);
+    div.appendChild(lbl);
+    if (fnClickHandler) {
+        rb.addEventListener("click", fnClickHandler);
+    }
+    return div;
+}
+
+/**
+ * @param {Object<string,string|number>} attributes
+ * @param {string} label
+ * @returns {HTMLElement}
+ */
+function createTextInputDiv(attributes, label) {
+    const div = hdom.createElement("div", "textinput");
+    const text = hdom.createInputElement(attributes);
+    const lbl = hdom.createLabelElement(attributes.id.toString(), label);
+    div.appendChild(lbl);
+    div.appendChild(text);
+    return div;
+}
+
 function getDisplayMode() {
     return hdom.getFormElementValue(
         hdom.getFormElement(RESULT_FORM_ID, "displayopt"),
@@ -1174,6 +1244,15 @@ function setMapHeight() {
         "height",
         `${window.screen.availHeight - divMap.offsetTop - 8}px`,
     );
+}
+
+function setMapTypeObs() {
+    hdom.showElement("mt-pop-options", false);
+}
+
+function setMapTypePop() {
+    hdom.showElement("mt-pop-options", true);
+    hdom.setFocusTo("mt-pop-distance");
 }
 
 (async function () {
