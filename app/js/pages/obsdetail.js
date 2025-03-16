@@ -8,7 +8,7 @@ import { SearchUI } from "../lib/searchui.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { createDownloadLink } from "../lib/utils.js";
 import { InatURL } from "../lib/inaturl.js";
-import { Map } from "../lib/map.js";
+import { Map, MAP_SOURCES } from "../lib/map.js";
 
 /** @typedef {{role:string}} ProjectMember */
 /** @typedef {{countObscured:number,countPublic:number,countTrusted:number,observations:INatObservation[]}} Results */
@@ -776,7 +776,17 @@ class ObsDetailUI extends SearchUI {
     showMap() {
         const eResults = this.clearResults();
 
+        const divMapOptions = hdom.createElement("div", "section");
+        eResults.appendChild(divMapOptions);
+
+        const options = Object.entries(MAP_SOURCES).map((source) => {
+            return { value: source[0], label: source[1].label };
+        });
+        const selectSource = hdom.createSelectElement("map-source", options);
+        divMapOptions.appendChild(selectSource);
+
         const divMap = hdom.createElement("div", {
+            class: "section",
             id: "map",
         });
         eResults.appendChild(divMap);
@@ -786,6 +796,10 @@ class ObsDetailUI extends SearchUI {
         const map = new Map();
         map.fitBounds(gj);
         map.addObservations(gj);
+
+        selectSource.addEventListener("change", () => {
+            map.setSource(hdom.getFormElementValue(selectSource));
+        });
     }
 
     showMapData() {
