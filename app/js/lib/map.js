@@ -1,14 +1,32 @@
 import L from "leaflet";
 import { hdom } from "./hdom.js";
 
+const SOURCES = {
+    geoapifycarto: {
+        url: "https://maps.geoapify.com/v1/tile/carto/{z}/{x}/{y}.png?&apiKey=8acd76429dee413f8ebe45219867d721",
+        attribution:
+            'Powered by <a href="https://www.geoapify.com/" target="_blank">Geoapify</a> | © OpenStreetMap <a href="https://www.openstreetmap.org/copyright" target="_blank">contributors</a>',
+    },
+    openstreetmap: {
+        url: "https://tile.openstreetmap.org/{z}/{x}/{y}.png",
+        attribution:
+            '&copy; <a href="http://www.openstreetmap.org/copyright" target="_blank">OpenStreetMap</a>',
+    },
+    opentopomap: {
+        url: "https://{s}.tile.opentopomap.org/{z}/{x}/{y}.png",
+        attribution:
+            '&copy; <a href="https://opentopomap.org/" target="_blank">OpenTopoMap</a> (<a href="https://creativecommons.org/licenses/by-sa/3.0/" target="_blank">CC-BY-SA</a>) | © OpenStreetMap <a href="https://www.openstreetmap.org/copyright" target="_blank">contributors</a>',
+    },
+};
+
 export class Map {
     #map;
 
     constructor() {
         this.#map = L.map("map");
-        L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
-            attribution:
-                '&copy; <a href="http://www.openstreetmap.org/copyright">OpenStreetMap</a>',
+        const source = SOURCES.geoapifycarto;
+        L.tileLayer(source.url, {
+            attribution: source.attribution,
         }).addTo(this.#map);
     }
 
