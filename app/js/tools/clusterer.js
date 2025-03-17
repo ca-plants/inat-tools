@@ -1,5 +1,10 @@
 import whichPolygon from "which-polygon";
 import * as turf from "@turf/turf";
+import { GJTools } from "../lib/geojson.js";
+
+/**
+ * @typedef {import("geojson").Feature<import("geojson").LineString|import("geojson").MultiLineString>|import("geojson").FeatureCollection<import("geojson").LineString|import("geojson").MultiLineString>} MixedLineStrings
+ */
 
 export class Clusterer {
     /**
@@ -66,7 +71,7 @@ export class Clusterer {
                 hectares: turf
                     .convertArea(turf.area(p), "meters", "hectares")
                     .toFixed(2),
-                pop_num: index,
+                pop_num: index + 1,
                 ...properties,
             };
         });
@@ -140,15 +145,17 @@ export class Clusterer {
         // If any points remain outside, find the distance to the nearest polygon.
         if (initialOutsidePoints.length) {
             // Convert all polygons to lines.
+            /** @type {Map<number,MixedLineStrings[]>} */
             const polysAsLines = new Map();
             for (const polygon of polygons) {
-                const cluster = polygon.properties?.cluster;
+                const cluster = GJTools.getProperty(polygon, "cluster");
                 let lines = polysAsLines.get(cluster);
                 if (!lines) {
                     lines = [];
                     polysAsLines.set(cluster, lines);
                 }
-                lines.push(turf.polygonToLine(polygon));
+                const polyLines = turf.polygonToLine(polygon);
+                lines.push(polyLines);
             }
 
             for (const point of initialOutsidePoints) {
@@ -163,20 +170,57 @@ export class Clusterer {
                     finalOutsidePoints.push(point);
                     continue;
                 }
-                let minDistance = Number.MAX_SAFE_INTEGER;
-                for (const line of lines) {
-                    const dist = turf.pointToLineDistance(point, line, {
-                        units: "meters",
-                    });
-                    minDistance = Math.min(minDistance, dist);
+                let minDistance = {
+                    pop_num: 0,
+                    distance: Number.MAX_SAFE_INTEGER,
+                };
+                for (const rawLines of lines) {
+                    const processedlines = convertToLineStrings(rawLines);
+                    for (const line of processedlines) {
+                        const popNum = GJTools.getProperty(line, "pop_num");
+                        const dist = turf.pointToLineDistance(point, line, {
+                            units: "meters",
+                        });
+                        if (dist < minDistance.distance) {
+                            minDistance = { pop_num: popNum, distance: dist };
+                        }
+                    }
                 }
 
-                if (minDistance > 1) {
+                if (minDistance.distance > 1) {
+                    minDistance.distance = Math.round(minDistance.distance);
+                    GJTools.setProperty(point, "min_distance", minDistance);
                     finalOutsidePoints.push(point);
+                } else {
+                    // Add the observation to the correct polygon.
+                    const poly = polygons[minDistance.pop_num - 1];
+                    /** @type {import("geojson").Feature<import("geojson").Point>[]} */
+                    const observations = GJTools.getRequiredProperty(
+                        poly,
+                        "observations",
+                        [],
+                    );
+                    observations.push(point);
                 }
             }
         }
 
         return finalOutsidePoints;
     }
+}
+
+/**
+ * @param {MixedLineStrings} mixedData
+ * @returns {import("geojson").Feature<import("geojson").LineString>[]}
+ */
+function convertToLineStrings(mixedData) {
+    if (
+        mixedData.type === "Feature" &&
+        mixedData.geometry.type === "LineString"
+    ) {
+        // @ts-ignore
+        return [mixedData];
+    }
+    // TODO: implement this if the situation arises.
+    throw new Error();
 }

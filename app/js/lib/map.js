@@ -1,6 +1,7 @@
 import L from "leaflet";
 import { hdom } from "./hdom.js";
 import { InatURL } from "./inaturl.js";
+import { GJTools } from "./geojson.js";
 
 /**
  * @typedef {{label:string,url:string,attribution:string}} MapSource
@@ -65,6 +66,7 @@ export class Map {
                 "observer",
                 "accuracy",
                 "cluster",
+                "min_distance",
             ]) {
                 if (!properties || properties[property] === undefined) {
                     continue;
@@ -84,6 +86,12 @@ export class Map {
                         hdom.appendTextValue(
                             div,
                             `Cluster ${properties.cluster}`,
+                        );
+                        break;
+                    case "min_distance":
+                        hdom.appendTextValue(
+                            div,
+                            `${properties.min_distance.distance} meters from population ${properties.min_distance.pop_num}`,
                         );
                         break;
                     case "taxon_name":
@@ -141,7 +149,7 @@ export class Map {
                              */
                             const observations = properties.observations;
                             const ids = observations.map((obs) =>
-                                getProperty(obs, "id"),
+                                GJTools.getProperty(obs, "id"),
                             );
                             const url = InatURL.getObsIDLink(ids, "map");
                             div.appendChild(
@@ -156,7 +164,7 @@ export class Map {
                     case "pop_num":
                         hdom.appendTextValue(
                             div,
-                            `Population #${properties.pop_num + 1} of ${maxPopNum + 1}`,
+                            `Population #${properties.pop_num} of ${maxPopNum}`,
                         );
                         break;
                 }
@@ -195,11 +203,11 @@ export class Map {
                 return f.properties.pop_num;
             }
             return n;
-        }, -1);
+        }, 0);
 
         this.#featureLayer = L.geoJSON(gj, {
             pointToLayer: (f, latLng) => {
-                if (maxPopNum >= 0 && f.properties.dbscan === "noise") {
+                if (maxPopNum > 0 && f.properties.dbscan === "noise") {
                     const accuracy = f.properties.accuracy;
                     const color = accuracy === undefined ? "orange" : "red";
                     const radius =
@@ -249,17 +257,4 @@ export class Map {
         });
         this.#tileLayer.addTo(this.#map);
     }
-}
-
-/**
- * @template T
- * @param {import("geojson").Feature} feature
- * @param {string} propName
- * @returns {T|undefined}
- */
-function getProperty(feature, propName) {
-    if (!feature.properties) {
-        return;
-    }
-    return feature.properties[propName];
 }
