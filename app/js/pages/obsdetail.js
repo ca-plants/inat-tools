@@ -140,16 +140,16 @@ class ObsDetailUI extends SearchUI {
     };
     /** @type {Object<string,ProjectMember>|undefined} */
     #project_members;
+    /** @type {import("../types.js").ParamsPageObsDetail} */
+    #hashParams;
 
     /**
-     * @param {import("../types.js").ParamsSpeciesFilter} f1
+     * @param {import("../types.js").ParamsPageObsDetail} params
      */
-    constructor(f1) {
+    constructor(params) {
         super({ allowBoundary: true });
-        if (f1.taxon_id === undefined) {
-            throw new Error();
-        }
-        this.#f1 = new SpeciesFilter(f1);
+        this.#hashParams = params;
+        this.#f1 = new SpeciesFilter(params.f1 ?? {});
     }
 
     clearResults() {
@@ -341,8 +341,8 @@ class ObsDetailUI extends SearchUI {
         const initArgs = JSON.parse(
             decodeURIComponent(document.location.hash).substring(1),
         );
-        const ui = new ObsDetailUI(initArgs.f1);
-        await ui.initInstance(initArgs.coords, initArgs.view, initArgs.branch);
+        const ui = new ObsDetailUI(initArgs);
+        await ui.initInstance(initArgs);
         return ui;
     }
 
@@ -478,11 +478,9 @@ class ObsDetailUI extends SearchUI {
     }
 
     /**
-     * @param {("public"|"obscured"|"trusted")[]} selArray
-     * @param {string|undefined} view
-     * @param {boolean|undefined} branch
+     * @param {import("../types.js").ParamsPageObsDetail} params
      */
-    async initInstance(selArray = ALL_COORD_TYPES, view, branch) {
+    async initInstance(params) {
         await super.init();
 
         // Add handlers for form.
@@ -493,11 +491,11 @@ class ObsDetailUI extends SearchUI {
 
         await this.initForm("f1", this.#f1);
 
-        await this.onSubmit(selArray, view, branch);
+        await this.onSubmit(params);
     }
 
     onResize() {
-        const mode = getDisplayMode();
+        const mode = getViewMode();
         switch (mode) {
             case "datehisto":
                 {
@@ -517,11 +515,9 @@ class ObsDetailUI extends SearchUI {
     }
 
     /**
-     * @param {("public"|"obscured"|"trusted")[]} [selArray]
-     * @param {string|undefined} [view]
-     * @param {boolean|undefined} [includeDescendants]
+     * @param {import("../types.js").ParamsPageObsDetail} [params={}]
      */
-    async onSubmit(selArray, view, includeDescendants) {
+    async onSubmit(params = {}) {
         /**
          * @param {string} value
          * @param {string} label
@@ -534,6 +530,10 @@ class ObsDetailUI extends SearchUI {
             );
             radios.appendChild(div);
         }
+
+        let selArray = params.coords;
+        let view = params.view;
+        let includeDescendants = params.branch;
 
         if (selArray === undefined) {
             selArray = this.getSelectedTypes();
@@ -755,12 +755,12 @@ class ObsDetailUI extends SearchUI {
             {
                 value: "obs",
                 label: "Observations",
-                handler: () => setMapTypeObs(map, gj),
+                handler: () => this.#setMapTypeObs(map, gj),
             },
             {
                 value: "pop",
                 label: "Populations",
-                handler: () => setMapTypePop(map, gj),
+                handler: () => this.#setMapTypePop(map, gj),
             },
         ];
         for (const type of types) {
@@ -789,7 +789,7 @@ class ObsDetailUI extends SearchUI {
                     min: 0.01,
                     max: 10,
                     style: "width:4rem",
-                    value: 1,
+                    value: this.#hashParams.map?.maxdist ?? 1,
                 },
                 "Max distance (km)",
             ),
@@ -813,9 +813,13 @@ class ObsDetailUI extends SearchUI {
         });
 
         hdom.addEventListener("mt-pop-distance", "change", () =>
-            setMapTypePop(map, gj),
+            this.#setMapTypePop(map, gj),
         );
-        hdom.clickElement("mt-obs");
+        const mapMode =
+            this.#hashParams.map && this.#hashParams.map.view === "pop"
+                ? "mt-pop"
+                : "mt-obs";
+        hdom.clickElement(mapMode);
     }
 
     showMapData() {
@@ -1040,7 +1044,7 @@ class ObsDetailUI extends SearchUI {
     }
 
     updateDisplay() {
-        switch (getDisplayMode()) {
+        switch (getViewMode()) {
             case "datehisto":
                 this.showDateHistogram();
                 break;
@@ -1119,6 +1123,36 @@ class ObsDetailUI extends SearchUI {
         }
     }
 
+    /**
+     * @param {Map} map
+     * @param {import("geojson").FeatureCollection} gj
+     */
+    #setMapTypeObs(map, gj) {
+        hdom.showElement("mt-pop-options", false);
+        map.clearFeatures();
+        map.addObservations(gj);
+        this.#updateHash();
+    }
+
+    /**
+     * @param {Map} map
+     * @param {import("geojson").FeatureCollection<import("geojson").Point>} gj
+     */
+    #setMapTypePop(map, gj) {
+        hdom.showElement("mt-pop-options", true);
+        hdom.setFocusTo("mt-pop-distance");
+        map.clearFeatures();
+
+        const distance = getPopDistance();
+
+        const clusterer = new Clusterer();
+        const clustered = clusterer.cluster(gj, distance);
+        const bordered = clusterer.addBorders(clustered);
+
+        map.addObservations(bordered);
+        this.#updateHash();
+    }
+
     #updateGeoJSONFormat() {
         hdom.setFormElementValue(
             "geojson-value",
@@ -1141,16 +1175,17 @@ class ObsDetailUI extends SearchUI {
         const params = {
             f1: this.#f1.getParams(),
             coords: this.getSelectedTypes(),
-            // @ts-ignore
-            view: hdom.getFormElementValue(
-                hdom.getFormElement(RESULT_FORM_ID, "displayopt"),
-            ),
+            view: getViewMode(),
         };
         if (hdom.isChecked("branch")) {
             params.branch = true;
-        } else {
-            delete params.branch;
         }
+        if (params.view === "map") {
+            if (hdom.isChecked("mt-pop")) {
+                params.map = { view: "pop", maxdist: getPopDistance() };
+            }
+        }
+        this.#hashParams = params;
         document.location.hash = JSON.stringify(params);
     }
 
@@ -1216,12 +1251,6 @@ function createTextInputDiv(attributes, label) {
     return div;
 }
 
-function getDisplayMode() {
-    return hdom.getFormElementValue(
-        hdom.getFormElement(RESULT_FORM_ID, "displayopt"),
-    );
-}
-
 /**
  * @param {SpeciesFilter} filter
  * @returns {Element|undefined}
@@ -1266,40 +1295,33 @@ function getNeedsAttributeLink(filter) {
     }
 }
 
+function getPopDistance() {
+    return parseFloat(hdom.getFormElementValue("mt-pop-distance"));
+}
+
+/**
+ * @returns {import("../types.js").EnumObsDetailView}
+ */
+function getViewMode() {
+    const radioVal = hdom.getFormElementValue(
+        hdom.getFormElement(RESULT_FORM_ID, "displayopt"),
+    );
+    switch (radioVal) {
+        case "datehisto":
+        case "mapdata":
+        case "map":
+        case "usersumm":
+            return radioVal;
+    }
+    return "details";
+}
+
 function setMapHeight() {
     const divMap = hdom.getElement("map");
     divMap.style.setProperty(
         "height",
         `${window.screen.availHeight - divMap.offsetTop - 8}px`,
     );
-}
-
-/**
- * @param {Map} map
- * @param {import("geojson").FeatureCollection} gj
- */
-function setMapTypeObs(map, gj) {
-    hdom.showElement("mt-pop-options", false);
-    map.clearFeatures();
-    map.addObservations(gj);
-}
-
-/**
- * @param {Map} map
- * @param {import("geojson").FeatureCollection<import("geojson").Point>} gj
- */
-function setMapTypePop(map, gj) {
-    hdom.showElement("mt-pop-options", true);
-    hdom.setFocusTo("mt-pop-distance");
-    map.clearFeatures();
-
-    const distance = parseFloat(hdom.getFormElementValue("mt-pop-distance"));
-
-    const clusterer = new Clusterer();
-    const clustered = clusterer.cluster(gj, distance);
-    const bordered = clusterer.addBorders(clustered);
-
-    map.addObservations(bordered);
 }
 
 (async function () {

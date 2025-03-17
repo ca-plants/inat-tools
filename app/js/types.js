@@ -1,6 +1,7 @@
 /**
  * Enums
  * @typedef {"exclude"|"subtract"} EnumCompareType
+ * @typedef {"datehisto" | "details" | "mapdata" | "usersumm" | "map"} EnumObsDetailView
  *
  * Types - INat Data
  * @typedef {{
@@ -36,10 +37,11 @@
  *
  * Types - Parameters
  * @typedef {{
- *      f1: ParamsSpeciesFilter;
+ *      f1?: ParamsSpeciesFilter;
  *      coords?: ("public" | "obscured" | "trusted")[];
- *      view?: "datehisto" | "details" | "geojson" | "usersumm";
+ *      view?: EnumObsDetailView
  *      branch?: boolean;
+ *      map?:{view?:"obs"|"pop";maxdist?:number}
  *  }} ParamsPageObsDetail
  * @typedef {{
  *  accuracy?: number;
