@@ -198,49 +198,23 @@ class ObsDetailUI extends SearchUI {
      * @returns {GeoJSON.FeatureCollection}
      */
     #getGeoJSON() {
-        /**
-         * @param {INatObservation} obs
-         * @returns {Object<string,any>}
-         */
-        function propsDefault(obs) {
-            const accuracy = obs.getAccuracy();
-            /** @type {Object<string,any>} */
-            const props = {
-                taxon_name: obs.getTaxonName(),
-                url: obs.getURL(),
-                date: obs.getObsDateString(),
-                observer: obs.getUserDisplayName(),
-            };
-            if (accuracy !== undefined) {
-                props.accuracy = accuracy;
-            }
-            return props;
-        }
-
-        const fnProps = propsDefault;
-
         // If there is a boundary, include it in the GeoJSON.
         const params = this.#f1.getParams();
         /** @type {GeoJSON.Feature[]} */
         const features = params.boundary ? params.boundary.features : [];
 
-        const selectedTypes = this.getSelectedTypes();
-        for (const obs of this.#processedResults.observations) {
-            if (!selectedTypes.includes(obs.getCoordType())) {
-                continue;
-            }
-            const properties = fnProps(obs);
-            /** @type {GeoJSON.Feature} */
-            const feature = {
-                type: "Feature",
-                properties: properties,
-                geometry: {
-                    type: "Point",
-                    coordinates: obs.getCoordinatesGeoJSON(),
-                },
-            };
-            features.push(feature);
-        }
+        this.#addGeoJSONObservations(features);
+
+        return { type: "FeatureCollection", features: features };
+    }
+
+    /**
+     * @returns {GeoJSON.FeatureCollection<import("geojson").Point>}
+     */
+    #getGeoJSONPoints() {
+        /** @type {GeoJSON.Feature<import("geojson").Point>[]} */
+        const features = [];
+        this.#addGeoJSONObservations(features);
 
         return { type: "FeatureCollection", features: features };
     }
@@ -838,7 +812,7 @@ class ObsDetailUI extends SearchUI {
 
         const source = "stadia";
         const map = new Map(source);
-        const gj = this.#getGeoJSON();
+        const gj = this.#getGeoJSONPoints();
         map.fitBounds(gj);
 
         hdom.setFormElementValue(selectSource, source);
@@ -846,6 +820,9 @@ class ObsDetailUI extends SearchUI {
             map.setSource(hdom.getFormElementValue(selectSource));
         });
 
+        hdom.addEventListener("mt-pop-distance", "change", () =>
+            setMapTypePop(map, gj),
+        );
         hdom.clickElement("mt-obs");
     }
 
@@ -1105,6 +1082,50 @@ class ObsDetailUI extends SearchUI {
         this.#updateHash();
     }
 
+    /**
+     * @param {import("geojson").Feature[]} features
+     */
+    #addGeoJSONObservations(features) {
+        /**
+         * @param {INatObservation} obs
+         * @returns {Object<string,any>}
+         */
+        function propsDefault(obs) {
+            const accuracy = obs.getAccuracy();
+            /** @type {Object<string,any>} */
+            const props = {
+                taxon_name: obs.getTaxonName(),
+                url: obs.getURL(),
+                date: obs.getObsDateString(),
+                observer: obs.getUserDisplayName(),
+            };
+            if (accuracy !== undefined) {
+                props.accuracy = accuracy;
+            }
+            return props;
+        }
+
+        const fnProps = propsDefault;
+
+        const selectedTypes = this.getSelectedTypes();
+        for (const obs of this.#processedResults.observations) {
+            if (!selectedTypes.includes(obs.getCoordType())) {
+                continue;
+            }
+            const properties = fnProps(obs);
+            /** @type {GeoJSON.Feature<import("geojson").Point>} */
+            const feature = {
+                type: "Feature",
+                properties: properties,
+                geometry: {
+                    type: "Point",
+                    coordinates: obs.getCoordinatesGeoJSON(),
+                },
+            };
+            features.push(feature);
+        }
+    }
+
     #updateGeoJSONFormat() {
         hdom.setFormElementValue(
             "geojson-value",
@@ -1272,15 +1293,17 @@ function setMapTypeObs(map, gj) {
 
 /**
  * @param {Map} map
- * @param {import("geojson").FeatureCollection} gj
+ * @param {import("geojson").FeatureCollection<import("geojson").Point>} gj
  */
 function setMapTypePop(map, gj) {
     hdom.showElement("mt-pop-options", true);
     hdom.setFocusTo("mt-pop-distance");
     map.clearFeatures();
 
+    const distance = parseFloat(hdom.getFormElementValue("mt-pop-distance"));
+
     const clusterer = new Clusterer();
-    const clustered = clusterer.cluster(gj, 1);
+    const clustered = clusterer.cluster(gj, distance);
     const bordered = clusterer.addBorders(clustered);
 
     map.addObservations(bordered);

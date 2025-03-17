@@ -63,6 +63,7 @@ export class Map {
                 "date",
                 "observer",
                 "accuracy",
+                "cluster",
             ]) {
                 if (!properties || properties[property] === undefined) {
                     continue;
@@ -76,6 +77,12 @@ export class Map {
                         hdom.appendTextValue(
                             div,
                             `Accuracy ${properties.accuracy} meters`,
+                        );
+                        break;
+                    case "cluster":
+                        hdom.appendTextValue(
+                            div,
+                            `Cluster ${properties.cluster}`,
                         );
                         break;
                     case "taxon_name":
@@ -100,12 +107,7 @@ export class Map {
          */
         function createPolygonPopup(div, properties) {
             let first = true;
-            for (const property of [
-                "pop_num",
-                "hectares",
-                "accuracy",
-                "cluster",
-            ]) {
+            for (const property of ["pop_num", "hectares", "cluster"]) {
                 if (!properties) {
                     continue;
                 }

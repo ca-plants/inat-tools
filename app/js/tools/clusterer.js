@@ -3,14 +3,14 @@ import * as turf from "@turf/turf";
 
 export class Clusterer {
     /**
-     * @param {import("geojson").FeatureCollection} geojson
+     * @param {import("geojson").FeatureCollection<import("geojson").Point>} geojson
      * @param {import("geojson").GeoJsonProperties} [properties={}]
      * @returns {import("geojson").FeatureCollection}
      */
     addBorders(geojson, properties = {}) {
         /** @type {import("geojson").Feature[]} */
         const unClusteredPoints = [];
-        /** @type {import("geojson").Feature[]} */
+        /** @type {import("geojson").Feature<import("geojson").Polygon>[]} */
         const newPolygons = [];
 
         /** @type {Map<number,import("geojson").Feature<GeoJSON.Point>[]>} */
@@ -25,7 +25,6 @@ export class Clusterer {
                     clusterPoints = [];
                     clusters.set(point.properties.cluster, clusterPoints);
                 }
-                // @ts-ignore
                 clusterPoints.push(point);
             } else {
                 unClusteredPoints.push(point);
@@ -39,10 +38,11 @@ export class Clusterer {
                 continue;
             }
 
-            /** @type {import("geojson").Feature[]} */
+            /** @type {import("geojson").Feature<import("geojson").Polygon>[]} */
             let polygons = [];
             switch (border.geometry.type) {
                 case "Polygon":
+                    // @ts-ignore
                     polygons = [border];
                     break;
                 case "MultiPolygon":
@@ -87,9 +87,9 @@ export class Clusterer {
     }
 
     /**
-     * @param {GeoJSON.FeatureCollection<import("geojson").Geometry>} geojson
+     * @param {GeoJSON.FeatureCollection<import("geojson").Point>} geojson
      * @param {number} [maxDistance]
-     * @returns {import("geojson").FeatureCollection}
+     * @returns {import("geojson").FeatureCollection<import("geojson").Point>}
      */
     cluster(geojson, maxDistance = 1) {
         return turf.clustersDbscan(geojson, maxDistance);
@@ -110,7 +110,7 @@ export class Clusterer {
     }
 
     /**
-     * @param {import("geojson").Feature[]} polygons
+     * @param {import("geojson").Feature<import("geojson").Polygon>[]} polygons
      * @param {Map<number,import("geojson").Feature<import("geojson").Point,import("geojson").GeoJsonProperties>[]>} clusters
      * @returns {import("geojson").Feature<import("geojson").Point>[]}
      */
@@ -142,7 +142,6 @@ export class Clusterer {
                     lines = [];
                     polysAsLines.set(cluster, lines);
                 }
-                // @ts-ignore
                 lines.push(turf.polygonToLine(polygon));
             }
 
