@@ -16,7 +16,7 @@ export class Clusterer {
         /** @type {Map<number,import("geojson").Feature<GeoJSON.Point>[]>} */
         const clusters = new Map();
         turf.featureEach(geojson, (point) => {
-            if (!point.properties || point.geometry.type !== "Point") {
+            if (!point.properties) {
                 return;
             }
             if (typeof point.properties.cluster === "number") {
@@ -125,6 +125,12 @@ export class Clusterer {
                 const polyProps = query([coords[0], coords[1]]);
                 if (!polyProps) {
                     initialOutsidePoints.push(point);
+                } else {
+                    // Add the point to the list for this polygon.
+                    if (!polyProps.observations) {
+                        polyProps.observations = [];
+                    }
+                    polyProps.observations.push(point);
                 }
             }
         }
@@ -146,7 +152,11 @@ export class Clusterer {
             }
 
             for (const point of initialOutsidePoints) {
-                const cluster = point.properties?.cluster;
+                let properties = point.properties;
+                if (properties === null) {
+                    properties = point.properties = {};
+                }
+                const cluster = properties.cluster;
                 const lines = polysAsLines.get(cluster);
                 if (!lines) {
                     console.warn(`cluster ${cluster} has no polygons`);

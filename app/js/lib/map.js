@@ -1,5 +1,6 @@
 import L from "leaflet";
 import { hdom } from "./hdom.js";
+import { InatURL } from "./inaturl.js";
 
 /**
  * @typedef {{label:string,url:string,attribution:string}} MapSource
@@ -107,7 +108,12 @@ export class Map {
          */
         function createPolygonPopup(div, properties) {
             let first = true;
-            for (const property of ["pop_num", "hectares", "cluster"]) {
+            for (const property of [
+                "pop_num",
+                "observations",
+                "hectares",
+                "cluster",
+            ]) {
                 if (!properties) {
                     continue;
                 }
@@ -127,6 +133,25 @@ export class Map {
                             div,
                             `${properties.hectares} hectares`,
                         );
+                        break;
+                    case "observations":
+                        {
+                            /**
+                             * @type {import("geojson").Feature<import("geojson").Point>[]}
+                             */
+                            const observations = properties.observations;
+                            const ids = observations.map((obs) =>
+                                getProperty(obs, "id"),
+                            );
+                            const url = InatURL.getObsIDLink(ids, "map");
+                            div.appendChild(
+                                hdom.createLinkElement(
+                                    url,
+                                    `${properties.observations.length} observations`,
+                                    { target: "_blank" },
+                                ),
+                            );
+                        }
                         break;
                     case "pop_num":
                         hdom.appendTextValue(
@@ -224,4 +249,17 @@ export class Map {
         });
         this.#tileLayer.addTo(this.#map);
     }
+}
+
+/**
+ * @template T
+ * @param {import("geojson").Feature} feature
+ * @param {string} propName
+ * @returns {T|undefined}
+ */
+function getProperty(feature, propName) {
+    if (!feature.properties) {
+        return;
+    }
+    return feature.properties[propName];
 }

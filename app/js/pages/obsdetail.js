@@ -285,15 +285,7 @@ class ObsDetailUI extends SearchUI {
                     selectedIDs.push(obs.getID());
                 }
             }
-            const url = new URL(
-                "https://www.inaturalist.org/observations?subview=grid",
-            );
-            const idList = selectedIDs.join(",");
-            if (idList.length >= 10813) {
-                return "";
-            }
-            url.searchParams.set("id", idList);
-            return url;
+            return InatURL.getObsIDLink(selectedIDs);
         }
 
         /**
@@ -1094,6 +1086,7 @@ class ObsDetailUI extends SearchUI {
             const accuracy = obs.getAccuracy();
             /** @type {Object<string,any>} */
             const props = {
+                id: obs.getID(),
                 taxon_name: obs.getTaxonName(),
                 url: obs.getURL(),
                 date: obs.getObsDateString(),
