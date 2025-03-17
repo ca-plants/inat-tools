@@ -200,15 +200,21 @@ class ObsDetailUI extends SearchUI {
     #getGeoJSON() {
         /**
          * @param {INatObservation} obs
-         * @returns {Object<string,string>}
+         * @returns {Object<string,any>}
          */
         function propsDefault(obs) {
-            return {
+            const accuracy = obs.getAccuracy();
+            /** @type {Object<string,any>} */
+            const props = {
                 taxon_name: obs.getTaxonName(),
                 url: obs.getURL(),
                 date: obs.getObsDateString(),
                 observer: obs.getUserDisplayName(),
             };
+            if (accuracy !== undefined) {
+                props.accuracy = accuracy;
+            }
+            return props;
         }
 
         const fnProps = propsDefault;

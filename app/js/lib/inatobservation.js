@@ -13,6 +13,21 @@ class INatObservation {
     }
 
     /**
+     * @returns {number|undefined}
+     */
+    getAccuracy() {
+        if (this.isObscured()) {
+            if (this.#rawObservation.public_positional_accuracy !== null) {
+                return this.#rawObservation.public_positional_accuracy;
+            }
+            return;
+        }
+        if (this.#rawObservation.positional_accuracy !== null) {
+            return this.#rawObservation.positional_accuracy;
+        }
+    }
+
+    /**
      * @returns {[number,number]}
      */
     getCoordinatesGeoJSON() {

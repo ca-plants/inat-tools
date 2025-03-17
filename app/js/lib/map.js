@@ -58,9 +58,13 @@ export class Map {
          */
         function createPointPopup(div, properties) {
             let first = true;
-            console.log(properties);
-            for (const property of ["taxon_name", "date", "observer"]) {
-                if (!properties) {
+            for (const property of [
+                "taxon_name",
+                "date",
+                "observer",
+                "accuracy",
+            ]) {
+                if (!properties || properties[property] === undefined) {
                     continue;
                 }
                 if (!first) {
@@ -68,6 +72,12 @@ export class Map {
                 }
                 first = false;
                 switch (property) {
+                    case "accuracy":
+                        hdom.appendTextValue(
+                            div,
+                            `Accuracy ${properties.accuracy} meters`,
+                        );
+                        break;
                     case "taxon_name":
                         div.appendChild(
                             hdom.createLinkElement(
@@ -90,7 +100,12 @@ export class Map {
          */
         function createPolygonPopup(div, properties) {
             let first = true;
-            for (const property of ["pop_num", "hectares", "cluster"]) {
+            for (const property of [
+                "pop_num",
+                "hectares",
+                "accuracy",
+                "cluster",
+            ]) {
                 if (!properties) {
                     continue;
                 }
@@ -119,6 +134,7 @@ export class Map {
                         break;
                 }
             }
+            1;
         }
 
         /**
@@ -156,16 +172,20 @@ export class Map {
 
         this.#featureLayer = L.geoJSON(gj, {
             pointToLayer: (f, latLng) => {
-                console.log(f.properties);
-                /** @type {import("leaflet").CircleMarkerOptions} */
-                const circleMarkerOptions = {
-                    radius: 4,
-                    opacity: 0.25,
-                    color: "red",
-                    fillColor: "red",
-                };
                 if (maxPopNum >= 0 && f.properties.dbscan === "noise") {
-                    return L.circleMarker(latLng, circleMarkerOptions);
+                    const accuracy = f.properties.accuracy;
+                    const color = accuracy === undefined ? "orange" : "red";
+                    const radius =
+                        6 +
+                        (accuracy === undefined
+                            ? 0
+                            : Math.min(accuracy, 1000) / 50);
+                    return L.circleMarker(latLng, {
+                        radius: radius,
+                        opacity: 0.75,
+                        color: "none",
+                        fillColor: color,
+                    });
                 }
                 return L.marker(latLng);
             },

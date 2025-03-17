@@ -9,6 +9,8 @@
  *  location: string;
  *  observed_on_details: { date: string };
  *  place_guess: string;
+ *  positional_accuracy: number|null;
+ *  public_positional_accuracy: number|null;
  *  private_location: string;
  *  private_place_guess: string;
  *  quality_grade: string;
