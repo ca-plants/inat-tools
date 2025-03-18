@@ -8,7 +8,7 @@ import { SearchUI } from "../lib/searchui.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { createDownloadLink } from "../lib/utils.js";
 import { InatURL } from "../lib/inaturl.js";
-import { Map, MAP_SOURCES } from "../lib/map.js";
+import { DEFAULT_MAP_SOURCE, Map, MAP_SOURCES } from "../lib/map.js";
 import { Clusterer } from "../tools/clusterer.js";
 
 /** @typedef {{role:string}} ProjectMember */
@@ -815,13 +815,14 @@ class ObsDetailUI extends SearchUI {
         eResults.appendChild(divMap);
         setMapHeight();
 
-        const source = "stadia";
+        const source = this.#hashParams.map?.source ?? DEFAULT_MAP_SOURCE;
         const map = new Map(source);
         const gj = this.#getGeoJSONPoints();
         map.fitBounds(gj);
 
         hdom.setFormElementValue(selectSource, source);
         selectSource.addEventListener("change", () => {
+            this.#updateHash();
             map.setSource(hdom.getFormElementValue(selectSource));
         });
 
@@ -1204,8 +1205,17 @@ class ObsDetailUI extends SearchUI {
             params.branch = true;
         }
         if (params.view === "map") {
+            params.map = {};
+            const source = hdom.getFormElementValue("map-source");
+            if (source !== DEFAULT_MAP_SOURCE) {
+                params.map.source = source;
+            }
             if (hdom.isChecked("mt-pop")) {
-                params.map = { view: "pop", maxdist: getPopDistance() };
+                params.map.view = "pop";
+                params.map.maxdist = getPopDistance();
+            }
+            if (Object.keys(params.map).length === 0) {
+                delete params.map;
             }
         }
         this.#hashParams = params;

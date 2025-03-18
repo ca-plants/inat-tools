@@ -41,7 +41,7 @@
  *      coords?: ("public" | "obscured" | "trusted")[];
  *      view?: EnumObsDetailView
  *      branch?: boolean;
- *      map?:{view?:"obs"|"pop";maxdist?:number}
+ *      map?:{source?:string,view?:"obs"|"pop";maxdist?:number}
  *  }} ParamsPageObsDetail
  * @typedef {{
  *  accuracy?: number;

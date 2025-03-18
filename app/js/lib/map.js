@@ -7,6 +7,8 @@ import { GJTools } from "./geojson.js";
  * @typedef {{label:string,url:string,attribution:string}} MapSource
  */
 
+export const DEFAULT_MAP_SOURCE = "stadia";
+
 /** @type {Object<string,MapSource>}> */
 export const MAP_SOURCES = {
     geoapifycarto: {
@@ -245,9 +247,10 @@ export class Map {
      * @param {string} id
      */
     setSource(id) {
-        const source = MAP_SOURCES[id];
+        let source = MAP_SOURCES[id];
         if (!source) {
-            console.warn(`map source "${id}" not found`);
+            console.warn(`map source "${id}" not found; using default source`);
+            source = MAP_SOURCES[DEFAULT_MAP_SOURCE];
         }
         if (this.#tileLayer) {
             this.#map.removeLayer(this.#tileLayer);
