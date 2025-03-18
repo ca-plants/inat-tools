@@ -340,9 +340,15 @@ class ObsDetailUI extends SearchUI {
 
     static async getInstance() {
         /** @type {import("../types.js").ParamsPageObsDetail} */
-        const initArgs = JSON.parse(
-            decodeURIComponent(document.location.hash).substring(1),
-        );
+        let initArgs;
+        try {
+            initArgs = JSON.parse(
+                decodeURIComponent(document.location.hash).substring(1),
+            );
+        } catch {
+            initArgs = {};
+        }
+
         const ui = new ObsDetailUI(initArgs);
         await ui.initInstance(initArgs);
         return ui;
@@ -548,12 +554,7 @@ class ObsDetailUI extends SearchUI {
             includeDescendants = hdom.isChecked("branch");
         }
 
-        const filter = this.initFilterFromForm("f1");
-        if (!filter) {
-            return;
-        }
-        this.#f1 = filter;
-
+        this.#f1 = this.initFilterFromForm("f1") ?? new SpeciesFilter({});
         const api = this.getAPI();
 
         const taxonId = this.#f1.getTaxonID();
@@ -611,10 +612,10 @@ class ObsDetailUI extends SearchUI {
             style: "flex:3;min-width:20rem",
         });
         divDesc.appendChild(
-            document.createTextNode(await filter.getDescription(api)),
+            document.createTextNode(await this.#f1.getDescription(api)),
         );
         resultsSummary.appendChild(divDesc);
-        const link = getNeedsAttributeLink(filter);
+        const link = getNeedsAttributeLink(this.#f1);
         if (link) {
             const divLink = hdom.createElement("div", {
                 style: "flex:2;min-width:15rem;text-align:right",
