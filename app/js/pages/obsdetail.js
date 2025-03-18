@@ -142,6 +142,8 @@ class ObsDetailUI extends SearchUI {
     #project_members;
     /** @type {import("../types.js").ParamsPageObsDetail} */
     #hashParams;
+    /** @type {number|undefined} */
+    #debounceTimer;
 
     /**
      * @param {import("../types.js").ParamsPageObsDetail} params
@@ -749,6 +751,27 @@ class ObsDetailUI extends SearchUI {
         const selectSource = hdom.createSelectElement("map-source", options);
         divMapOptions.appendChild(selectSource);
 
+        const divPopOptions = hdom.createElement("div", {
+            id: "mt-pop-options",
+        });
+        divMapOptions.appendChild(divPopOptions);
+        divPopOptions.appendChild(
+            createTextInputDiv(
+                {
+                    id: "mt-pop-distance",
+                    type: "number",
+                    required: "",
+                    step: ".01",
+                    inputmode: "numeric",
+                    min: 0.01,
+                    max: 10,
+                    style: "width:4rem",
+                    value: this.#hashParams.map?.maxdist ?? 1,
+                },
+                "Max distance (km)",
+            ),
+        );
+
         const divTypeOptions = hdom.createElement("div", "flex");
         divMapOptions.appendChild(divTypeOptions);
         const types = [
@@ -775,26 +798,6 @@ class ObsDetailUI extends SearchUI {
             );
         }
 
-        const divPopOptions = hdom.createElement("div", {
-            id: "mt-pop-options",
-        });
-        divMapOptions.appendChild(divPopOptions);
-        divPopOptions.appendChild(
-            createTextInputDiv(
-                {
-                    id: "mt-pop-distance",
-                    type: "number",
-                    step: ".01",
-                    inputmode: "numeric",
-                    min: 0.01,
-                    max: 10,
-                    style: "width:4rem",
-                    value: this.#hashParams.map?.maxdist ?? 1,
-                },
-                "Max distance (km)",
-            ),
-        );
-
         const divMap = hdom.createElement("div", {
             class: "section",
             id: "map",
@@ -813,7 +816,7 @@ class ObsDetailUI extends SearchUI {
         });
 
         hdom.addEventListener("mt-pop-distance", "change", () =>
-            this.#setMapTypePop(map, gj),
+            this.#debounce(() => this.#setMapTypePop(map, gj)),
         );
         const mapMode =
             this.#hashParams.map && this.#hashParams.map.view === "pop"
@@ -1124,6 +1127,14 @@ class ObsDetailUI extends SearchUI {
     }
 
     /**
+     * @param {function} fn
+     */
+    #debounce(fn) {
+        clearTimeout(this.#debounceTimer);
+        this.#debounceTimer = setTimeout(fn, 500);
+    }
+
+    /**
      * @param {Map} map
      * @param {import("geojson").FeatureCollection} gj
      */
@@ -1147,7 +1158,7 @@ class ObsDetailUI extends SearchUI {
 
         const clusterer = new Clusterer();
         const clustered = clusterer.cluster(gj, distance);
-        const bordered = clusterer.addBorders(clustered);
+        const bordered = clusterer.addBorders(clustered, distance);
 
         map.addObservations(bordered);
         this.#updateHash();

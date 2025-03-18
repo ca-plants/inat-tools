@@ -217,7 +217,7 @@ export class Map {
                             : Math.min(accuracy, 1000) / 50);
                     return L.circleMarker(latLng, {
                         radius: radius,
-                        opacity: 0.75,
+                        fillOpacity: 0.3,
                         color: "none",
                         fillColor: color,
                     });

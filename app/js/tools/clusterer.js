@@ -9,10 +9,11 @@ import { GJTools } from "../lib/geojson.js";
 export class Clusterer {
     /**
      * @param {import("geojson").FeatureCollection<import("geojson").Point>} geojson
+     * @param {number} [distance=1]
      * @param {import("geojson").GeoJsonProperties} [properties={}]
      * @returns {import("geojson").FeatureCollection}
      */
-    addBorders(geojson, properties = {}) {
+    addBorders(geojson, distance = 1, properties = {}) {
         /** @type {import("geojson").Feature[]} */
         const unClusteredPoints = [];
         /** @type {import("geojson").Feature<import("geojson").Polygon>[]} */
@@ -38,7 +39,7 @@ export class Clusterer {
 
         for (const [cluster_num, clusterPoints] of clusters.entries()) {
             const fc = turf.featureCollection(clusterPoints);
-            const border = turf.concave(fc, { maxEdge: 1 });
+            const border = turf.concave(fc, { maxEdge: 2 * distance });
             if (!border) {
                 continue;
             }
