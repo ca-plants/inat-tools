@@ -540,7 +540,6 @@ class ObsDetailUI extends SearchUI {
         }
 
         let selArray = params.coords;
-        let view = params.view;
         let includeDescendants = params.branch;
 
         if (selArray === undefined) {
@@ -691,6 +690,7 @@ class ObsDetailUI extends SearchUI {
         window.onresize = this.onResize;
 
         // Select initial view.
+        let view = this.#hashParams.view;
         const initialView = displayOptions.some((opt) => opt.id === view)
             ? hdom.getElement("disp-" + view)
             : hdom.getElement("disp-details");
