@@ -681,6 +681,13 @@ class ObsDetailUI extends SearchUI {
 
         this.updateCoordOptions(selArray);
 
+        if (
+            this.#processedResults.countPublic === 0 &&
+            this.#processedResults.countTrusted === 0
+        ) {
+            hdom.enableElement("disp-map", false);
+            hdom.enableElement("disp-mapdata", false);
+        }
         window.onresize = this.onResize;
 
         // Select initial view.
@@ -742,6 +749,8 @@ class ObsDetailUI extends SearchUI {
 
     showMap() {
         const eResults = this.clearResults();
+
+        removeObscured();
 
         const divMapOptions = hdom.createElement("div", "section options");
         eResults.appendChild(divMapOptions);
@@ -828,6 +837,8 @@ class ObsDetailUI extends SearchUI {
 
     showMapData() {
         const eResults = this.clearResults();
+
+        removeObscured();
 
         const eButtons = hdom.createElement("div", {
             class: "section flex-fullwidth",
@@ -1326,6 +1337,21 @@ function getViewMode() {
             return radioVal;
     }
     return "details";
+}
+
+function removeObscured() {
+    const ePublic = hdom.getElementById("sel-public");
+    const eTrusted = hdom.getElementById("sel-trusted");
+
+    // If neither public nor trusted is checked, check them before unchecking obscured.
+    if (
+        (!ePublic || !hdom.isChecked(ePublic)) &&
+        (!eTrusted || !hdom.isChecked(eTrusted))
+    ) {
+        if (ePublic) hdom.setCheckBoxState(ePublic, true);
+        if (eTrusted) hdom.setCheckBoxState(eTrusted, true);
+    }
+    hdom.setCheckBoxState("sel-obscured", false);
 }
 
 function setMapHeight() {

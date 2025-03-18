@@ -249,6 +249,14 @@ export class hdom {
     }
 
     /**
+     * @param {string} id
+     * @returns {HTMLElement|undefined}
+     */
+    static getElementById(id) {
+        return document.getElementById(id) ?? undefined;
+    }
+
+    /**
      * @param {string|HTMLElement} form
      * @param {string} elName
      * @returns {HTMLFormElement|RadioNodeList}
