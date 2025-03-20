@@ -1,4 +1,5 @@
 import L from "leaflet";
+import * as turf from "@turf/turf";
 import { hdom } from "./hdom.js";
 import { InatURL } from "./inaturl.js";
 import { GJTools } from "./geojson.js";
@@ -115,22 +116,18 @@ export class Map {
         /**
          * @param {HTMLElement} div
          * @param {import("geojson").GeoJsonProperties} properties
+         * @param {Map} map
          */
-        function createPolygonPopup(div, properties) {
-            let first = true;
+        function createPolygonPopup(div, properties, map) {
+            if (!properties) {
+                return;
+            }
             for (const property of [
                 "pop_num",
                 "observations",
                 "hectares",
                 "cluster",
             ]) {
-                if (!properties) {
-                    continue;
-                }
-                if (!first) {
-                    div.appendChild(hdom.createElement("br"));
-                }
-                first = false;
                 switch (property) {
                     case "cluster":
                         hdom.appendTextValue(
@@ -175,16 +172,34 @@ export class Map {
                             `Population #${properties.pop_num} of ${maxPopNum}`,
                         );
                         break;
+                    default:
+                        continue;
                 }
+                div.appendChild(hdom.createElement("br"));
             }
-            1;
+
+            // Add a link to zoom to these observations.
+            const link = hdom.createLinkElement(
+                "",
+                "Zoom to these observations",
+            );
+            link.addEventListener("click", (e) => {
+                e.preventDefault();
+                /** @type {import("geojson").Feature<import("geojson").Point>[]} */
+                const observations = properties.observations;
+                const fc = turf.featureCollection(observations);
+                map.closePopups();
+                map.fitBounds(fc);
+            });
+            div.appendChild(link);
         }
 
         /**
          * @param {import("leaflet").Layer} layer
+         * @param {Map} map
          * @returns {HTMLElement}
          */
-        function popup(layer) {
+        function popup(layer, map) {
             /** @type {import("geojson").Feature} */
             // @ts-ignore
             const feature = layer.feature;
@@ -195,7 +210,7 @@ export class Map {
                     createPointPopup(div, properties);
                     break;
                 case "Polygon":
-                    createPolygonPopup(div, properties);
+                    createPolygonPopup(div, properties, map);
                     break;
             }
             return div;
@@ -232,7 +247,7 @@ export class Map {
                 }
                 return L.marker(latLng);
             },
-        }).bindPopup(popup);
+        }).bindPopup((layer) => popup(layer, this));
         this.#featureLayer.addTo(this.#map);
     }
 
@@ -240,6 +255,10 @@ export class Map {
         if (this.#featureLayer) {
             this.#featureLayer.clearLayers();
         }
+    }
+
+    closePopups() {
+        this.#map.closePopup();
     }
 
     /**
