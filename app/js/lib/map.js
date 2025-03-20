@@ -153,7 +153,13 @@ export class Map {
                             const ids = observations.map((obs) =>
                                 GJTools.getProperty(obs, "id"),
                             );
-                            const url = InatURL.getObsIDLink(ids, "map");
+                            const allPublic = observations.every((obs) =>
+                                GJTools.getProperty(obs, "is_public"),
+                            );
+                            const url = InatURL.getObsIDLink(
+                                ids,
+                                allPublic ? "map" : "table",
+                            );
                             div.appendChild(
                                 hdom.createLinkElement(
                                     url,

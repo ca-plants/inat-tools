@@ -1111,6 +1111,7 @@ class ObsDetailUI extends SearchUI {
                 url: obs.getURL(),
                 date: obs.getObsDateString(),
                 observer: obs.getUserDisplayName(),
+                is_public: obs.getCoordType() === "public",
             };
             if (accuracy !== undefined) {
                 props.accuracy = accuracy;
@@ -1352,6 +1353,7 @@ function getViewMode() {
 function removeObscured() {
     const ePublic = hdom.getElementById("sel-public");
     const eTrusted = hdom.getElementById("sel-trusted");
+    const eObscured = hdom.getElementById("sel-obscured");
 
     // If neither public nor trusted is checked, check them before unchecking obscured.
     if (
@@ -1361,7 +1363,9 @@ function removeObscured() {
         if (ePublic) hdom.setCheckBoxState(ePublic, true);
         if (eTrusted) hdom.setCheckBoxState(eTrusted, true);
     }
-    hdom.setCheckBoxState("sel-obscured", false);
+    if (eObscured) {
+        hdom.setCheckBoxState("sel-obscured", false);
+    }
 }
 
 function setMapHeight() {

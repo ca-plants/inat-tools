@@ -1,7 +1,7 @@
 export class InatURL {
     /**
      * @param {string|string[]} id
-     * @param {"map"|"grid"|"list"} [subview="grid"]
+     * @param {"map"|"grid"|"table"} [subview="grid"]
      * @returns {string}
      */
     static getObsIDLink(id, subview = "grid") {
