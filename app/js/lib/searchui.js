@@ -80,8 +80,7 @@ export class SearchUI extends UI {
      * @param {AutoCompleteConfig} config
      */
     async autoComplete(e, config) {
-        const dl = hdom.getElement(config.getListID());
-        hdom.removeChildren(dl);
+        const dl = hdom.removeChildren(config.getListID());
 
         if (!(e.target instanceof HTMLInputElement)) {
             return;
@@ -129,14 +128,14 @@ export class SearchUI extends UI {
      * @param {Event} e
      * @param {AutoCompleteConfig} config
      */
-    async #debounce(e, config, timeout = 200) {
+    #debounce(e, config, timeout = 200) {
         if (!(e instanceof InputEvent) || !e.inputType) {
             // Ignore events with no inputType (e.g., the event triggered after we set value).
             return;
         }
         clearTimeout(this.#debounceTimer);
         this.#debounceTimer = setTimeout(
-            () => this.autoComplete(e, config),
+            async () => await this.autoComplete(e, config),
             timeout,
         );
     }

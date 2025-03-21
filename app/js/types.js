@@ -1,6 +1,7 @@
 /**
  * Enums
  * @typedef {"exclude"|"subtract"} EnumCompareType
+ * @typedef {"datehisto" | "details" | "mapdata" | "usersumm" | "map"} EnumObsDetailView
  *
  * Types - INat Data
  * @typedef {{
@@ -9,6 +10,8 @@
  *  location: string;
  *  observed_on_details: { date: string };
  *  place_guess: string;
+ *  positional_accuracy: number|null;
+ *  public_positional_accuracy: number|null;
  *  private_location: string;
  *  private_place_guess: string;
  *  quality_grade: string;
@@ -34,10 +37,11 @@
  *
  * Types - Parameters
  * @typedef {{
- *      f1: ParamsSpeciesFilter;
+ *      f1?: ParamsSpeciesFilter;
  *      coords?: ("public" | "obscured" | "trusted")[];
- *      view?: "datehisto" | "details" | "geojson" | "usersumm";
+ *      view?: EnumObsDetailView
  *      branch?: boolean;
+ *      map?:{source?:string,view?:"obs"|"pop";maxdist?:number}
  *  }} ParamsPageObsDetail
  * @typedef {{
  *  accuracy?: number;

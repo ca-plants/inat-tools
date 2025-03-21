@@ -8,7 +8,8 @@ import { SearchUI } from "../lib/searchui.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { createDownloadLink } from "../lib/utils.js";
 import { InatURL } from "../lib/inaturl.js";
-import { Map, MAP_SOURCES } from "../lib/map.js";
+import { DEFAULT_MAP_SOURCE, Map, MAP_SOURCES } from "../lib/map.js";
+import { Clusterer } from "../tools/clusterer.js";
 
 /** @typedef {{role:string}} ProjectMember */
 /** @typedef {{countObscured:number,countPublic:number,countTrusted:number,observations:INatObservation[]}} Results */
@@ -139,16 +140,18 @@ class ObsDetailUI extends SearchUI {
     };
     /** @type {Object<string,ProjectMember>|undefined} */
     #project_members;
+    /** @type {import("../types.js").ParamsPageObsDetail} */
+    #hashParams;
+    /** @type {number|undefined} */
+    #debounceTimer;
 
     /**
-     * @param {import("../types.js").ParamsSpeciesFilter} f1
+     * @param {import("../types.js").ParamsPageObsDetail} params
      */
-    constructor(f1) {
+    constructor(params) {
         super({ allowBoundary: true });
-        if (f1.taxon_id === undefined) {
-            throw new Error();
-        }
-        this.#f1 = new SpeciesFilter(f1);
+        this.#hashParams = params;
+        this.#f1 = new SpeciesFilter(params.f1 ?? {});
     }
 
     clearResults() {
@@ -197,43 +200,23 @@ class ObsDetailUI extends SearchUI {
      * @returns {GeoJSON.FeatureCollection}
      */
     #getGeoJSON() {
-        /**
-         * @param {INatObservation} obs
-         * @returns {Object<string,string>}
-         */
-        function propsDefault(obs) {
-            return {
-                taxon_name: obs.getTaxonName(),
-                url: obs.getURL(),
-                date: obs.getObsDateString(),
-                observer: obs.getUserDisplayName(),
-            };
-        }
-
-        const fnProps = propsDefault;
-
         // If there is a boundary, include it in the GeoJSON.
         const params = this.#f1.getParams();
         /** @type {GeoJSON.Feature[]} */
         const features = params.boundary ? params.boundary.features : [];
 
-        const selectedTypes = this.getSelectedTypes();
-        for (const obs of this.#processedResults.observations) {
-            if (!selectedTypes.includes(obs.getCoordType())) {
-                continue;
-            }
-            const properties = fnProps(obs);
-            /** @type {GeoJSON.Feature} */
-            const feature = {
-                type: "Feature",
-                properties: properties,
-                geometry: {
-                    type: "Point",
-                    coordinates: obs.getCoordinatesGeoJSON(),
-                },
-            };
-            features.push(feature);
-        }
+        this.#addGeoJSONObservations(features);
+
+        return { type: "FeatureCollection", features: features };
+    }
+
+    /**
+     * @returns {GeoJSON.FeatureCollection<import("geojson").Point>}
+     */
+    #getGeoJSONPoints() {
+        /** @type {GeoJSON.Feature<import("geojson").Point>[]} */
+        const features = [];
+        this.#addGeoJSONObservations(features);
 
         return { type: "FeatureCollection", features: features };
     }
@@ -304,15 +287,7 @@ class ObsDetailUI extends SearchUI {
                     selectedIDs.push(obs.getID());
                 }
             }
-            const url = new URL(
-                "https://www.inaturalist.org/observations?subview=grid",
-            );
-            const idList = selectedIDs.join(",");
-            if (idList.length >= 10813) {
-                return "";
-            }
-            url.searchParams.set("id", idList);
-            return url;
+            return InatURL.getObsIDLink(selectedIDs);
         }
 
         /**
@@ -365,11 +340,17 @@ class ObsDetailUI extends SearchUI {
 
     static async getInstance() {
         /** @type {import("../types.js").ParamsPageObsDetail} */
-        const initArgs = JSON.parse(
-            decodeURIComponent(document.location.hash).substring(1),
-        );
-        const ui = new ObsDetailUI(initArgs.f1);
-        await ui.initInstance(initArgs.coords, initArgs.view, initArgs.branch);
+        let initArgs;
+        try {
+            initArgs = JSON.parse(
+                decodeURIComponent(document.location.hash).substring(1),
+            );
+        } catch {
+            initArgs = {};
+        }
+
+        const ui = new ObsDetailUI(initArgs);
+        await ui.initInstance(initArgs);
         return ui;
     }
 
@@ -505,11 +486,9 @@ class ObsDetailUI extends SearchUI {
     }
 
     /**
-     * @param {("public"|"obscured"|"trusted")[]} selArray
-     * @param {string|undefined} view
-     * @param {boolean|undefined} branch
+     * @param {import("../types.js").ParamsPageObsDetail} params
      */
-    async initInstance(selArray = ALL_COORD_TYPES, view, branch) {
+    async initInstance(params) {
         await super.init();
 
         // Add handlers for form.
@@ -520,11 +499,11 @@ class ObsDetailUI extends SearchUI {
 
         await this.initForm("f1", this.#f1);
 
-        await this.onSubmit(selArray, view, branch);
+        await this.onSubmit(params);
     }
 
     onResize() {
-        const mode = getDisplayMode();
+        const mode = getViewMode();
         switch (mode) {
             case "datehisto":
                 {
@@ -544,11 +523,9 @@ class ObsDetailUI extends SearchUI {
     }
 
     /**
-     * @param {("public"|"obscured"|"trusted")[]} [selArray]
-     * @param {string|undefined} [view]
-     * @param {boolean|undefined} [includeDescendants]
+     * @param {import("../types.js").ParamsPageObsDetail} [params={}]
      */
-    async onSubmit(selArray, view, includeDescendants) {
+    async onSubmit(params = {}) {
         /**
          * @param {string} value
          * @param {string} label
@@ -556,20 +533,14 @@ class ObsDetailUI extends SearchUI {
          */
         function addDisplayOption(value, label, ui) {
             const id = "disp-" + value;
-            const div = hdom.createElement("div", "radio");
-            const rb = hdom.createInputElement({
-                type: "radio",
-                id: id,
-                value: value,
-                name: "displayopt",
-            });
-            rb.addEventListener("click", () => ui.updateDisplay());
-            const lbl = hdom.createElement("label", { for: id });
-            lbl.appendChild(document.createTextNode(label));
-            div.appendChild(rb);
-            div.appendChild(lbl);
+            const div = createRadioDiv("displayopt", id, value, label, () =>
+                ui.updateDisplay(),
+            );
             radios.appendChild(div);
         }
+
+        let selArray = params.coords;
+        let includeDescendants = params.branch;
 
         if (selArray === undefined) {
             selArray = this.getSelectedTypes();
@@ -582,12 +553,7 @@ class ObsDetailUI extends SearchUI {
             includeDescendants = hdom.isChecked("branch");
         }
 
-        const filter = this.initFilterFromForm("f1");
-        if (!filter) {
-            return;
-        }
-        this.#f1 = filter;
-
+        this.#f1 = this.initFilterFromForm("f1") ?? new SpeciesFilter({});
         const api = this.getAPI();
 
         const taxonId = this.#f1.getTaxonID();
@@ -645,10 +611,10 @@ class ObsDetailUI extends SearchUI {
             style: "flex:3;min-width:20rem",
         });
         divDesc.appendChild(
-            document.createTextNode(await filter.getDescription(api)),
+            document.createTextNode(await this.#f1.getDescription(api)),
         );
         resultsSummary.appendChild(divDesc);
-        const link = getNeedsAttributeLink(filter);
+        const link = getNeedsAttributeLink(this.#f1);
         if (link) {
             const divLink = hdom.createElement("div", {
                 style: "flex:2;min-width:15rem;text-align:right",
@@ -699,7 +665,7 @@ class ObsDetailUI extends SearchUI {
             addDisplayOption(opt.id, opt.label, this),
         );
 
-        const iNatDiv = hdom.createElement("div");
+        const iNatDiv = hdom.createElement("div", "right");
         iNatDiv.appendChild(
             hdom.createLinkElement("", "View in iNaturalist", {
                 target: "_blank",
@@ -714,9 +680,17 @@ class ObsDetailUI extends SearchUI {
 
         this.updateCoordOptions(selArray);
 
+        if (
+            this.#processedResults.countPublic === 0 &&
+            this.#processedResults.countTrusted === 0
+        ) {
+            hdom.enableElement("disp-map", false);
+            hdom.enableElement("disp-mapdata", false);
+        }
         window.onresize = this.onResize;
 
         // Select initial view.
+        let view = this.#hashParams.view;
         const initialView = displayOptions.some((opt) => opt.id === view)
             ? hdom.getElement("disp-" + view)
             : hdom.getElement("disp-details");
@@ -776,7 +750,9 @@ class ObsDetailUI extends SearchUI {
     showMap() {
         const eResults = this.clearResults();
 
-        const divMapOptions = hdom.createElement("div", "section");
+        removeObscured();
+
+        const divMapOptions = hdom.createElement("div", "section options");
         eResults.appendChild(divMapOptions);
 
         const options = Object.entries(MAP_SOURCES).map((source) => {
@@ -785,6 +761,53 @@ class ObsDetailUI extends SearchUI {
         const selectSource = hdom.createSelectElement("map-source", options);
         divMapOptions.appendChild(selectSource);
 
+        const divPopOptions = hdom.createElement("div", {
+            id: "mt-pop-options",
+        });
+        divMapOptions.appendChild(divPopOptions);
+        divPopOptions.appendChild(
+            createTextInputDiv(
+                {
+                    id: "mt-pop-distance",
+                    type: "number",
+                    required: "",
+                    step: ".01",
+                    inputmode: "numeric",
+                    min: 0.01,
+                    max: 10,
+                    style: "width:4rem",
+                    value: this.#hashParams.map?.maxdist ?? 1,
+                },
+                "Max distance (km)",
+            ),
+        );
+
+        const divTypeOptions = hdom.createElement("div", "flex");
+        divMapOptions.appendChild(divTypeOptions);
+        const types = [
+            {
+                value: "obs",
+                label: "Observations",
+                handler: () => this.#setMapTypeObs(map, gj),
+            },
+            {
+                value: "pop",
+                label: "Populations",
+                handler: () => this.#setMapTypePop(map, gj),
+            },
+        ];
+        for (const type of types) {
+            divTypeOptions.appendChild(
+                createRadioDiv(
+                    "map-type",
+                    `mt-${type.value}`,
+                    type.value,
+                    type.label,
+                    type.handler,
+                ),
+            );
+        }
+
         const divMap = hdom.createElement("div", {
             class: "section",
             id: "map",
@@ -792,20 +815,31 @@ class ObsDetailUI extends SearchUI {
         eResults.appendChild(divMap);
         setMapHeight();
 
-        const source = "stadia";
-        const gj = this.#getGeoJSON();
+        const source = this.#hashParams.map?.source ?? DEFAULT_MAP_SOURCE;
         const map = new Map(source);
+        const gj = this.#getGeoJSONPoints();
         map.fitBounds(gj);
-        map.addObservations(gj);
 
         hdom.setFormElementValue(selectSource, source);
         selectSource.addEventListener("change", () => {
+            this.#updateHash();
             map.setSource(hdom.getFormElementValue(selectSource));
         });
+
+        hdom.addEventListener("mt-pop-distance", "change", () =>
+            this.#debounce(() => this.#setMapTypePop(map, gj)),
+        );
+        const mapMode =
+            this.#hashParams.map && this.#hashParams.map.view === "pop"
+                ? "mt-pop"
+                : "mt-obs";
+        hdom.clickElement(mapMode);
     }
 
     showMapData() {
         const eResults = this.clearResults();
+
+        removeObscured();
 
         const eButtons = hdom.createElement("div", {
             class: "section flex-fullwidth",
@@ -1026,7 +1060,7 @@ class ObsDetailUI extends SearchUI {
     }
 
     updateDisplay() {
-        switch (getDisplayMode()) {
+        switch (getViewMode()) {
             case "datehisto":
                 this.showDateHistogram();
                 break;
@@ -1060,6 +1094,90 @@ class ObsDetailUI extends SearchUI {
         this.#updateHash();
     }
 
+    /**
+     * @param {import("geojson").Feature[]} features
+     */
+    #addGeoJSONObservations(features) {
+        /**
+         * @param {INatObservation} obs
+         * @returns {Object<string,any>}
+         */
+        function propsDefault(obs) {
+            const accuracy = obs.getAccuracy();
+            /** @type {Object<string,any>} */
+            const props = {
+                id: obs.getID(),
+                taxon_name: obs.getTaxonName(),
+                url: obs.getURL(),
+                date: obs.getObsDateString(),
+                observer: obs.getUserDisplayName(),
+                is_public: obs.getCoordType() === "public",
+            };
+            if (accuracy !== undefined) {
+                props.accuracy = accuracy;
+            }
+            return props;
+        }
+
+        const fnProps = propsDefault;
+
+        const selectedTypes = this.getSelectedTypes();
+        for (const obs of this.#processedResults.observations) {
+            if (!selectedTypes.includes(obs.getCoordType())) {
+                continue;
+            }
+            const properties = fnProps(obs);
+            /** @type {GeoJSON.Feature<import("geojson").Point>} */
+            const feature = {
+                type: "Feature",
+                properties: properties,
+                geometry: {
+                    type: "Point",
+                    coordinates: obs.getCoordinatesGeoJSON(),
+                },
+            };
+            features.push(feature);
+        }
+    }
+
+    /**
+     * @param {function} fn
+     */
+    #debounce(fn) {
+        clearTimeout(this.#debounceTimer);
+        this.#debounceTimer = setTimeout(fn, 500);
+    }
+
+    /**
+     * @param {Map} map
+     * @param {import("geojson").FeatureCollection} gj
+     */
+    #setMapTypeObs(map, gj) {
+        hdom.showElement("mt-pop-options", false);
+        map.clearFeatures();
+        map.addObservations(gj);
+        this.#updateHash();
+    }
+
+    /**
+     * @param {Map} map
+     * @param {import("geojson").FeatureCollection<import("geojson").Point>} gj
+     */
+    #setMapTypePop(map, gj) {
+        hdom.showElement("mt-pop-options", true);
+        hdom.setFocusTo("mt-pop-distance");
+        map.clearFeatures();
+
+        const distance = getPopDistance();
+
+        const clusterer = new Clusterer();
+        const clustered = clusterer.cluster(gj, distance);
+        const bordered = clusterer.addBorders(clustered, distance);
+
+        map.addObservations(bordered);
+        this.#updateHash();
+    }
+
     #updateGeoJSONFormat() {
         hdom.setFormElementValue(
             "geojson-value",
@@ -1082,16 +1200,26 @@ class ObsDetailUI extends SearchUI {
         const params = {
             f1: this.#f1.getParams(),
             coords: this.getSelectedTypes(),
-            // @ts-ignore
-            view: hdom.getFormElementValue(
-                hdom.getFormElement(RESULT_FORM_ID, "displayopt"),
-            ),
+            view: getViewMode(),
         };
         if (hdom.isChecked("branch")) {
             params.branch = true;
-        } else {
-            delete params.branch;
         }
+        if (params.view === "map") {
+            params.map = {};
+            const source = hdom.getFormElementValue("map-source");
+            if (source !== DEFAULT_MAP_SOURCE) {
+                params.map.source = source;
+            }
+            if (hdom.isChecked("mt-pop")) {
+                params.map.view = "pop";
+                params.map.maxdist = getPopDistance();
+            }
+            if (Object.keys(params.map).length === 0) {
+                delete params.map;
+            }
+        }
+        this.#hashParams = params;
         document.location.hash = JSON.stringify(params);
     }
 
@@ -1118,10 +1246,43 @@ class ObsDetailUI extends SearchUI {
     }
 }
 
-function getDisplayMode() {
-    return hdom.getFormElementValue(
-        hdom.getFormElement(RESULT_FORM_ID, "displayopt"),
-    );
+/**
+ * @param {string} name
+ * @param {string} id
+ * @param {string} value
+ * @param {string} label
+ * @param {function(Event):void} [fnClickHandler]
+ * @returns {HTMLElement}
+ */
+function createRadioDiv(name, id, value, label, fnClickHandler) {
+    const div = hdom.createElement("div", "radio");
+    const rb = hdom.createInputElement({
+        type: "radio",
+        id: id,
+        value: value,
+        name: name,
+    });
+    const lbl = hdom.createLabelElement(id, label);
+    div.appendChild(rb);
+    div.appendChild(lbl);
+    if (fnClickHandler) {
+        rb.addEventListener("click", fnClickHandler);
+    }
+    return div;
+}
+
+/**
+ * @param {Object<string,string|number>} attributes
+ * @param {string} label
+ * @returns {HTMLElement}
+ */
+function createTextInputDiv(attributes, label) {
+    const div = hdom.createElement("div", "textinput");
+    const text = hdom.createInputElement(attributes);
+    const lbl = hdom.createLabelElement(attributes.id.toString(), label);
+    div.appendChild(lbl);
+    div.appendChild(text);
+    return div;
 }
 
 /**
@@ -1165,6 +1326,45 @@ function getNeedsAttributeLink(filter) {
                     return getLink(filter, "12", "plant phenology");
             }
         }
+    }
+}
+
+function getPopDistance() {
+    return parseFloat(hdom.getFormElementValue("mt-pop-distance"));
+}
+
+/**
+ * @returns {import("../types.js").EnumObsDetailView}
+ */
+function getViewMode() {
+    const radioVal = hdom.getFormElementValue(
+        hdom.getFormElement(RESULT_FORM_ID, "displayopt"),
+    );
+    switch (radioVal) {
+        case "datehisto":
+        case "mapdata":
+        case "map":
+        case "usersumm":
+            return radioVal;
+    }
+    return "details";
+}
+
+function removeObscured() {
+    const ePublic = hdom.getElementById("sel-public");
+    const eTrusted = hdom.getElementById("sel-trusted");
+    const eObscured = hdom.getElementById("sel-obscured");
+
+    // If neither public nor trusted is checked, check them before unchecking obscured.
+    if (
+        (!ePublic || !hdom.isChecked(ePublic)) &&
+        (!eTrusted || !hdom.isChecked(eTrusted))
+    ) {
+        if (ePublic) hdom.setCheckBoxState(ePublic, true);
+        if (eTrusted) hdom.setCheckBoxState(eTrusted, true);
+    }
+    if (eObscured) {
+        hdom.setCheckBoxState("sel-obscured", false);
     }
 }
 

@@ -22,7 +22,7 @@ async function run(program, options) {
     const json = JSON.parse(str);
     const clusterer = new Clusterer();
     const clustered = clusterer.cluster(json, options.maxdistance);
-    const bordered = clusterer.addBorders(clustered, {
+    const bordered = clusterer.addBorders(clustered, options.maxdistance, {
         fill: "red",
         "fill-opacity": 0.8,
     });

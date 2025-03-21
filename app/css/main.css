@@ -9,6 +9,7 @@ nav.navbar {
 .flex {
     display: flex;
     flex-flow: wrap;
+    column-gap: .5rem;
     justify-content: space-between;
 }
 
@@ -36,10 +37,6 @@ fieldset,
 
 input[type="checkbox"] {
     margin-right: .25rem;
-}
-
-input[type="checkbox"]+label {
-    margin-right: .5rem;
 }
 
 input:invalid {
@@ -70,7 +67,21 @@ th {
 /* Standard Form Elements */
 div.checkbox,
 div.radio {
+    display: inline-block;
     white-space: nowrap;
+}
+
+div.checkbox label,
+div.radio label {
+    vertical-align: text-bottom;
+}
+
+div.radio label {
+    margin-left: .2rem;
+}
+
+div.textinput label {
+    margin-right: .2rem;
 }
 
 /* Modal Dialogs */
@@ -166,15 +177,12 @@ div.buttons input {
 
 div.options {
     display: flex;
-    gap: 3rem;
-    margin: auto;
-    width: fit-content;
+    justify-content: space-between;
 }
 
 div#coordoptions {
     display: flex;
-    gap: 1rem;
-    margin: auto;
+    column-gap: 1rem;
     width: fit-content;
 }
 

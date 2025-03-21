@@ -1,5 +1,11 @@
 import test from "ava";
 import { INatObservation } from "../../app/js/lib/inatobservation.js";
+import { makeObservationData } from "./mockdata.js";
+import { MockAPI, MockTaxa } from "./mockapi.js";
+
+const API = new MockAPI();
+
+const CUSCUTA = await API.getTaxonData(MockTaxa.Cuscuta.toString());
 
 /**
  * @param {string} taxon_geoprivacy
@@ -8,28 +14,13 @@ import { INatObservation } from "../../app/js/lib/inatobservation.js";
  * @returns{INatObservation}
  */
 function makeObservation(taxon_geoprivacy, geoprivacy, private_location) {
-    const rawObservation = {
-        taxon_geoprivacy: taxon_geoprivacy,
-        geoprivacy: geoprivacy,
-        private_location: private_location ?? "",
-        id: "",
-        location: "",
-        observed_on_details: { date: "" },
-        place_guess: "",
-        private_place_guess: "",
-        quality_grade: "research",
-        taxon: {
-            id: 0,
-            parent_id: 0,
-            name: "",
-            preferred_common_name: "",
-            rank: "",
-            rank_level: 0,
-            ancestor_ids: [],
-        },
-        user: { id: "", login: "", name: "" },
-    };
-    return new INatObservation(rawObservation);
+    return new INatObservation(
+        makeObservationData(CUSCUTA, {
+            taxon_geoprivacy: taxon_geoprivacy,
+            geoprivacy: geoprivacy,
+            private_location: private_location,
+        }),
+    );
 }
 
 const geoprivacy = test.macro({
@@ -71,21 +62,21 @@ test(
     "obscured-trusted",
     geoprivacy,
     makeObservation("open", "obscured", "37,-122"),
-    false
+    false,
 );
 test("private", geoprivacy, makeObservation("open", "private"), true);
 test(
     "private-trusted",
     geoprivacy,
     makeObservation("open", "private", "37,-122"),
-    false
+    false,
 );
 test("taxon-obscured", geoprivacy, makeObservation("obscured", "open"), true);
 test(
     "taxon-obscured-trusted",
     geoprivacy,
     makeObservation("obscured", "open", "37,-122"),
-    false
+    false,
 );
 
 test("pc-null", pubcoords, makeObservation("open", null), true);
@@ -95,24 +86,24 @@ test(
     "pc-obscured-trusted",
     pubcoords,
     makeObservation("open", "obscured", "37,-122"),
-    false
+    false,
 );
 test("pc-private", pubcoords, makeObservation("open", "private"), false);
 test(
     "pc-private-trusted",
     pubcoords,
     makeObservation("open", "private", "37,-122"),
-    false
+    false,
 );
 test(
     "pc-taxon-obscured",
     pubcoords,
     makeObservation("obscured", "open"),
-    false
+    false,
 );
 test(
     "pc-taxon-obscured-trusted",
     pubcoords,
     makeObservation("obscured", "open", "37,-122"),
-    false
+    false,
 );

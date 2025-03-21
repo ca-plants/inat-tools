@@ -1,22 +1,28 @@
 import whichPolygon from "which-polygon";
 import * as turf from "@turf/turf";
+import { GJTools } from "../lib/geojson.js";
+
+/**
+ * @typedef {import("geojson").Feature<import("geojson").LineString|import("geojson").MultiLineString>|import("geojson").FeatureCollection<import("geojson").LineString|import("geojson").MultiLineString>} MixedLineStrings
+ */
 
 export class Clusterer {
     /**
-     * @param {import("geojson").FeatureCollection} geojson
+     * @param {import("geojson").FeatureCollection<import("geojson").Point>} geojson
+     * @param {number} [distance=1]
      * @param {import("geojson").GeoJsonProperties} [properties={}]
      * @returns {import("geojson").FeatureCollection}
      */
-    addBorders(geojson, properties = {}) {
+    addBorders(geojson, distance = 1, properties = {}) {
         /** @type {import("geojson").Feature[]} */
         const unClusteredPoints = [];
-        /** @type {import("geojson").Feature[]} */
+        /** @type {import("geojson").Feature<import("geojson").Polygon>[]} */
         const newPolygons = [];
 
         /** @type {Map<number,import("geojson").Feature<GeoJSON.Point>[]>} */
         const clusters = new Map();
         turf.featureEach(geojson, (point) => {
-            if (!point.properties || point.geometry.type !== "Point") {
+            if (!point.properties) {
                 return;
             }
             if (typeof point.properties.cluster === "number") {
@@ -25,7 +31,6 @@ export class Clusterer {
                     clusterPoints = [];
                     clusters.set(point.properties.cluster, clusterPoints);
                 }
-                // @ts-ignore
                 clusterPoints.push(point);
             } else {
                 unClusteredPoints.push(point);
@@ -34,15 +39,16 @@ export class Clusterer {
 
         for (const [cluster_num, clusterPoints] of clusters.entries()) {
             const fc = turf.featureCollection(clusterPoints);
-            const border = turf.concave(fc, { maxEdge: 1 });
+            const border = turf.concave(fc, { maxEdge: 2 * distance });
             if (!border) {
                 continue;
             }
 
-            /** @type {import("geojson").Feature[]} */
+            /** @type {import("geojson").Feature<import("geojson").Polygon>[]} */
             let polygons = [];
             switch (border.geometry.type) {
                 case "Polygon":
+                    // @ts-ignore
                     polygons = [border];
                     break;
                 case "MultiPolygon":
@@ -66,7 +72,7 @@ export class Clusterer {
                 hectares: turf
                     .convertArea(turf.area(p), "meters", "hectares")
                     .toFixed(2),
-                pop_num: index,
+                pop_num: index + 1,
                 ...properties,
             };
         });
@@ -89,7 +95,7 @@ export class Clusterer {
     /**
      * @param {GeoJSON.FeatureCollection<import("geojson").Point>} geojson
      * @param {number} [maxDistance]
-     * @returns {import("geojson").FeatureCollection}
+     * @returns {import("geojson").FeatureCollection<import("geojson").Point>}
      */
     cluster(geojson, maxDistance = 1) {
         return turf.clustersDbscan(geojson, maxDistance);
@@ -110,7 +116,7 @@ export class Clusterer {
     }
 
     /**
-     * @param {import("geojson").Feature[]} polygons
+     * @param {import("geojson").Feature<import("geojson").Polygon>[]} polygons
      * @param {Map<number,import("geojson").Feature<import("geojson").Point,import("geojson").GeoJsonProperties>[]>} clusters
      * @returns {import("geojson").Feature<import("geojson").Point>[]}
      */
@@ -125,6 +131,12 @@ export class Clusterer {
                 const polyProps = query([coords[0], coords[1]]);
                 if (!polyProps) {
                     initialOutsidePoints.push(point);
+                } else {
+                    // Add the point to the list for this polygon.
+                    if (!polyProps.observations) {
+                        polyProps.observations = [];
+                    }
+                    polyProps.observations.push(point);
                 }
             }
         }
@@ -134,40 +146,82 @@ export class Clusterer {
         // If any points remain outside, find the distance to the nearest polygon.
         if (initialOutsidePoints.length) {
             // Convert all polygons to lines.
+            /** @type {Map<number,MixedLineStrings[]>} */
             const polysAsLines = new Map();
             for (const polygon of polygons) {
-                const cluster = polygon.properties?.cluster;
+                const cluster = GJTools.getProperty(polygon, "cluster");
                 let lines = polysAsLines.get(cluster);
                 if (!lines) {
                     lines = [];
                     polysAsLines.set(cluster, lines);
                 }
-                // @ts-ignore
-                lines.push(turf.polygonToLine(polygon));
+                const polyLines = turf.polygonToLine(polygon);
+                lines.push(polyLines);
             }
 
             for (const point of initialOutsidePoints) {
-                const cluster = point.properties?.cluster;
+                let properties = point.properties;
+                if (properties === null) {
+                    properties = point.properties = {};
+                }
+                const cluster = properties.cluster;
                 const lines = polysAsLines.get(cluster);
                 if (!lines) {
                     console.warn(`cluster ${cluster} has no polygons`);
                     finalOutsidePoints.push(point);
                     continue;
                 }
-                let minDistance = Number.MAX_SAFE_INTEGER;
-                for (const line of lines) {
-                    const dist = turf.pointToLineDistance(point, line, {
-                        units: "meters",
-                    });
-                    minDistance = Math.min(minDistance, dist);
+                let minDistance = {
+                    pop_num: 0,
+                    distance: Number.MAX_SAFE_INTEGER,
+                };
+                for (const rawLines of lines) {
+                    const processedlines = convertToLineStrings(rawLines);
+                    for (const line of processedlines) {
+                        const popNum = GJTools.getProperty(line, "pop_num");
+                        const dist = turf.pointToLineDistance(point, line, {
+                            units: "meters",
+                        });
+                        if (dist < minDistance.distance) {
+                            minDistance = { pop_num: popNum, distance: dist };
+                        }
+                    }
                 }
 
-                if (minDistance > 1) {
+                if (minDistance.distance > 1) {
+                    minDistance.distance = Math.round(minDistance.distance);
+                    GJTools.setProperty(point, "min_distance", minDistance);
                     finalOutsidePoints.push(point);
+                } else {
+                    // Add the observation to the correct polygon.
+                    const poly = polygons[minDistance.pop_num - 1];
+                    /** @type {import("geojson").Feature<import("geojson").Point>[]} */
+                    const observations = GJTools.getRequiredProperty(
+                        poly,
+                        "observations",
+                        [],
+                    );
+                    observations.push(point);
                 }
             }
         }
 
         return finalOutsidePoints;
     }
+}
+
+/**
+ * @param {MixedLineStrings} mixedData
+ * @returns {import("geojson").Feature<import("geojson").LineString>[]}
+ */
+function convertToLineStrings(mixedData) {
+    if (
+        mixedData.type === "Feature" &&
+        mixedData.geometry.type === "LineString"
+    ) {
+        // @ts-ignore
+        return [mixedData];
+    }
+    // TODO: implement this if the situation arises.
+    throw new Error();
 }

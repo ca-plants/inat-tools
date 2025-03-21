@@ -89,7 +89,7 @@ export class hdom {
     }
 
     /**
-     * @param {Object.<string,string|number>|string} attributes
+     * @param {Object<string,string|number>|string} attributes
      * @returns {HTMLInputElement}
      */
     static createInputElement(attributes) {
@@ -246,6 +246,14 @@ export class hdom {
             return el;
         }
         return e;
+    }
+
+    /**
+     * @param {string} id
+     * @returns {HTMLElement|undefined}
+     */
+    static getElementById(id) {
+        return document.getElementById(id) ?? undefined;
     }
 
     /**

@@ -1,9 +1,14 @@
 import L from "leaflet";
+import * as turf from "@turf/turf";
 import { hdom } from "./hdom.js";
+import { InatURL } from "./inaturl.js";
+import { GJTools } from "./geojson.js";
 
 /**
  * @typedef {{label:string,url:string,attribution:string}} MapSource
  */
+
+export const DEFAULT_MAP_SOURCE = "stadia";
 
 /** @type {Object<string,MapSource>}> */
 export const MAP_SOURCES = {
@@ -37,6 +42,8 @@ export class Map {
     #map;
     /** @type {import("leaflet").TileLayer|undefined} */
     #tileLayer;
+    /** @type {import("leaflet").GeoJSON|undefined} */
+    #featureLayer;
 
     /**
      * @param {string} source
@@ -51,18 +58,20 @@ export class Map {
      */
     addObservations(gj) {
         /**
-         * @param {import("leaflet").Layer} layer
-         * @returns {HTMLElement}
+         * @param {HTMLElement} div
+         * @param {import("geojson").GeoJsonProperties} properties
          */
-        function popup(layer) {
-            /** @type {import("geojson").Feature} */
-            // @ts-ignore
-            const feature = layer.feature;
-            const properties = feature.properties;
-            const div = hdom.createElement("div");
+        function createPointPopup(div, properties) {
             let first = true;
-            for (const property of ["taxon_name", "date", "observer"]) {
-                if (!properties) {
+            for (const property of [
+                "taxon_name",
+                "date",
+                "observer",
+                "accuracy",
+                "cluster",
+                "min_distance",
+            ]) {
+                if (!properties || properties[property] === undefined) {
                     continue;
                 }
                 if (!first) {
@@ -70,6 +79,24 @@ export class Map {
                 }
                 first = false;
                 switch (property) {
+                    case "accuracy":
+                        hdom.appendTextValue(
+                            div,
+                            `Accuracy ${properties.accuracy} meters`,
+                        );
+                        break;
+                    case "cluster":
+                        hdom.appendTextValue(
+                            div,
+                            `Cluster ${properties.cluster}`,
+                        );
+                        break;
+                    case "min_distance":
+                        hdom.appendTextValue(
+                            div,
+                            `${properties.min_distance.distance} meters from population ${properties.min_distance.pop_num}`,
+                        );
+                        break;
                     case "taxon_name":
                         div.appendChild(
                             hdom.createLinkElement(
@@ -84,9 +111,154 @@ export class Map {
                         break;
                 }
             }
+        }
+
+        /**
+         * @param {HTMLElement} div
+         * @param {import("geojson").GeoJsonProperties} properties
+         * @param {Map} map
+         */
+        function createPolygonPopup(div, properties, map) {
+            if (!properties) {
+                return;
+            }
+            for (const property of [
+                "pop_num",
+                "observations",
+                "hectares",
+                "cluster",
+            ]) {
+                switch (property) {
+                    case "cluster":
+                        hdom.appendTextValue(
+                            div,
+                            `Cluster ${properties.cluster}`,
+                        );
+                        break;
+                    case "hectares":
+                        hdom.appendTextValue(
+                            div,
+                            `${properties.hectares} hectares`,
+                        );
+                        break;
+                    case "observations":
+                        {
+                            /**
+                             * @type {import("geojson").Feature<import("geojson").Point>[]}
+                             */
+                            const observations = properties.observations;
+                            const ids = observations.map((obs) =>
+                                GJTools.getProperty(obs, "id"),
+                            );
+                            const allPublic = observations.every((obs) =>
+                                GJTools.getProperty(obs, "is_public"),
+                            );
+                            const url = InatURL.getObsIDLink(
+                                ids,
+                                allPublic ? "map" : "table",
+                            );
+                            div.appendChild(
+                                hdom.createLinkElement(
+                                    url,
+                                    `${properties.observations.length} observations`,
+                                    { target: "_blank" },
+                                ),
+                            );
+                        }
+                        break;
+                    case "pop_num":
+                        hdom.appendTextValue(
+                            div,
+                            `Population #${properties.pop_num} of ${maxPopNum}`,
+                        );
+                        break;
+                    default:
+                        continue;
+                }
+                div.appendChild(hdom.createElement("br"));
+            }
+
+            // Add a link to zoom to these observations.
+            const link = hdom.createLinkElement(
+                "",
+                "Zoom to these observations",
+            );
+            link.addEventListener("click", (e) => {
+                e.preventDefault();
+                /** @type {import("geojson").Feature<import("geojson").Point>[]} */
+                const observations = properties.observations;
+                const fc = turf.featureCollection(observations);
+                map.closePopups();
+                map.fitBounds(fc);
+            });
+            div.appendChild(link);
+        }
+
+        /**
+         * @param {import("leaflet").Layer} layer
+         * @param {Map} map
+         * @returns {HTMLElement}
+         */
+        function popup(layer, map) {
+            /** @type {import("geojson").Feature} */
+            // @ts-ignore
+            const feature = layer.feature;
+            const properties = feature.properties;
+            const div = hdom.createElement("div");
+            switch (feature.geometry.type) {
+                case "Point":
+                    createPointPopup(div, properties);
+                    break;
+                case "Polygon":
+                    createPolygonPopup(div, properties, map);
+                    break;
+            }
             return div;
         }
-        L.geoJSON(gj).bindPopup(popup).addTo(this.#map);
+
+        /** Find the largest population number. */
+        const maxPopNum = gj.features.reduce((n, f) => {
+            if (
+                f.geometry.type === "Polygon" &&
+                f.properties &&
+                f.properties.pop_num > n
+            ) {
+                return f.properties.pop_num;
+            }
+            return n;
+        }, 0);
+
+        this.#featureLayer = L.geoJSON(gj, {
+            pointToLayer: (f, latLng) => {
+                if (maxPopNum > 0 && f.properties.dbscan === "noise") {
+                    const accuracy = f.properties.accuracy;
+                    const color = accuracy === undefined ? "orange" : "red";
+                    const radius =
+                        6 +
+                        (accuracy === undefined
+                            ? 0
+                            : Math.min(accuracy, 1000) / 50);
+                    return L.circleMarker(latLng, {
+                        radius: radius,
+                        fillOpacity: 0.3,
+                        color: "none",
+                        fillColor: color,
+                    });
+                }
+                return L.marker(latLng);
+            },
+        }).bindPopup((layer) => popup(layer, this));
+        this.#featureLayer.addTo(this.#map);
+    }
+
+    clearFeatures() {
+        if (this.#featureLayer) {
+            this.#featureLayer.clearLayers();
+        }
+    }
+
+    closePopups() {
+        this.#map.closePopup();
     }
 
     /**
@@ -100,9 +272,10 @@ export class Map {
      * @param {string} id
      */
     setSource(id) {
-        const source = MAP_SOURCES[id];
+        let source = MAP_SOURCES[id];
         if (!source) {
-            console.warn(`map source "${id}" not found`);
+            console.warn(`map source "${id}" not found; using default source`);
+            source = MAP_SOURCES[DEFAULT_MAP_SOURCE];
         }
         if (this.#tileLayer) {
             this.#map.removeLayer(this.#tileLayer);
