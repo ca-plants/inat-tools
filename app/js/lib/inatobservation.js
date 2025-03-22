@@ -58,9 +58,8 @@ class INatObservation {
     }
 
     getObsDateString() {
-        return this.#rawObservation.observed_on_string
-            .substring(0, 9)
-            .replaceAll("-", String.fromCharCode(8209));
+        const d = this.getObsDate();
+        return `${d.getFullYear()}‑${(d.getMonth() + 1).toString().padStart(2, "0")}‑${d.getDay().toString().padStart(2, "0")}`;
     }
 
     getPlaceGuess() {

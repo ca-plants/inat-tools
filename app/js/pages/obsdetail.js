@@ -10,6 +10,7 @@ import { createDownloadLink } from "../lib/utils.js";
 import { InatURL } from "../lib/inaturl.js";
 import { DEFAULT_MAP_SOURCE, Map, MAP_SOURCES } from "../lib/map.js";
 import { Clusterer } from "../tools/clusterer.js";
+import { DateUtils } from "../lib/dateutils.js";
 
 /** @typedef {{role:string}} ProjectMember */
 /** @typedef {{countObscured:number,countPublic:number,countTrusted:number,observations:INatObservation[]}} Results */
@@ -30,6 +31,7 @@ const DETAIL_COLS = {
         (value, obs) => {
             return hdom.createLinkElement(obs.getURL(), value, {
                 target: "_blank",
+                title: DateUtils.getTimeString(obs.getObsDate()),
             });
         },
     ),
