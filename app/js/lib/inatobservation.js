@@ -54,14 +54,13 @@ class INatObservation {
     }
 
     getObsDate() {
-        return new Date(this.#rawObservation.observed_on_details.date);
+        return new Date(this.#rawObservation.observed_on_string);
     }
 
     getObsDateString() {
-        return this.#rawObservation.observed_on_details.date.replaceAll(
-            "-",
-            String.fromCharCode(8209),
-        );
+        return this.#rawObservation.observed_on_string
+            .substring(0, 9)
+            .replaceAll("-", String.fromCharCode(8209));
     }
 
     getPlaceGuess() {

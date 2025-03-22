@@ -8,7 +8,7 @@
  *  geoprivacy: string | null;
  *  id: string;
  *  location: string;
- *  observed_on_details: { date: string };
+ *  observed_on_string: string;
  *  place_guess: string;
  *  positional_accuracy: number|null;
  *  public_positional_accuracy: number|null;

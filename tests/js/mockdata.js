@@ -12,7 +12,7 @@ export function makeObservationData(taxon, options = {}) {
         public_positional_accuracy: 0,
         id: "",
         location: "",
-        observed_on_details: { date: "" },
+        observed_on_string: "",
         place_guess: "",
         private_place_guess: "",
         quality_grade: "research",
