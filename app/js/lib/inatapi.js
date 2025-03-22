@@ -104,7 +104,7 @@ export class INatAPI {
     async getAutoCompleteObserver(str) {
         /** @type {{id:number,login:string}[]} */
         const raw = await this.#getAutoCompleteRaw(URL_AC_USERS, str);
-        return this.#getAutoCompleteProcessed(
+        return await this.#getAutoCompleteProcessed(
             raw,
             (r) => r.login,
             (r) => r.id,
@@ -118,7 +118,7 @@ export class INatAPI {
     async getAutoCompletePlace(str) {
         /** @type {{id:number,display_name:string}[]} */
         const raw = await this.#getAutoCompleteRaw(URL_AC_PLACE, str);
-        return this.#getAutoCompleteProcessed(
+        return await this.#getAutoCompleteProcessed(
             raw,
             (r) => r.display_name,
             (r) => r.id,
@@ -132,7 +132,7 @@ export class INatAPI {
     async getAutoCompleteProject(str) {
         /** @type {{id:number,title:string}[]} */
         const raw = await this.#getAutoCompleteRaw(URL_AC_PROJECT, str);
-        return this.#getAutoCompleteProcessed(
+        return await this.#getAutoCompleteProcessed(
             raw,
             (r) => r.title,
             (r) => r.id,
@@ -146,7 +146,7 @@ export class INatAPI {
     async getAutoCompleteTaxon(str) {
         /** @type {{id:number,name:string,preferred_common_name:string,rank:string,rank_level:number}[]} */
         const raw = await this.#getAutoCompleteRaw(URL_AC_TAXA, str);
-        return this.#getAutoCompleteProcessed(
+        return await this.#getAutoCompleteProcessed(
             raw,
             (r) => INatAPI.getTaxonFormName(r),
             (r) => r.id,

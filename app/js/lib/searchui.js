@@ -40,8 +40,8 @@ export class AutoCompleteConfig {
     /**
      * @param {string} value
      */
-    getResults(value) {
-        return this.#fnRetrieve(value);
+    async getResults(value) {
+        return await this.#fnRetrieve(value);
     }
 
     getValueID() {
@@ -75,18 +75,27 @@ export class SearchUI extends UI {
         this.#options = options;
     }
 
+    #autoCompleteRunning = false;
     /**
      * @param {Event} e
      * @param {AutoCompleteConfig} config
      */
     async autoComplete(e, config) {
+        if (this.#autoCompleteRunning) {
+            // Already running; reschedule this config.
+            this.#debounce(e, config);
+            return;
+        }
+        this.#autoCompleteRunning = true;
         const dl = hdom.removeChildren(config.getListID());
 
         if (!(e.target instanceof HTMLInputElement)) {
+            this.#autoCompleteRunning = false;
             return;
         }
         const value = e.target.value;
         if (value.length < 3) {
+            this.#autoCompleteRunning = false;
             return;
         }
 
@@ -96,6 +105,7 @@ export class SearchUI extends UI {
                 hdom.createElement("option", { value: k, value_id: v }),
             );
         }
+        this.#autoCompleteRunning = false;
     }
 
     /**
@@ -320,20 +330,25 @@ export class SearchUI extends UI {
         const fields = [
             {
                 name: "observer",
-                fnRetrieve: (v) => this.getAPI().getAutoCompleteObserver(v),
+                fnRetrieve: async (v) =>
+                    await this.getAPI().getAutoCompleteObserver(v),
             },
             {
                 name: "place",
-                fnRetrieve: (v) => this.getAPI().getAutoCompletePlace(v),
+                fnRetrieve: async (v) =>
+                    await this.getAPI().getAutoCompletePlace(v),
             },
             {
                 name: "proj",
-                fnRetrieve: (v) => this.getAPI().getAutoCompleteProject(v),
+                fnRetrieve: async (v) =>
+                    await this.getAPI().getAutoCompleteProject(v),
             },
             {
                 name: "taxon",
-                fnRetrieve: (v) => this.getAPI().getAutoCompleteTaxon(v),
-                fnHandleChange: (valueID) => this.handleTaxonChange(valueID),
+                fnRetrieve: async (v) =>
+                    await this.getAPI().getAutoCompleteTaxon(v),
+                fnHandleChange: async (valueID) =>
+                    await this.handleTaxonChange(valueID),
             },
         ];
 
