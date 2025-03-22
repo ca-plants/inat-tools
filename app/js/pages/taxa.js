@@ -105,10 +105,10 @@ class UI extends SearchUI {
         const downloadLink = createDownloadLink(
             this.getPathPrefix(),
             "Download CSV",
-            "species.csv",
             () => {
                 return {
                     content: this.#getCSVData(speciesData),
+                    fileName: "species.csv",
                 };
             },
         );
