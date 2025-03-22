@@ -74,6 +74,14 @@ export class DateUtils {
     }
 
     /**
+     * @param {Date} d
+     * @returns {string}
+     */
+    static getTimeString(d) {
+        return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+    }
+
+    /**
      * @param {number} year
      * @returns {boolean}
      */
