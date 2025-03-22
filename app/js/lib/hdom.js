@@ -134,7 +134,7 @@ export class hdom {
      * @param {URL|string|undefined} url
      * @param {Node|string|number} eLinkText
      * @param {Object.<string,string>|string} [attributes]
-     * @returns {Element}
+     * @returns {HTMLElement}
      */
     static createLinkElement(url, eLinkText, attributes) {
         const eLink = this.createElement("a", attributes);

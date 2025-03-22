@@ -144,6 +144,8 @@ class ObsDetailUI extends SearchUI {
     #hashParams;
     /** @type {number|undefined} */
     #debounceTimer;
+    /** @type {import("geojson").FeatureCollection|undefined} */
+    #downloadData;
 
     /**
      * @param {import("../types.js").ParamsPageObsDetail} params
@@ -177,7 +179,7 @@ class ObsDetailUI extends SearchUI {
      * @param {string} [type]
      * @returns {{content:string,fileName:string}}
      */
-    #getDownloadData(indent, type) {
+    #getMapDataDownload(indent, type) {
         if (type === undefined) {
             type = hdom.getFormElementValue("download-type");
         }
@@ -193,6 +195,19 @@ class ObsDetailUI extends SearchUI {
         return {
             content: JSON.stringify(gj, undefined, indent),
             fileName: "observations.geojson",
+        };
+    }
+
+    /**
+     * @returns {{content:string,fileName:string}}
+     */
+    #getMapDownload() {
+        return {
+            content: JSON.stringify(this.#downloadData),
+            fileName:
+                this.#getMapMode() === "mt-pop"
+                    ? "populations.geojson"
+                    : "observations.geojson",
         };
     }
 
@@ -807,6 +822,12 @@ class ObsDetailUI extends SearchUI {
                 ),
             );
         }
+        const dlLink = createDownloadLink(
+            this.getPathPrefix(),
+            "Download",
+            () => this.#getMapDownload(),
+        );
+        divTypeOptions.appendChild(dlLink);
 
         const divMap = hdom.createElement("div", {
             class: "section",
@@ -829,10 +850,7 @@ class ObsDetailUI extends SearchUI {
         hdom.addEventListener("mt-pop-distance", "change", () =>
             this.#debounce(() => this.#setMapTypePop(map, gj)),
         );
-        const mapMode =
-            this.#hashParams.map && this.#hashParams.map.view === "pop"
-                ? "mt-pop"
-                : "mt-obs";
+        const mapMode = this.#getMapMode();
         hdom.clickElement(mapMode);
     }
 
@@ -858,8 +876,7 @@ class ObsDetailUI extends SearchUI {
         const dlLink = createDownloadLink(
             this.getPathPrefix(),
             "Download",
-            "observations.geojson",
-            () => this.#getDownloadData(),
+            () => this.#getMapDataDownload(),
         );
         const dlDiv = hdom.createElement("div", "buttons");
         dlDiv.appendChild(typeDiv);
@@ -870,7 +887,7 @@ class ObsDetailUI extends SearchUI {
         urlGJ.hash =
             "data=data:application/json," +
             encodeURIComponent(
-                this.#getDownloadData(undefined, "geojson").content,
+                this.#getMapDataDownload(undefined, "geojson").content,
             );
         const eBtnGeoJSONIO = hdom.createLinkElement(
             urlGJ,
@@ -959,10 +976,10 @@ class ObsDetailUI extends SearchUI {
         const downloadLink = createDownloadLink(
             this.getPathPrefix(),
             "Download CSV",
-            "species.csv",
             () => {
                 return {
                     content: ColDef.getCSVData(sortedSummary, csvCols, this),
+                    fileName: "species.csv",
                 };
             },
         );
@@ -1149,6 +1166,15 @@ class ObsDetailUI extends SearchUI {
     }
 
     /**
+     * @returns {"mt-obs"|"mt-pop"}
+     */
+    #getMapMode() {
+        return this.#hashParams.map && this.#hashParams.map.view === "pop"
+            ? "mt-pop"
+            : "mt-obs";
+    }
+
+    /**
      * @param {Map} map
      * @param {import("geojson").FeatureCollection} gj
      */
@@ -1156,6 +1182,7 @@ class ObsDetailUI extends SearchUI {
         hdom.showElement("mt-pop-options", false);
         map.clearFeatures();
         map.addObservations(gj);
+        this.#downloadData = gj;
         this.#updateHash();
     }
 
@@ -1175,13 +1202,14 @@ class ObsDetailUI extends SearchUI {
         const bordered = clusterer.addBorders(clustered, distance);
 
         map.addObservations(bordered);
+        this.#downloadData = bordered;
         this.#updateHash();
     }
 
     #updateGeoJSONFormat() {
         hdom.setFormElementValue(
             "geojson-value",
-            this.#getDownloadData(2).content,
+            this.#getMapDataDownload(2).content,
         );
 
         // Update links based on selected type.
