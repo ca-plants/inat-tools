@@ -2,7 +2,7 @@ import jstoxml from "jstoxml";
 import { ColDef } from "../lib/coldef.js";
 import { DataRetriever } from "../lib/dataretriever.js";
 import { hdom } from "../lib/hdom.js";
-import { Histogram } from "../lib/histogram.js";
+import { HistogramDate, HistogramTime } from "../lib/histogram.js";
 import { INatObservation } from "../lib/inatobservation.js";
 import { SearchUI } from "../lib/searchui.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
@@ -244,11 +244,7 @@ class ObsDetailUI extends SearchUI {
      */
     #getGPX(indent) {
         const waypoints = [];
-        const selectedTypes = this.getSelectedTypes();
-        for (const obs of this.#processedResults.observations) {
-            if (!selectedTypes.includes(obs.getCoordType())) {
-                continue;
-            }
+        for (const obs of this.#getSelectedObservations()) {
             const coords = obs.getCoordinatesGeoJSON();
             const waypoint = {
                 _name: "wpt",
@@ -674,7 +670,7 @@ class ObsDetailUI extends SearchUI {
         const displayOptions = [
             { id: "details", label: "Details" },
             { id: "mapdata", label: "Map Data" },
-            { id: "datehisto", label: "Date Histogram" },
+            { id: "datehisto", label: "Histogram" },
             { id: "usersumm", label: "Summary by Observer" },
             { id: "map", label: "Map" },
         ];
@@ -718,18 +714,38 @@ class ObsDetailUI extends SearchUI {
 
     showDateHistogram() {
         const eResults = this.clearResults();
-        const coordTypes = this.getSelectedTypes();
 
-        const svg = Histogram.createSVG(
-            this.#processedResults.observations.filter((obs) =>
-                coordTypes.includes(obs.getCoordType()),
-            ),
-            this.#f1,
-        );
+        const divHistoOptions = hdom.createElement("div", "section options");
+        eResults.appendChild(divHistoOptions);
 
-        svg.setAttribute("id", "svg-datehisto");
-        eResults.appendChild(svg);
-        this.onResize();
+        const divTypeOptions = hdom.createElement("div", "flex");
+        divHistoOptions.appendChild(divTypeOptions);
+        const types = [
+            {
+                value: "date",
+                label: "Date",
+                handler: () => this.#setHistoType("date"),
+            },
+            {
+                value: "time",
+                label: "Time",
+                handler: () => this.#setHistoType("time"),
+            },
+        ];
+        for (const type of types) {
+            divTypeOptions.appendChild(
+                createRadioDiv(
+                    "histo-type",
+                    `hist-${type.value}`,
+                    type.value,
+                    type.label,
+                    type.handler,
+                ),
+            );
+        }
+
+        const histMode = "hist-time";
+        hdom.clickElement(histMode);
     }
 
     showDetails() {
@@ -754,10 +770,7 @@ class ObsDetailUI extends SearchUI {
         const tbody = hdom.createElement("tbody");
         eTable.appendChild(tbody);
 
-        for (const obs of this.#processedResults.observations) {
-            if (!selectedTypes.includes(obs.getCoordType())) {
-                continue;
-            }
+        for (const obs of this.#getSelectedObservations()) {
             tbody.appendChild(ColDef.createRow(obs, cols, [this]));
         }
 
@@ -1140,11 +1153,7 @@ class ObsDetailUI extends SearchUI {
 
         const fnProps = propsDefault;
 
-        const selectedTypes = this.getSelectedTypes();
-        for (const obs of this.#processedResults.observations) {
-            if (!selectedTypes.includes(obs.getCoordType())) {
-                continue;
-            }
+        for (const obs of this.#getSelectedObservations()) {
             const properties = fnProps(obs);
             /** @type {GeoJSON.Feature<import("geojson").Point>} */
             const feature = {
@@ -1174,6 +1183,39 @@ class ObsDetailUI extends SearchUI {
         return this.#hashParams.map && this.#hashParams.map.view === "pop"
             ? "mt-pop"
             : "mt-obs";
+    }
+
+    /**
+     * @returns {INatObservation[]}
+     */
+    #getSelectedObservations() {
+        const selectedTypes = this.getSelectedTypes();
+
+        return this.#processedResults.observations.filter((obs) =>
+            selectedTypes.includes(obs.getCoordType()),
+        );
+    }
+
+    /**
+     * @param {"date"|"time"} type
+     */
+    #setHistoType(type) {
+        // Delete current histogram if present.
+        const e = document.getElementById("svg-datehisto");
+        if (e) {
+            e.remove();
+        }
+        const eResults = hdom.getElement("results");
+        const histo =
+            type === "time"
+                ? new HistogramTime(this.#getSelectedObservations(), this.#f1)
+                : new HistogramDate(this.#getSelectedObservations(), this.#f1);
+        const svg = histo.createSVG();
+
+        svg.setAttribute("id", "svg-datehisto");
+        eResults.appendChild(svg);
+        this.onResize();
+        this.#updateHash();
     }
 
     /**

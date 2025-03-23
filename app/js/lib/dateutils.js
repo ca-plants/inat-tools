@@ -78,7 +78,16 @@ export class DateUtils {
      * @returns {string}
      */
     static getTimeString(d) {
-        return `${d.getHours().toString().padStart(2, "0")}:${d.getMinutes().toString().padStart(2, "0")}`;
+        return this.getTimeStringHM(d.getHours(), d.getMinutes());
+    }
+
+    /**
+     * @param {number} hours
+     * @param {number} minutes
+     * @returns {string}
+     */
+    static getTimeStringHM(hours, minutes) {
+        return `${hours.toString().padStart(2, "0")}:${minutes.toString().padStart(2, "0")}`;
     }
 
     /**
