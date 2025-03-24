@@ -175,10 +175,10 @@ export class HistogramDate extends Histogram {
      */
     viewInINat(event, value, filter) {
         event.preventDefault();
-        const url = filter.getURL();
         if (!value || !value.count) {
             return;
         }
+        const url = filter.getURL();
         const md = DateUtils.getMonthAndDay(value.tick, true);
         url.searchParams.set("month", md.month.toString());
         url.searchParams.set("day", md.day.toString());
@@ -204,7 +204,7 @@ export class HistogramTime extends Histogram {
 
         for (let index = 0; index < data.length; index++) {
             const item = data[index];
-            if (item || ticks.length > 0) {
+            if (item) {
                 ticks.push(item.tick);
             }
         }
@@ -244,11 +244,12 @@ export class HistogramTime extends Histogram {
     /**
      * @param {Event} event
      * @param {Summary} value
-     * @param {import("../types.js").SpeciesFilter} filter
      */
-    // eslint-disable-next-line no-unused-vars
-    viewInINat(event, value, filter) {
+    viewInINat(event, value) {
         event.preventDefault();
+        if (!value || !value.count) {
+            return;
+        }
         const url = InatURL.getObsIDLink(value.ids ?? [], "table");
         if (!value) {
             return;
