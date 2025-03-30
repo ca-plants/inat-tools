@@ -41,6 +41,7 @@
  *      coords?: ("public" | "obscured" | "trusted")[];
  *      view?: EnumObsDetailView
  *      branch?: boolean;
+ *      hist?:{view?:"date"|"time"};
  *      map?:{source?:string,view?:"obs"|"pop";maxdist?:number}
  *  }} ParamsPageObsDetail
  * @typedef {{

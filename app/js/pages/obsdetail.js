@@ -744,7 +744,8 @@ class ObsDetailUI extends SearchUI {
             );
         }
 
-        const histMode = "hist-time";
+        const histMode =
+            this.#hashParams.hist?.view === "time" ? "hist-time" : "hist-date";
         hdom.clickElement(histMode);
     }
 
@@ -1277,7 +1278,15 @@ class ObsDetailUI extends SearchUI {
         if (hdom.isChecked("branch")) {
             params.branch = true;
         }
-        if (params.view === "map") {
+        if (params.view === "datehisto") {
+            params.hist = {};
+            if (hdom.isChecked("hist-time")) {
+                params.hist.view = "time";
+            }
+            if (Object.keys(params.hist).length === 0) {
+                delete params.hist;
+            }
+        } else if (params.view === "map") {
             params.map = {};
             const source = hdom.getFormElementValue("map-source");
             if (source !== DEFAULT_MAP_SOURCE) {
