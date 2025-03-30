@@ -74,14 +74,6 @@ export class DateUtils {
     }
 
     /**
-     * @param {Date} d
-     * @returns {string}
-     */
-    static getTimeString(d) {
-        return this.getTimeStringHM(d.getHours(), d.getMinutes());
-    }
-
-    /**
      * @param {number} hours
      * @param {number} minutes
      * @returns {string}

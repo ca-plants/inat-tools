@@ -8,7 +8,7 @@
  *  geoprivacy: string | null;
  *  id: string;
  *  location: string;
- *  observed_on_string: string;
+ *  observed_on: string;
  *  place_guess: string;
  *  positional_accuracy: number|null;
  *  public_positional_accuracy: number|null;
@@ -17,6 +17,7 @@
  *  quality_grade: string;
  *  taxon: INatDataTaxon;
  *  taxon_geoprivacy: string;
+ *  time_observed_at: string;
  *  user: INatDataUser;
  * }} INatDataObs
  * @typedef {{display_name:string}} INatDataPlace

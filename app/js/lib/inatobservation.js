@@ -53,13 +53,22 @@ class INatObservation {
         return this.#rawObservation.id;
     }
 
-    getObsDate() {
-        return new Date(this.#rawObservation.observed_on_string);
+    /**
+     * Return the date of the observation (in the local time of the observation) in YYYY-MM-DD format.
+     */
+    getObsDateString() {
+        return this.#rawObservation.observed_on;
     }
 
-    getObsDateString() {
-        const d = this.getObsDate();
-        return `${d.getFullYear()}‑${(d.getMonth() + 1).toString().padStart(2, "0")}‑${d.getDay().toString().padStart(2, "0")}`;
+    /**
+     * Return the time of the observation (in the local time of the observation) in HH:MM format, or
+     * undefined if the time cannot be determined.
+     * @returns {string|undefined}
+     */
+    getObsTimeString() {
+        return this.#rawObservation.time_observed_at
+            ? this.#rawObservation.time_observed_at.substring(11, 16)
+            : undefined;
     }
 
     getPlaceGuess() {

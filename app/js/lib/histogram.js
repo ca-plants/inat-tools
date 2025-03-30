@@ -146,7 +146,10 @@ export class HistogramDate extends Histogram {
         /** @type {number[]} */
         const rawSummary = [];
         for (const obs of this.getObservations()) {
-            const dayOfYear = DateUtils.getDayOfYear(obs.getObsDate(), true);
+            const dayOfYear = DateUtils.getDayOfYear(
+                new Date(obs.getObsDateString()),
+                true,
+            );
             if (rawSummary[dayOfYear]) {
                 rawSummary[dayOfYear] = rawSummary[dayOfYear] + 1;
             } else {
@@ -218,8 +221,12 @@ export class HistogramTime extends Histogram {
         /** @type {string[][]} */
         const rawSummary = [];
         for (const obs of this.getObservations()) {
-            const d = obs.getObsDate();
-            const h = d.getHours() + (d.getMinutes() >= 30 ? 1 : 0);
+            const t = obs.getObsTimeString();
+            if (!t) {
+                continue;
+            }
+            const hm = t.split(":");
+            const h = parseInt(hm[0]) + (parseInt(hm[1]) >= 30 ? 1 : 0);
             if (rawSummary[h] === undefined) {
                 rawSummary[h] = [];
             }
