@@ -1,50 +1,30 @@
 import * as Plot from "@observablehq/plot";
 import { DateUtils } from "./dateutils.js";
+import { InatURL } from "./inaturl.js";
 
-/** @typedef {{date:number,count:number}} Summary */
+/** @typedef {{tick:number,count:number,ids?:string[]}} Summary */
 
 class Histogram {
+    #observations;
+    #filter;
+
     /**
      * @param {import("../types.js").INatObservation[]} observations
      * @param {import("../types.js").SpeciesFilter} filter
      */
-    static createSVG(observations, filter) {
-        /**
-         * @param {number} doy
-         */
-        function formatDate(doy) {
-            const md = DateUtils.getMonthAndDay(doy, true);
-            return md.month.toString() + "/" + md.day.toString();
-        }
+    constructor(observations, filter) {
+        this.#observations = observations;
+        this.#filter = filter;
+    }
 
-        /**
-         * @param {Summary[]} data
-         */
-        function getTicks(data) {
-            const start = data[0].date;
-            const end = data[data.length - 1].date;
-            const ticks = [start];
-
-            const startMonth = DateUtils.getMonthAndDay(start, true).month;
-            const endMonth = DateUtils.getMonthAndDay(end, true).month;
-
-            // Add the first of each month.
-            for (let month = startMonth + 1; month <= endMonth; month++) {
-                ticks.push(
-                    DateUtils.getDayOfYear(new Date(2024, month - 1, 1), true),
-                );
-            }
-            ticks.push(end);
-            return ticks;
-        }
-
-        const data = this.#summarizeObservations(observations);
+    createSVG() {
+        const data = this.summarizeObservations();
         const plot = Plot.plot({
             x: {
                 label: null,
                 interval: 1,
-                tickFormat: (t) => formatDate(t),
-                ticks: getTicks(data),
+                tickFormat: (t) => this.formatTick(t),
+                ticks: this.getTicks(data),
             },
             y: {
                 label: null,
@@ -53,20 +33,20 @@ class Histogram {
             },
             marks: [
                 Plot.barY(data, {
-                    x: "date",
+                    x: "tick",
                     y: "count",
                 }),
                 Plot.tip(
                     data,
                     Plot.pointerX({
                         x: {
-                            value: (d) => (d.count ? d.date : undefined),
+                            value: (d) => (d.count ? d.tick : undefined),
                             label: "",
                         },
                         y: { value: "count", label: "" },
                         format: {
                             x: (d) => {
-                                return formatDate(d);
+                                return this.formatTick(d);
                             },
                             y: (d) =>
                                 d > 1
@@ -79,7 +59,7 @@ class Histogram {
             ],
         });
         plot.addEventListener("click", (event) => {
-            this.#viewInINat(event, plot.value, filter);
+            this.viewInINat(event, plot.value, this.#filter);
         });
 
         plot.removeAttribute("width");
@@ -88,14 +68,88 @@ class Histogram {
     }
 
     /**
-     * @param {import("../types.js").INatObservation[]} observations
+     * @param {number} n
+     * @returns {string}
+     */
+    // eslint-disable-next-line no-unused-vars
+    formatTick(n) {
+        throw new Error("must be implemented in subclass");
+    }
+
+    getObservations() {
+        return this.#observations;
+    }
+
+    /**
+     * @param {Summary[]} data
+     * @returns {number[]}
+     */
+    // eslint-disable-next-line no-unused-vars
+    getTicks(data) {
+        throw new Error("must be implemented in subclass");
+    }
+
+    /**
      * @returns {Summary[]}
      */
-    static #summarizeObservations(observations) {
+    summarizeObservations() {
+        throw new Error("must be implemented in subclass");
+    }
+
+    /**
+     * @param {Event} event
+     * @param {Summary} value
+     * @param {import("../types.js").SpeciesFilter} filter
+     */
+    // eslint-disable-next-line no-unused-vars
+    viewInINat(event, value, filter) {
+        throw new Error("must be implemented in subclass");
+    }
+}
+
+export class HistogramDate extends Histogram {
+    /**
+     * @param {number} n
+     * @returns {string}
+     */
+    formatTick(n) {
+        const md = DateUtils.getMonthAndDay(n, true);
+        return md.month.toString() + "/" + md.day.toString();
+    }
+
+    /**
+     * @param {Summary[]} data
+     * @returns {number[]}
+     */
+    getTicks(data) {
+        const start = data[0].tick;
+        const end = data[data.length - 1].tick;
+        const ticks = [start];
+
+        const startMonth = DateUtils.getMonthAndDay(start, true).month;
+        const endMonth = DateUtils.getMonthAndDay(end, true).month;
+
+        // Add the first of each month.
+        for (let month = startMonth + 1; month <= endMonth; month++) {
+            ticks.push(
+                DateUtils.getDayOfYear(new Date(2024, month - 1, 1), true),
+            );
+        }
+        ticks.push(end);
+        return ticks;
+    }
+
+    /**
+     * @returns {Summary[]}
+     */
+    summarizeObservations() {
         /** @type {number[]} */
         const rawSummary = [];
-        for (const obs of observations) {
-            const dayOfYear = DateUtils.getDayOfYear(obs.getObsDate(), true);
+        for (const obs of this.getObservations()) {
+            const dayOfYear = DateUtils.getDayOfYear(
+                new Date(obs.getObsDateString()),
+                true,
+            );
             if (rawSummary[dayOfYear]) {
                 rawSummary[dayOfYear] = rawSummary[dayOfYear] + 1;
             } else {
@@ -108,7 +162,7 @@ class Histogram {
             const count = rawSummary[index];
             if (summary.length || count) {
                 summary.push({
-                    date: index,
+                    tick: index,
                     count: count ? count : 0,
                 });
             }
@@ -119,20 +173,94 @@ class Histogram {
 
     /**
      * @param {Event} event
-     * @param {{date:number,count:number}} value
+     * @param {Summary} value
      * @param {import("../types.js").SpeciesFilter} filter
      */
-    static #viewInINat(event, value, filter) {
+    viewInINat(event, value, filter) {
         event.preventDefault();
-        const url = filter.getURL();
         if (!value || !value.count) {
             return;
         }
-        const md = DateUtils.getMonthAndDay(value.date, true);
+        const url = filter.getURL();
+        const md = DateUtils.getMonthAndDay(value.tick, true);
         url.searchParams.set("month", md.month.toString());
         url.searchParams.set("day", md.day.toString());
         window.open(url, "_blank");
     }
 }
 
-export { Histogram };
+export class HistogramTime extends Histogram {
+    /**
+     * @param {number} hour
+     * @returns {string}
+     */
+    formatTick(hour) {
+        return DateUtils.getTimeStringHM(hour, 0);
+    }
+
+    /**
+     * @param {Summary[]} data
+     * @returns {number[]}
+     */
+    getTicks(data) {
+        const ticks = [];
+
+        for (let index = 0; index < data.length; index++) {
+            const item = data[index];
+            if (item) {
+                ticks.push(item.tick);
+            }
+        }
+        return ticks;
+    }
+
+    /**
+     * @returns {Summary[]}
+     */
+    summarizeObservations() {
+        /** @type {string[][]} */
+        const rawSummary = [];
+        for (const obs of this.getObservations()) {
+            const t = obs.getObsTimeString();
+            if (!t) {
+                continue;
+            }
+            const hm = t.split(":");
+            const h = parseInt(hm[0]) + (parseInt(hm[1]) >= 30 ? 1 : 0);
+            if (rawSummary[h] === undefined) {
+                rawSummary[h] = [];
+            }
+            rawSummary[h].push(obs.getID());
+        }
+
+        const summary = [];
+        for (let index = 0; index < rawSummary.length; index++) {
+            const count = rawSummary[index] ? rawSummary[index].length : 0;
+            if (summary.length || count) {
+                summary.push({
+                    tick: index,
+                    count: count ? count : 0,
+                    ids: rawSummary[index] ?? [],
+                });
+            }
+        }
+
+        return summary;
+    }
+
+    /**
+     * @param {Event} event
+     * @param {Summary} value
+     */
+    viewInINat(event, value) {
+        event.preventDefault();
+        if (!value || !value.count) {
+            return;
+        }
+        const url = InatURL.getObsIDLink(value.ids ?? [], "table");
+        if (!value) {
+            return;
+        }
+        window.open(url, "_blank");
+    }
+}
