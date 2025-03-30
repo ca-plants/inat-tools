@@ -1089,11 +1089,15 @@ function handleMonth1Change(e, ui) {
     }
     const prefix = target.id.split("-")[0];
     const locked = ui.getMonthLock(prefix);
+    const value = hdom.getFormElementValue(target);
+    if (value === "") {
+        // Clear both values when one is cleared.
+        hdom.setFormElementValue(prefix + "-month2", "");
+        ui.setMonthLock(prefix, true);
+        return;
+    }
     if (locked) {
-        hdom.setFormElementValue(
-            prefix + "-month2",
-            hdom.getFormElementValue(target),
-        );
+        hdom.setFormElementValue(prefix + "-month2", value);
     }
 }
 
@@ -1107,10 +1111,14 @@ function handleMonth2Change(e, ui) {
         throw new Error();
     }
     const prefix = target.id.split("-")[0];
+    const value = hdom.getFormElementValue(target);
+    if (value === "") {
+        // Clear both values when one is cleared.
+        hdom.setFormElementValue(prefix + "-month1", "");
+    }
     ui.setMonthLock(
         prefix,
-        hdom.getFormElementValue(target) ===
-            hdom.getFormElementValue(prefix + "-month1"),
+        value === hdom.getFormElementValue(prefix + "-month1"),
     );
 }
 
