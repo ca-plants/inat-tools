@@ -7,6 +7,7 @@ export function makeObservationData(taxon, options = {}) {
     const rawObservation = {
         taxon_geoprivacy: options.taxon_geoprivacy ?? "",
         geoprivacy: options.geoprivacy ?? "",
+        observed_on: "",
         private_location: options.private_location ?? "",
         positional_accuracy: 0,
         public_positional_accuracy: 0,
