@@ -1,5 +1,6 @@
 import { DateUtils } from "./dateutils.js";
 import { hdom } from "./hdom.js";
+import { HTMLUtils } from "./htmlutils.js";
 import { INatAPI } from "./inatapi.js";
 import { SpeciesFilter } from "./speciesfilter.js";
 import { UI } from "./ui.js";
@@ -937,11 +938,16 @@ function createMiscFields(prefix) {
     const divForm = hdom.getElement(prefix + "-misc");
 
     // Add Quality Grade checkboxes.
-    const divQuality = hdom.createElement("div");
+    const divQuality = hdom.createElement("div", "flex");
     for (const cb of QUALITY_GRADES) {
-        const id = `${prefix}-${cb.id}`;
-        divQuality.appendChild(hdom.createCheckBox(id, false));
-        divQuality.appendChild(hdom.createLabelElement(id, cb.label));
+        divQuality.appendChild(
+            HTMLUtils.createCheckboxDiv(
+                undefined,
+                `${prefix}-${cb.id}`,
+                undefined,
+                cb.label,
+            ),
+        );
     }
     divForm.appendChild(divQuality);
 
