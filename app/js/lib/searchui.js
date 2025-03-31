@@ -81,13 +81,15 @@ export class SearchUI extends UI {
      * @param {AutoCompleteConfig} config
      */
     async autoComplete(e, config) {
+        // Make sure there's nothing in the queue when we start.
+        this.#debounceTimer = undefined;
+
         if (this.#autoCompleteRunning) {
             // Already running; reschedule this config.
             this.#debounce(e, config);
             return;
         }
         this.#autoCompleteRunning = true;
-        const dl = hdom.removeChildren(config.getListID());
 
         if (!(e.target instanceof HTMLInputElement)) {
             this.#autoCompleteRunning = false;
@@ -100,6 +102,13 @@ export class SearchUI extends UI {
         }
 
         const results = await config.getResults(value);
+        if (this.#debounceTimer) {
+            // There's another change in the queue, abandon this one.
+            this.#autoCompleteRunning = false;
+            return;
+        }
+
+        const dl = hdom.removeChildren(config.getListID());
         for (const [k, v] of Object.entries(results)) {
             dl.appendChild(
                 hdom.createElement("option", { value: k, value_id: v }),
