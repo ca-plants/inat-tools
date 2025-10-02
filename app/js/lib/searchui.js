@@ -233,7 +233,14 @@ export class SearchUI extends UI {
                 setValue(config, "");
                 // Clear any errors.
                 target.setCustomValidity("");
-                this.#debounce(e, config);
+                // Check inputType - Firefox does not send change event when item is selected from <datalist>; the only indicator is
+                // e.inputType === "insertReplacementText".
+                if (
+                    e instanceof InputEvent &&
+                    e.inputType !== "insertReplacementText"
+                ) {
+                    this.#debounce(e, config);
+                }
                 break;
         }
     }
@@ -274,10 +281,7 @@ export class SearchUI extends UI {
             fnHandleChange,
         );
 
-        const input = document.getElementById(id);
-        if (!input) {
-            return;
-        }
+        const input = hdom.getElement(id);
         input.addEventListener("change", (e) =>
             this.handleAutoCompleteField(e, config),
         );
