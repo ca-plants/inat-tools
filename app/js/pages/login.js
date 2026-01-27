@@ -150,6 +150,7 @@ class LoginUI {
             alert("You must enter a client id.");
             return;
         }
+        localStorage.setItem("client_id",client_id)
         await this.authorize();
     }
 
@@ -181,6 +182,10 @@ class LoginUI {
         }
 
         // Running on localhost. The production client ID won't work, so paste one in.
+        const client_id = localStorage.getItem("client_id")
+        if(client_id!==null){
+          hdom.setFormElementValue("client_id",client_id)
+        }
         hdom.showElement("login-section");
         hdom.addEventListener(
             "login",
