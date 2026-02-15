@@ -303,7 +303,6 @@ function getAutoCompleteDiv(prefix, name, label) {
 
     const eInput = hdom.createInputElement({
         type: "text",
-        list: `${id}-list`,
         id: id,
         autocomplete: "off",
     });
@@ -314,9 +313,6 @@ function getAutoCompleteDiv(prefix, name, label) {
         id: `${prefix}-${name}-id`,
     });
     eDiv.appendChild(eHidden);
-
-    const eDataList = hdom.createElement("datalist", { id: `${id}-list` });
-    eDiv.appendChild(eDataList);
 
     return eDiv;
 }

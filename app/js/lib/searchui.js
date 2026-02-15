@@ -16,26 +16,19 @@ const QUALITY_GRADES = [
  */
 
 export class AutoCompleteConfig {
-    #listID;
     #valueID;
     #fnRetrieve;
     #fnHandleChange;
 
     /**
-     * @param {string} listID
      * @param {string} valueID
      * @param {function (string): Promise<Object<string,number>>} fnRetrieve
      * @param {function (string): void|undefined} [fnHandleChange]
      */
-    constructor(listID, valueID, fnRetrieve, fnHandleChange) {
-        this.#listID = listID;
+    constructor(valueID, fnRetrieve, fnHandleChange) {
         this.#valueID = valueID;
         this.#fnRetrieve = fnRetrieve;
         this.#fnHandleChange = fnHandleChange;
-    }
-
-    getListID() {
-        return this.#listID;
     }
 
     /**
@@ -216,27 +209,6 @@ export class SearchUI extends UI {
             throw new Error();
         }
         switch (e.type) {
-            case "change":
-                {
-                    // Clear ID.
-                    setValue(config, "");
-                    const value = target.value;
-                    const list = hdom.getElement(config.getListID());
-                    if (!(list instanceof HTMLDataListElement)) {
-                        throw new Error();
-                    }
-                    const options = list.childNodes;
-                    for (const option of options) {
-                        if (!(option instanceof HTMLOptionElement)) {
-                            throw new Error();
-                        }
-                        if (option.value === value) {
-                            setValue(config, option.getAttribute("value_id"));
-                            return;
-                        }
-                    }
-                }
-                break;
             case "focus":
                 target.select();
                 break;
@@ -298,16 +270,12 @@ export class SearchUI extends UI {
     initAutoCompleteField(prefix, name, fnRetrieve, fnHandleChange) {
         const id = prefix + "-" + name + "-name";
         const config = new AutoCompleteConfig(
-            prefix + "-" + name + "-name-list",
             prefix + "-" + name + "-id",
             fnRetrieve,
             fnHandleChange,
         );
 
         const input = hdom.getElement(id);
-        input.addEventListener("change", (e) =>
-            this.handleAutoCompleteField(e, config),
-        );
         input.addEventListener("focus", (e) =>
             this.handleAutoCompleteField(e, config),
         );
