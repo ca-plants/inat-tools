@@ -16,17 +16,17 @@ const QUALITY_GRADES = [
  */
 
 export class AutoCompleteConfig {
-    #valueID;
+    #prefix;
     #fnRetrieve;
     #fnHandleChange;
 
     /**
-     * @param {string} valueID
+     * @param {string} prefix
      * @param {function (string): Promise<Object<string,number>>} fnRetrieve
      * @param {function (string): void|undefined} [fnHandleChange]
      */
-    constructor(valueID, fnRetrieve, fnHandleChange) {
-        this.#valueID = valueID;
+    constructor(prefix, fnRetrieve, fnHandleChange) {
+        this.#prefix = prefix;
         this.#fnRetrieve = fnRetrieve;
         this.#fnHandleChange = fnHandleChange;
     }
@@ -38,13 +38,17 @@ export class AutoCompleteConfig {
         return await this.#fnRetrieve(value);
     }
 
+    getInputID() {
+        return `${this.#prefix}-name`;
+    }
+
     getValueID() {
-        return this.#valueID;
+        return `${this.#prefix}-id`;
     }
 
     handleChange() {
         if (this.#fnHandleChange) {
-            this.#fnHandleChange(this.#valueID);
+            this.#fnHandleChange(this.getValueID());
         }
     }
 }
@@ -116,7 +120,7 @@ export class SearchUI extends UI {
                 k,
             );
             eList.appendChild(li);
-            hdom.addEventListener(li, "click", () =>
+            hdom.addEventListener(li, "mousedown", () =>
                 selectAutoComplete(config, li),
             );
         }
@@ -154,10 +158,6 @@ export class SearchUI extends UI {
      * @param {AutoCompleteConfig} config
      */
     #debounce(e, config, timeout = 200) {
-        if (!(e instanceof InputEvent) || !e.inputType) {
-            // Ignore events with no inputType (e.g., the event triggered after we set value).
-            return;
-        }
         clearTimeout(this.#debounceTimer);
         this.#debounceTimer = setTimeout(
             async () => await this.autoComplete(e, config),
@@ -211,20 +211,17 @@ export class SearchUI extends UI {
         switch (e.type) {
             case "focus":
                 target.select();
+                // If there's no id set, and there's text present, open the suggestion list.
+                if (hdom.getFormElementValue(config.getValueID()) === "") {
+                    this.#debounce(e, config);
+                }
                 break;
             case "input":
                 // Clear ID.
                 setValue(config, "");
                 // Clear any errors.
                 target.setCustomValidity("");
-                // Check inputType - Firefox does not send change event when item is selected from <datalist>; the only indicator is
-                // e.inputType === "insertReplacementText".
-                if (
-                    e instanceof InputEvent &&
-                    e.inputType !== "insertReplacementText"
-                ) {
-                    this.#debounce(e, config);
-                }
+                this.#debounce(e, config);
                 break;
         }
     }
@@ -268,14 +265,16 @@ export class SearchUI extends UI {
      * @param {(function(string):void)|undefined} [fnHandleChange]
      */
     initAutoCompleteField(prefix, name, fnRetrieve, fnHandleChange) {
-        const id = prefix + "-" + name + "-name";
         const config = new AutoCompleteConfig(
-            prefix + "-" + name + "-id",
+            `${prefix}-${name}`,
             fnRetrieve,
             fnHandleChange,
         );
 
-        const input = hdom.getElement(id);
+        const input = hdom.getElement(config.getInputID());
+        input.addEventListener("blur", () => {
+            hdom.showElement("autocomplete", false);
+        });
         input.addEventListener("focus", (e) =>
             this.handleAutoCompleteField(e, config),
         );
@@ -1198,9 +1197,8 @@ function handleSetFromURL(ui, prefix) {
  * @param {HTMLElement} li
  */
 function selectAutoComplete(config, li) {
-    const prefix = config.getValueID().split("-").slice(0, -1).join("-");
-    hdom.setFormElementValue(`${prefix}-name`, li.textContent);
-    hdom.setFormElementValue(`${prefix}-id`, li.dataset.id);
+    hdom.setFormElementValue(config.getInputID(), li.textContent);
+    hdom.setFormElementValue(config.getValueID(), li.dataset.id);
     hdom.showElement("autocomplete", false);
 }
 
