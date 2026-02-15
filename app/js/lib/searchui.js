@@ -109,6 +109,12 @@ export class SearchUI extends UI {
             return;
         }
 
+        /** @type {HTMLElement} */
+        const eList = hdom.getElement("autocomplete");
+        eList.style.top = `${e.target.offsetTop + e.target.offsetHeight - window.pageYOffset + 5}px`;
+        eList.style.left = `${e.target.offsetLeft}px`;
+        hdom.showElement(eList, true);
+
         const dl = hdom.removeChildren(config.getListID());
         for (const [k, v] of Object.entries(results)) {
             dl.appendChild(
@@ -258,12 +264,23 @@ export class SearchUI extends UI {
 
     async init() {
         await super.init();
-        const e = document.getElementById("cancel-query");
-        if (e) {
-            e.addEventListener("click", () => {
-                this.getAPI().cancelQuery(true);
+
+        // Create <ul> for autocompletes.
+        const body = document.documentElement
+            .getElementsByTagName("body")
+            .item(0);
+        if (body) {
+            const ul = hdom.createElement("ul", {
+                id: "autocomplete",
+                hidden: "",
             });
+            body.appendChild(ul);
         }
+
+        const eCancel = hdom.getElement("cancel-query");
+        eCancel.addEventListener("click", () => {
+            this.getAPI().cancelQuery(true);
+        });
     }
 
     /**
