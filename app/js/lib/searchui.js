@@ -115,10 +115,16 @@ export class SearchUI extends UI {
         eList.style.left = `${e.target.offsetLeft}px`;
         hdom.showElement(eList, true);
 
-        const dl = hdom.removeChildren(eList);
+        hdom.removeChildren(eList);
         for (const [k, v] of Object.entries(results)) {
-            dl.appendChild(
-                hdom.createTextElement("li", { "data-id": v.toString() }, k),
+            const li = hdom.createTextElement(
+                "li",
+                { "data-id": v.toString() },
+                k,
+            );
+            eList.appendChild(li);
+            hdom.addEventListener(li, "click", () =>
+                selectAutoComplete(config, li),
             );
         }
         this.#autoCompleteRunning = false;
@@ -1217,6 +1223,17 @@ function handleSetFromURL(ui, prefix) {
     }
     // @ts-ignore
     eDlg.showModal();
+}
+
+/**
+ * @param {AutoCompleteConfig} config
+ * @param {HTMLElement} li
+ */
+function selectAutoComplete(config, li) {
+    const prefix = config.getValueID().split("-").slice(0, -1).join("-");
+    hdom.setFormElementValue(`${prefix}-name`, li.textContent);
+    hdom.setFormElementValue(`${prefix}-id`, li.dataset.id);
+    hdom.showElement("autocomplete", false);
 }
 
 /**

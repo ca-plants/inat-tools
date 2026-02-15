@@ -106,6 +106,10 @@ dialog form input[type="text"] {
   background-color: #ddd
 }
 
+#autocomplete li:hover {
+  background-color: #fff
+}
+
 /* Responsive Table */
 table {
   margin: auto;
