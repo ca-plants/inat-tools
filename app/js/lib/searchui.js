@@ -1146,13 +1146,16 @@ function handleAutoCompleteKey(e, config) {
             }
             break;
         case "Enter":
+        case "Tab":
             {
                 const selected = getAutoCompleteSelection();
                 if (selected === undefined) {
                     return;
                 }
-                e.preventDefault();
-                selectAutoComplete(config, selected);
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                }
+                selectAutoComplete(config, selected, e.key === "Enter");
             }
             break;
     }
@@ -1299,12 +1302,13 @@ function handleSetFromURL(ui, prefix) {
 /**
  * @param {AutoCompleteConfig} config
  * @param {HTMLElement} li
+ * @param {boolean} [setSelected=true]
  */
-function selectAutoComplete(config, li) {
+function selectAutoComplete(config, li, setSelected = true) {
     hdom.setFormElementValue(config.getInputID(), li.textContent);
     hdom.setFormElementValue(config.getValueID(), li.dataset.id);
     hdom.showElement("autocomplete", false);
-    config.setSelected(true);
+    config.setSelected(setSelected);
 }
 
 /**
