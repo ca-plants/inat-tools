@@ -105,8 +105,13 @@ export class SearchUI extends UI {
             this.#autoCompleteRunning = false;
             return;
         }
+
+        /** @type {HTMLElement} */
+        const eList = hdom.getElement("autocomplete");
+
         const value = e.target.value;
         if (value.length < 3) {
+            hdom.showElement(eList, false);
             this.#autoCompleteRunning = false;
             return;
         }
@@ -118,8 +123,6 @@ export class SearchUI extends UI {
             return;
         }
 
-        /** @type {HTMLElement} */
-        const eList = hdom.getElement("autocomplete");
         eList.style.top = `${e.target.offsetTop + e.target.offsetHeight - window.pageYOffset + 5}px`;
         eList.style.left = `${e.target.offsetLeft}px`;
         hdom.showElement(eList, true);
@@ -300,7 +303,7 @@ export class SearchUI extends UI {
             hdom.showElement("autocomplete", false);
         });
         hdom.addEventListener(input, "keydown", (e) =>
-            handleAutoCompleteKey(/** @type {KeyboardEvent} **/ (e)),
+            handleAutoCompleteKey(/** @type {KeyboardEvent} **/ (e), config),
         );
         input.addEventListener("focus", (e) =>
             this.handleAutoCompleteField(e, config),
@@ -1046,7 +1049,7 @@ function createMonthSelects(prefix, ui) {
 }
 
 /**
- * @returns {Element|undefined}
+ * @returns {HTMLElement|undefined}
  */
 function getAutoCompleteSelection() {
     const ul = hdom.getElement("autocomplete");
@@ -1055,7 +1058,7 @@ function getAutoCompleteSelection() {
     }
     for (const child of ul.children) {
         if (child.getAttribute("data-highlight") !== null) {
-            return child;
+            return /** @type {HTMLElement} */ (child);
         }
     }
 }
@@ -1112,8 +1115,9 @@ function handleAutoCompleteHover(li) {
 
 /**
  * @param {KeyboardEvent} e
+ * @param {AutoCompleteConfig} config
  */
-function handleAutoCompleteKey(e) {
+function handleAutoCompleteKey(e, config) {
     switch (e.key) {
         case "ArrowDown":
             {
@@ -1139,6 +1143,16 @@ function handleAutoCompleteKey(e) {
                     selected.removeAttribute("data-highlight");
                     selected.previousSibling.setAttribute("data-highlight", "");
                 }
+            }
+            break;
+        case "Enter":
+            {
+                const selected = getAutoCompleteSelection();
+                if (selected === undefined) {
+                    return;
+                }
+                e.preventDefault();
+                selectAutoComplete(config, selected);
             }
             break;
     }
