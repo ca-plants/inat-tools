@@ -115,10 +115,10 @@ export class SearchUI extends UI {
         eList.style.left = `${e.target.offsetLeft}px`;
         hdom.showElement(eList, true);
 
-        const dl = hdom.removeChildren(config.getListID());
+        const dl = hdom.removeChildren(eList);
         for (const [k, v] of Object.entries(results)) {
             dl.appendChild(
-                hdom.createElement("option", { value: k, value_id: v }),
+                hdom.createTextElement("li", { "data-id": v.toString() }, k),
             );
         }
         this.#autoCompleteRunning = false;
