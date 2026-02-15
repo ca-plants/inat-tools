@@ -299,6 +299,9 @@ export class SearchUI extends UI {
             }
             hdom.showElement("autocomplete", false);
         });
+        hdom.addEventListener(input, "keydown", (e) =>
+            handleAutoCompleteKey(/** @type {KeyboardEvent} **/ (e)),
+        );
         input.addEventListener("focus", (e) =>
             this.handleAutoCompleteField(e, config),
         );
@@ -1043,6 +1046,21 @@ function createMonthSelects(prefix, ui) {
 }
 
 /**
+ * @returns {Element|undefined}
+ */
+function getAutoCompleteSelection() {
+    const ul = hdom.getElement("autocomplete");
+    if (ul.hidden) {
+        return;
+    }
+    for (const child of ul.children) {
+        if (child.getAttribute("data-highlight") !== null) {
+            return child;
+        }
+    }
+}
+
+/**
  * @param {string} prefix
  * @returns {string}
  */
@@ -1089,6 +1107,40 @@ function handleAutoCompleteHover(li) {
         if (child !== li) {
             child.removeAttribute("data-highlight");
         }
+    }
+}
+
+/**
+ * @param {KeyboardEvent} e
+ */
+function handleAutoCompleteKey(e) {
+    switch (e.key) {
+        case "ArrowDown":
+            {
+                e.preventDefault();
+                const selected = getAutoCompleteSelection();
+                if (selected === undefined) {
+                    return;
+                }
+                if (selected.nextSibling instanceof HTMLElement) {
+                    selected.removeAttribute("data-highlight");
+                    selected.nextSibling.setAttribute("data-highlight", "");
+                }
+            }
+            break;
+        case "ArrowUp":
+            {
+                e.preventDefault();
+                const selected = getAutoCompleteSelection();
+                if (selected === undefined) {
+                    return;
+                }
+                if (selected.previousSibling instanceof HTMLElement) {
+                    selected.removeAttribute("data-highlight");
+                    selected.previousSibling.setAttribute("data-highlight", "");
+                }
+            }
+            break;
     }
 }
 
