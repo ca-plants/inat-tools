@@ -1158,6 +1158,9 @@ function handleAutoCompleteKey(e, config) {
                 selectAutoComplete(config, selected, e.key === "Enter");
             }
             break;
+        case "Escape":
+            hdom.showElement("autocomplete", false);
+            break;
     }
 }
 
