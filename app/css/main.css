@@ -106,7 +106,7 @@ dialog form input[type="text"] {
   background-color: #ddd
 }
 
-#autocomplete li:hover {
+#autocomplete li[data-highlight] {
   background-color: #fff
 }
 

@@ -125,15 +125,23 @@ export class SearchUI extends UI {
         hdom.showElement(eList, true);
 
         hdom.removeChildren(eList);
+        let first = true;
         for (const [k, v] of Object.entries(results)) {
             const li = hdom.createTextElement(
                 "li",
                 { "data-id": v.toString() },
                 k,
             );
+            if (first) {
+                li.setAttribute("data-highlight", "");
+                first = false;
+            }
             eList.appendChild(li);
             hdom.addEventListener(li, "mousedown", () =>
                 selectAutoComplete(config, li),
+            );
+            hdom.addEventListener(li, "mouseover", () =>
+                handleAutoCompleteHover(li),
             );
         }
         this.#autoCompleteRunning = false;
@@ -1068,6 +1076,20 @@ export function getMonthList(m1, m2) {
         }
     }
     return months;
+}
+
+/**
+ * @param {HTMLElement} li
+ */
+function handleAutoCompleteHover(li) {
+    li.setAttribute("data-highlight", "");
+
+    const parent = /** @type {HTMLElement} */ (li.parentElement);
+    for (const child of parent.children) {
+        if (child !== li) {
+            child.removeAttribute("data-highlight");
+        }
+    }
 }
 
 /**
