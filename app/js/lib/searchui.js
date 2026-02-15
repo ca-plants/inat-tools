@@ -19,6 +19,7 @@ export class AutoCompleteConfig {
     #prefix;
     #fnRetrieve;
     #fnHandleChange;
+    #selected = false;
 
     /**
      * @param {string} prefix
@@ -50,6 +51,17 @@ export class AutoCompleteConfig {
         if (this.#fnHandleChange) {
             this.#fnHandleChange(this.getValueID());
         }
+    }
+
+    isSelected() {
+        return this.#selected;
+    }
+
+    /**
+     * @param {boolean} state
+     */
+    setSelected(state) {
+        this.#selected = state;
     }
 }
 
@@ -273,6 +285,10 @@ export class SearchUI extends UI {
 
         const input = hdom.getElement(config.getInputID());
         input.addEventListener("blur", () => {
+            if (config.isSelected()) {
+                config.setSelected(false);
+                hdom.setFocusTo(input);
+            }
             hdom.showElement("autocomplete", false);
         });
         input.addEventListener("focus", (e) =>
@@ -1200,6 +1216,7 @@ function selectAutoComplete(config, li) {
     hdom.setFormElementValue(config.getInputID(), li.textContent);
     hdom.setFormElementValue(config.getValueID(), li.dataset.id);
     hdom.showElement("autocomplete", false);
+    config.setSelected(true);
 }
 
 /**
