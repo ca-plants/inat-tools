@@ -16,26 +16,20 @@ const QUALITY_GRADES = [
  */
 
 export class AutoCompleteConfig {
-    #listID;
-    #valueID;
+    #prefix;
     #fnRetrieve;
     #fnHandleChange;
+    #selected = false;
 
     /**
-     * @param {string} listID
-     * @param {string} valueID
+     * @param {string} prefix
      * @param {function (string): Promise<Object<string,number>>} fnRetrieve
      * @param {function (string): void|undefined} [fnHandleChange]
      */
-    constructor(listID, valueID, fnRetrieve, fnHandleChange) {
-        this.#listID = listID;
-        this.#valueID = valueID;
+    constructor(prefix, fnRetrieve, fnHandleChange) {
+        this.#prefix = prefix;
         this.#fnRetrieve = fnRetrieve;
         this.#fnHandleChange = fnHandleChange;
-    }
-
-    getListID() {
-        return this.#listID;
     }
 
     /**
@@ -45,14 +39,29 @@ export class AutoCompleteConfig {
         return await this.#fnRetrieve(value);
     }
 
+    getInputID() {
+        return `${this.#prefix}-name`;
+    }
+
     getValueID() {
-        return this.#valueID;
+        return `${this.#prefix}-id`;
     }
 
     handleChange() {
         if (this.#fnHandleChange) {
-            this.#fnHandleChange(this.#valueID);
+            this.#fnHandleChange(this.getValueID());
         }
+    }
+
+    isSelected() {
+        return this.#selected;
+    }
+
+    /**
+     * @param {boolean} state
+     */
+    setSelected(state) {
+        this.#selected = state;
     }
 }
 
@@ -96,8 +105,13 @@ export class SearchUI extends UI {
             this.#autoCompleteRunning = false;
             return;
         }
+
+        /** @type {HTMLElement} */
+        const eList = hdom.getElement("autocomplete");
+
         const value = e.target.value;
         if (value.length < 3) {
+            hdom.showElement(eList, false);
             this.#autoCompleteRunning = false;
             return;
         }
@@ -109,10 +123,28 @@ export class SearchUI extends UI {
             return;
         }
 
-        const dl = hdom.removeChildren(config.getListID());
+        eList.style.top = `${e.target.offsetTop + e.target.offsetHeight - window.pageYOffset + 5}px`;
+        eList.style.left = `${e.target.offsetLeft}px`;
+        hdom.showElement(eList, true);
+
+        hdom.removeChildren(eList);
+        let first = true;
         for (const [k, v] of Object.entries(results)) {
-            dl.appendChild(
-                hdom.createElement("option", { value: k, value_id: v }),
+            const li = hdom.createTextElement(
+                "li",
+                { "data-id": v.toString() },
+                k,
+            );
+            if (first) {
+                li.setAttribute("data-highlight", "");
+                first = false;
+            }
+            eList.appendChild(li);
+            hdom.addEventListener(li, "mousedown", () =>
+                selectAutoComplete(config, li),
+            );
+            hdom.addEventListener(li, "mouseover", () =>
+                handleAutoCompleteHover(li),
             );
         }
         this.#autoCompleteRunning = false;
@@ -149,10 +181,6 @@ export class SearchUI extends UI {
      * @param {AutoCompleteConfig} config
      */
     #debounce(e, config, timeout = 200) {
-        if (!(e instanceof InputEvent) || !e.inputType) {
-            // Ignore events with no inputType (e.g., the event triggered after we set value).
-            return;
-        }
         clearTimeout(this.#debounceTimer);
         this.#debounceTimer = setTimeout(
             async () => await this.autoComplete(e, config),
@@ -204,43 +232,19 @@ export class SearchUI extends UI {
             throw new Error();
         }
         switch (e.type) {
-            case "change":
-                {
-                    // Clear ID.
-                    setValue(config, "");
-                    const value = target.value;
-                    const list = hdom.getElement(config.getListID());
-                    if (!(list instanceof HTMLDataListElement)) {
-                        throw new Error();
-                    }
-                    const options = list.childNodes;
-                    for (const option of options) {
-                        if (!(option instanceof HTMLOptionElement)) {
-                            throw new Error();
-                        }
-                        if (option.value === value) {
-                            setValue(config, option.getAttribute("value_id"));
-                            return;
-                        }
-                    }
-                }
-                break;
             case "focus":
                 target.select();
+                // If there's no id set, and there's text present, open the suggestion list.
+                if (hdom.getFormElementValue(config.getValueID()) === "") {
+                    this.#debounce(e, config);
+                }
                 break;
             case "input":
                 // Clear ID.
                 setValue(config, "");
                 // Clear any errors.
                 target.setCustomValidity("");
-                // Check inputType - Firefox does not send change event when item is selected from <datalist>; the only indicator is
-                // e.inputType === "insertReplacementText".
-                if (
-                    e instanceof InputEvent &&
-                    e.inputType !== "insertReplacementText"
-                ) {
-                    this.#debounce(e, config);
-                }
+                this.#debounce(e, config);
                 break;
         }
     }
@@ -258,12 +262,23 @@ export class SearchUI extends UI {
 
     async init() {
         await super.init();
-        const e = document.getElementById("cancel-query");
-        if (e) {
-            e.addEventListener("click", () => {
-                this.getAPI().cancelQuery(true);
+
+        // Create <ul> for autocompletes.
+        const body = document.documentElement
+            .getElementsByTagName("body")
+            .item(0);
+        if (body) {
+            const ul = hdom.createElement("ul", {
+                id: "autocomplete",
+                hidden: "",
             });
+            body.appendChild(ul);
         }
+
+        const eCancel = hdom.getElement("cancel-query");
+        eCancel.addEventListener("click", () => {
+            this.getAPI().cancelQuery(true);
+        });
     }
 
     /**
@@ -273,17 +288,22 @@ export class SearchUI extends UI {
      * @param {(function(string):void)|undefined} [fnHandleChange]
      */
     initAutoCompleteField(prefix, name, fnRetrieve, fnHandleChange) {
-        const id = prefix + "-" + name + "-name";
         const config = new AutoCompleteConfig(
-            prefix + "-" + name + "-name-list",
-            prefix + "-" + name + "-id",
+            `${prefix}-${name}`,
             fnRetrieve,
             fnHandleChange,
         );
 
-        const input = hdom.getElement(id);
-        input.addEventListener("change", (e) =>
-            this.handleAutoCompleteField(e, config),
+        const input = hdom.getElement(config.getInputID());
+        input.addEventListener("blur", () => {
+            if (config.isSelected()) {
+                config.setSelected(false);
+                hdom.setFocusTo(input);
+            }
+            hdom.showElement("autocomplete", false);
+        });
+        hdom.addEventListener(input, "keydown", (e) =>
+            handleAutoCompleteKey(/** @type {KeyboardEvent} **/ (e), config),
         );
         input.addEventListener("focus", (e) =>
             this.handleAutoCompleteField(e, config),
@@ -1029,6 +1049,21 @@ function createMonthSelects(prefix, ui) {
 }
 
 /**
+ * @returns {HTMLElement|undefined}
+ */
+function getAutoCompleteSelection() {
+    const ul = hdom.getElement("autocomplete");
+    if (ul.hidden) {
+        return;
+    }
+    for (const child of ul.children) {
+        if (child.getAttribute("data-highlight") !== null) {
+            return /** @type {HTMLElement} */ (child);
+        }
+    }
+}
+
+/**
  * @param {string} prefix
  * @returns {string}
  */
@@ -1062,6 +1097,71 @@ export function getMonthList(m1, m2) {
         }
     }
     return months;
+}
+
+/**
+ * @param {HTMLElement} li
+ */
+function handleAutoCompleteHover(li) {
+    li.setAttribute("data-highlight", "");
+
+    const parent = /** @type {HTMLElement} */ (li.parentElement);
+    for (const child of parent.children) {
+        if (child !== li) {
+            child.removeAttribute("data-highlight");
+        }
+    }
+}
+
+/**
+ * @param {KeyboardEvent} e
+ * @param {AutoCompleteConfig} config
+ */
+function handleAutoCompleteKey(e, config) {
+    switch (e.key) {
+        case "ArrowDown":
+            {
+                e.preventDefault();
+                const selected = getAutoCompleteSelection();
+                if (selected === undefined) {
+                    return;
+                }
+                if (selected.nextSibling instanceof HTMLElement) {
+                    selected.removeAttribute("data-highlight");
+                    selected.nextSibling.setAttribute("data-highlight", "");
+                }
+            }
+            break;
+        case "ArrowUp":
+            {
+                e.preventDefault();
+                const selected = getAutoCompleteSelection();
+                if (selected === undefined) {
+                    return;
+                }
+                if (selected.previousSibling instanceof HTMLElement) {
+                    selected.removeAttribute("data-highlight");
+                    selected.previousSibling.setAttribute("data-highlight", "");
+                }
+            }
+            break;
+        case "Enter":
+        case "Tab":
+            {
+                const selected = getAutoCompleteSelection();
+                if (selected === undefined) {
+                    return;
+                }
+                if (e.key === "Enter") {
+                    e.preventDefault();
+                }
+                selectAutoComplete(config, selected, e.key === "Enter");
+            }
+            break;
+        case "Escape":
+            hdom.showElement("autocomplete", false);
+            break;
+    }
 }
 
 /**
@@ -1200,6 +1300,18 @@ function handleSetFromURL(ui, prefix) {
     }
     // @ts-ignore
     eDlg.showModal();
+}
+
+/**
+ * @param {AutoCompleteConfig} config
+ * @param {HTMLElement} li
+ * @param {boolean} [setSelected=true]
+ */
+function selectAutoComplete(config, li, setSelected = true) {
+    hdom.setFormElementValue(config.getInputID(), li.textContent);
+    hdom.setFormElementValue(config.getValueID(), li.dataset.id);
+    hdom.showElement("autocomplete", false);
+    config.setSelected(setSelected);
 }
 
 /**

@@ -93,6 +93,23 @@ dialog form input[type="text"] {
   width: 100%
 }
 
+/* Autocomplete */
+#autocomplete {
+  border: solid 1px;
+  width: max-content;
+  position: fixed;
+  list-style-type: none;
+  padding: 0;
+}
+
+#autocomplete li {
+  background-color: #ddd
+}
+
+#autocomplete li[data-highlight] {
+  background-color: #fff
+}
+
 /* Responsive Table */
 table {
   margin: auto;
