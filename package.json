@@ -1,13 +1,8 @@
 {
     "type": "module",
-    "bin": {
-        "int-build": "scripts/int-build.js"
-    },
     "scripts": {
         "ava": "ava tests/js/test*.js",
         "check": "npm run tsc && npm run eslint && npm run ava && npm run jest",
-        "dev-build": "concurrently -k \"node scripts/int-build.js\" \"npm run dev-parcel\"",
-        "dev-parcel": "parcel watch --dist-dir public",
         "eslint": "eslint app tests",
         "jest": "node --experimental-vm-modules node_modules/jest/bin/jest.js tests/jest",
         "prettier": "prettier -l .",
@@ -30,30 +25,9 @@
         "jest": "^30.2.0",
         "jstoxml": "^7.0.1",
         "leaflet": "^1.9.4",
-        "parcel": "^2.16.3",
         "pkce-challenge": "^6.0.0",
         "prettier": "^3.8.1",
         "typescript": "^5.9.3",
         "which-polygon": "^2.2.1"
-    },
-    "dependencies": {
-        "@metalsmith/in-place": "^5.0.0",
-        "@metalsmith/layouts": "^2.7.0",
-        "@turf/turf": "^7.3.4",
-        "commander": "^14.0.3",
-        "jstransformer-marked": "^1.4.0",
-        "jstransformer-nunjucks": "^1.2.0",
-        "metalsmith": "^2.6.3"
-    },
-    "targets": {
-        "default": {
-            "source": [
-                "ms/index.html",
-                "ms/obsdetail.html",
-                "ms/api.html",
-                "ms/favicon.ico",
-                "ms/img/**"
-            ]
-        }
     }
 }
