@@ -1,4 +1,4 @@
-import { bbox } from "@turf/bbox";
+import { bbox } from "@turf/turf";
 import { DateUtils } from "./dateutils.js";
 import { INatAPI } from "./inatapi.js";
 

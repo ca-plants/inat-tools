@@ -2,6 +2,7 @@
     "type": "module",
     "scripts": {
         "ava": "ava tests/js/test*.js",
+        "build-js-dev": "npx rollup --config ./config/config-rollup-dev.js",
         "check": "npm run tsc && npm run eslint && npm run ava && npm run jest",
         "eslint": "eslint app tests",
         "jest": "node --experimental-vm-modules node_modules/jest/bin/jest.js tests/jest",
@@ -12,6 +13,10 @@
         "@eslint/js": "^10.0.1",
         "@htmltools/hdom": "^0.1.1",
         "@observablehq/plot": "^0.6.16",
+        "@rollup/plugin-commonjs": "^29.0.2",
+        "@rollup/plugin-node-resolve": "^16.0.3",
+        "@rollup/plugin-terser": "^1.0.0",
+        "@turf/turf": "^7.3.5",
         "@types/d3": "^7.4.3",
         "@types/geojson": "^7946.0.16",
         "@types/jest": "^30.0.0",
@@ -20,6 +25,7 @@
         "@types/which-polygon": "^2.2.5",
         "ava": "^6.4.1",
         "concurrently": "^9.2.1",
+        "d3-dsv": "^3.0.1",
         "eslint": "^10.0.1",
         "globals": "^17.3.0",
         "jest": "^30.2.0",
@@ -27,6 +33,7 @@
         "leaflet": "^1.9.4",
         "pkce-challenge": "^6.0.0",
         "prettier": "^3.8.1",
+        "rollup": "^4.60.2",
         "typescript": "^5.9.3",
         "which-polygon": "^2.2.1"
     }
