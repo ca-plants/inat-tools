@@ -2,6 +2,7 @@
     "type": "module",
     "scripts": {
         "ava": "ava tests/js/test*.js",
+        "build-eleventy-dev": "npx @11ty/eleventy --config config/config-eleventy.js --watch",
         "build-js-dev": "npx rollup --config ./config/config-rollup-dev.js",
         "check": "npm run tsc && npm run eslint && npm run ava && npm run jest",
         "eslint": "eslint app tests",
@@ -10,6 +11,7 @@
         "tsc": "tsc"
     },
     "devDependencies": {
+        "@11ty/eleventy": "^3.1.5",
         "@eslint/js": "^10.0.1",
         "@htmltools/hdom": "^0.1.1",
         "@observablehq/plot": "^0.6.16",
