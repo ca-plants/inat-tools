@@ -4,9 +4,5 @@ title: About iNaturalist Analysis
 js: index
 ---
 
-{%block content%}
-
 The code for iNaturalist Analysis is on [GitHub](https://github.com/ca-plants/inat-tools).
 You can report any problems in the [GitHub issues](https://github.com/ca-plants/inat-tools/issues).
-
-{%endblock%}
