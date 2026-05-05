@@ -37,7 +37,7 @@
         "jstoxml": "^7.0.1",
         "leaflet": "^1.9.4",
         "pkce-challenge": "^6.0.0",
-        "prettier": "^3.8.1",
+        "prettier": "^3.8.3",
         "rollup": "^4.60.3",
         "typescript": "^6.0.3",
         "which-polygon": "^2.2.1"

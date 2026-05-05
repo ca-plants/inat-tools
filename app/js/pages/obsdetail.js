@@ -1,8 +1,12 @@
 import jstoxml from "jstoxml";
+import { hdom } from "@htmltools/hdom";
 import { ColDef } from "../lib/coldef.js";
 import { DataRetriever } from "../lib/dataretriever.js";
-import { hdom } from "../lib/hdom.js";
-import { HistogramDate, HistogramTime } from "../lib/histogram.js";
+import {
+    HistogramDate,
+    HistogramTime,
+    HistogramYear,
+} from "../lib/histogram.js";
 import { INatObservation } from "../lib/inatobservation.js";
 import { SearchUI } from "../lib/searchui.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
@@ -728,6 +732,11 @@ class ObsDetailUI extends SearchUI {
                 handler: () => this.#setHistoType("date"),
             },
             {
+                value: "year",
+                label: "Year",
+                handler: () => this.#setHistoType("year"),
+            },
+            {
                 value: "time",
                 label: "Time",
                 handler: () => this.#setHistoType("time"),
@@ -745,8 +754,13 @@ class ObsDetailUI extends SearchUI {
             );
         }
 
+        const hashMode = this.#hashParams.hist?.view;
         const histMode =
-            this.#hashParams.hist?.view === "time" ? "hist-time" : "hist-date";
+            hashMode === "time"
+                ? "hist-time"
+                : hashMode === "year"
+                  ? "hist-year"
+                  : "hist-date";
         hdom.clickElement(histMode);
     }
 
@@ -889,7 +903,9 @@ class ObsDetailUI extends SearchUI {
                 { value: "gpx", label: "GPX" },
             ],
         );
-        hdom.appendChildren(typeDiv, Object.values(dlOptions));
+        for (const child of Object.values(dlOptions)) {
+            typeDiv.appendChild(child);
+        }
         const dlLink = createDownloadLink(
             this.getPathPrefix(),
             "Download",
@@ -1199,7 +1215,7 @@ class ObsDetailUI extends SearchUI {
     }
 
     /**
-     * @param {"date"|"time"} type
+     * @param {"date"|"time"|"year"} type
      */
     #setHistoType(type) {
         // Delete current histogram if present.
@@ -1208,10 +1224,27 @@ class ObsDetailUI extends SearchUI {
             e.remove();
         }
         const eResults = hdom.getElement("results");
-        const histo =
-            type === "time"
-                ? new HistogramTime(this.#getSelectedObservations(), this.#f1)
-                : new HistogramDate(this.#getSelectedObservations(), this.#f1);
+        let histo;
+        switch (type) {
+            case "time":
+                histo = new HistogramTime(
+                    this.#getSelectedObservations(),
+                    this.#f1,
+                );
+                break;
+            case "year":
+                histo = new HistogramYear(
+                    this.#getSelectedObservations(),
+                    this.#f1,
+                );
+                break;
+            default:
+                histo = new HistogramDate(
+                    this.#getSelectedObservations(),
+                    this.#f1,
+                );
+                break;
+        }
         const svg = histo.createSVG();
 
         svg.setAttribute("id", "svg-datehisto");
@@ -1283,6 +1316,8 @@ class ObsDetailUI extends SearchUI {
             params.hist = {};
             if (hdom.isChecked("hist-time")) {
                 params.hist.view = "time";
+            } else if (hdom.isChecked("hist-year")) {
+                params.hist.view = "year";
             }
             if (Object.keys(params.hist).length === 0) {
                 delete params.hist;
@@ -1433,9 +1468,9 @@ function getViewMode() {
 }
 
 function removeObscured() {
-    const ePublic = hdom.getElementById("sel-public");
-    const eTrusted = hdom.getElementById("sel-trusted");
-    const eObscured = hdom.getElementById("sel-obscured");
+    const ePublic = hdom.getElement("sel-public");
+    const eTrusted = hdom.getElement("sel-trusted");
+    const eObscured = hdom.getElement("sel-obscured");
 
     // If neither public nor trusted is checked, check them before unchecking obscured.
     if (

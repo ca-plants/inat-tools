@@ -42,7 +42,7 @@
  *      coords?: ("public" | "obscured" | "trusted")[];
  *      view?: EnumObsDetailView
  *      branch?: boolean;
- *      hist?:{view?:"date"|"time"};
+ *      hist?:{view?:"date"|"time"|"year"};
  *      map?:{source?:string,view?:"obs"|"pop";maxdist?:number}
  *  }} ParamsPageObsDetail
  * @typedef {{
