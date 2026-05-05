@@ -19,6 +19,7 @@
  *  taxon_geoprivacy: string;
  *  time_observed_at: string;
  *  user: INatDataUser;
+ *  comments: {body:string}[]
  * }} INatDataObs
  * @typedef {{display_name:string}} INatDataPlace
  * @typedef {{id: number;title: string;slug: string;user_ids: number[];}} INatDataProject
@@ -41,6 +42,7 @@
  *      f1?: ParamsSpeciesFilter;
  *      coords?: ("public" | "obscured" | "trusted")[];
  *      view?: EnumObsDetailView
+ *      comments?: boolean;
  *      branch?: boolean;
  *      hist?:{view?:"date"|"time"|"year"};
  *      map?:{source?:string,view?:"obs"|"pop";maxdist?:number}

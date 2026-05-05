@@ -495,11 +495,17 @@ class ObsDetailUI extends SearchUI {
         if (!this.#rawResults) {
             return;
         }
-        this.#processedResults = this.summarizeResults(
-            this.#rawResults,
-            hdom.isChecked("branch"),
-        );
-        this.updateCoordOptions(this.getSelectedTypes());
+        this.#processedResults = this.summarizeResults(this.#rawResults);
+        this.updateCoordOptions();
+        this.updateDisplay();
+    }
+
+    handleCommentsClick() {
+        if (!this.#rawResults) {
+            return;
+        }
+        this.#processedResults = this.summarizeResults(this.#rawResults);
+        this.updateCoordOptions();
         this.updateDisplay();
     }
 
@@ -517,7 +523,9 @@ class ObsDetailUI extends SearchUI {
 
         await this.initForm("f1", this.#f1);
 
-        await this.onSubmit(params);
+        this.#initObsOptions(params);
+
+        await this.onSubmit();
     }
 
     onResize() {
@@ -540,10 +548,7 @@ class ObsDetailUI extends SearchUI {
         }
     }
 
-    /**
-     * @param {import("../types.js").ParamsPageObsDetail} [params={}]
-     */
-    async onSubmit(params = {}) {
+    async onSubmit() {
         /**
          * @param {string} value
          * @param {string} label
@@ -555,20 +560,6 @@ class ObsDetailUI extends SearchUI {
                 ui.updateDisplay(),
             );
             radios.appendChild(div);
-        }
-
-        let selArray = params.coords;
-        let includeDescendants = params.branch;
-
-        if (selArray === undefined) {
-            selArray = this.getSelectedTypes();
-        }
-        if (
-            includeDescendants === undefined &&
-            document.getElementById("branch")
-        ) {
-            // Preserve the state of the Show descendants checkbox if present.
-            includeDescendants = hdom.isChecked("branch");
         }
 
         this.#f1 = this.initFilterFromForm("f1") ?? new SpeciesFilter({});
@@ -593,10 +584,7 @@ class ObsDetailUI extends SearchUI {
             this.showSearchForm();
             return;
         }
-        this.#processedResults = this.summarizeResults(
-            this.#rawResults,
-            !!includeDescendants,
-        );
+        this.#processedResults = this.summarizeResults(this.#rawResults);
 
         hdom.showElement("search-crit", false);
         hdom.removeChildren("results");
@@ -647,28 +635,6 @@ class ObsDetailUI extends SearchUI {
         const form = hdom.createElement("form", { id: RESULT_FORM_ID });
         hdom.getElement("results").appendChild(form);
 
-        const divIncludeOpts = hdom.createElement("div", "options");
-        form.appendChild(divIncludeOpts);
-
-        const checkBoxes = hdom.createElement("div", {
-            id: "coordoptions",
-        });
-        divIncludeOpts.appendChild(checkBoxes);
-
-        const divDescendants = hdom.createElement("div", "checkbox");
-        divIncludeOpts.appendChild(divDescendants);
-        const cbDescendants = hdom.createCheckBox(
-            "branch",
-            !!includeDescendants,
-        );
-        hdom.addEventListener(cbDescendants, "click", () =>
-            this.handleBranchClick(),
-        );
-        divDescendants.appendChild(cbDescendants);
-        divDescendants.appendChild(
-            hdom.createLabelElement("branch", "Show descendants"),
-        );
-
         const radios = hdom.createElement("div", {
             class: "displayoptions",
         });
@@ -696,7 +662,9 @@ class ObsDetailUI extends SearchUI {
         optionDiv.appendChild(iNatDiv);
         form.appendChild(optionDiv);
 
-        this.updateCoordOptions(selArray);
+        hdom.setCheckBoxState("comments", !!this.#hashParams.comments);
+
+        this.updateCoordOptions();
 
         if (
             this.#processedResults.countPublic === 0 &&
@@ -1026,10 +994,9 @@ class ObsDetailUI extends SearchUI {
 
     /**
      * @param {import("../types.js").INatDataObs[]} rawResults
-     * @param {boolean} includeDescendants
      * @returns {Results}
      */
-    summarizeResults(rawResults, includeDescendants) {
+    summarizeResults(rawResults) {
         const taxon_data = this.#getTaxonData();
         const taxonSummary = {
             taxon_id: taxon_data.id,
@@ -1042,8 +1009,14 @@ class ObsDetailUI extends SearchUI {
             /** @type {INatObservation[]} */ observations: [],
         };
 
+        const includeComments = this.#hashParams.comments;
+        const includeDescendants = this.#hashParams.branch;
+
         for (const rawResult of rawResults) {
             if (!includeDescendants && rawResult.taxon.id !== this.#taxon_id) {
+                continue;
+            }
+            if (includeComments && rawResult.comments.length === 0) {
                 continue;
             }
 
@@ -1069,10 +1042,7 @@ class ObsDetailUI extends SearchUI {
         return taxonSummary;
     }
 
-    /**
-     * @param {SelArray} selArray
-     */
-    updateCoordOptions(selArray = ALL_COORD_TYPES) {
+    updateCoordOptions() {
         /**
          * @param {number} count
          * @param {"public"|"obscured"|"trusted"} label
@@ -1098,6 +1068,7 @@ class ObsDetailUI extends SearchUI {
             checkBoxes.appendChild(div);
         }
 
+        const selArray = this.getSelectedTypes();
         const checkBoxes = hdom.removeChildren("coordoptions");
         const r = this.#processedResults;
         const numTypes =
@@ -1215,6 +1186,55 @@ class ObsDetailUI extends SearchUI {
     }
 
     /**
+     * @param {import("../types.js").ParamsPageObsDetail} params
+     */
+    #initObsOptions(params) {
+        let includeDescendants = params.branch;
+        if (
+            includeDescendants === undefined &&
+            document.getElementById("branch")
+        ) {
+            // Preserve the state of the Show descendants checkbox if present.
+            includeDescendants = hdom.isChecked("branch");
+        }
+
+        const divIncludeOpts = hdom.createElement("div", "options");
+        const form = hdom.getElement(RESULT_FORM_ID);
+
+        form.appendChild(divIncludeOpts);
+
+        const checkBoxes = hdom.createElement("div", {
+            id: "coordoptions",
+        });
+        divIncludeOpts.appendChild(checkBoxes);
+
+        const divComments = hdom.createElement("div", "checkbox");
+        divIncludeOpts.appendChild(divComments);
+        const cbComments = hdom.createCheckBox("comments", false);
+        hdom.addEventListener(cbComments, "click", () =>
+            this.handleCommentsClick(),
+        );
+        divComments.appendChild(cbComments);
+        divComments.appendChild(
+            hdom.createLabelElement("comments", "Show comments"),
+        );
+
+        const divDescendants = hdom.createElement("div", "checkbox");
+        divIncludeOpts.appendChild(divDescendants);
+        const cbDescendants = hdom.createCheckBox(
+            "branch",
+            !!includeDescendants,
+        );
+        hdom.addEventListener(cbDescendants, "click", () =>
+            this.handleBranchClick(),
+        );
+        divDescendants.appendChild(cbDescendants);
+        divDescendants.appendChild(
+            hdom.createLabelElement("branch", "Show descendants"),
+        );
+    }
+
+    /**
      * @param {"date"|"time"|"year"} type
      */
     #setHistoType(type) {
@@ -1309,6 +1329,9 @@ class ObsDetailUI extends SearchUI {
             coords: this.getSelectedTypes(),
             view: getViewMode(),
         };
+        if (hdom.isChecked("comments")) {
+            params.comments = true;
+        }
         if (hdom.isChecked("branch")) {
             params.branch = true;
         }
