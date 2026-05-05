@@ -1,3 +1,4 @@
+import { describe, expect, it } from "@jest/globals";
 import { MockAPI, MockTaxa } from "../js/mockapi.js";
 import { SearchUI } from "../../app/js/lib/searchui.js";
 
@@ -9,7 +10,7 @@ async function test(taxonID, expected) {
     it(taxonID.toString(), async () => {
         const result = await SearchUI.getAnnotationsForTaxon(
             taxonID,
-            new MockAPI()
+            new MockAPI(),
         );
         expect(result).toEqual(expected);
     });

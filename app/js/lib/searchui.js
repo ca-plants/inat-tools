@@ -74,7 +74,7 @@ export class SearchUI extends UI {
     /** @type {Object<string,boolean>} */
     #monthLock = {};
 
-    /** @type {NodeJS.Timeout|number|undefined} */
+    /** @type {number|undefined} */
     #debounceTimer;
 
     /**

@@ -1,3 +1,4 @@
+import { expect, it } from "@jest/globals";
 import { DataRetriever } from "../../app/js/lib/dataretriever.js";
 
 const RES_BROMUS = {
