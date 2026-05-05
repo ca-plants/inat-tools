@@ -1,3 +1,4 @@
+import { expect, it } from "@jest/globals";
 import { MockAPI, MockTaxa } from "../js/mockapi.js";
 import { SpeciesFilter } from "../../app/js/lib/speciesfilter.js";
 

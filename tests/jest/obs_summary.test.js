@@ -1,3 +1,4 @@
+import { expect, it } from "@jest/globals";
 import { summarizeObservations } from "../../app/js/lib/obsSummaryTools.js";
 import { MockAPI, MockTaxa } from "../js/mockapi.js";
 import { makeObservationData } from "../js/mockdata.js";
