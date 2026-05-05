@@ -264,3 +264,73 @@ export class HistogramTime extends Histogram {
         window.open(url, "_blank");
     }
 }
+
+export class HistogramYear extends Histogram {
+    /**
+     * @param {number} year
+     * @returns {string}
+     */
+    formatTick(year) {
+        return year.toString();
+    }
+
+    /**
+     * @param {Summary[]} data
+     * @returns {number[]}
+     */
+    getTicks(data) {
+        const ticks = [];
+
+        for (let index = 0; index < data.length; index++) {
+            const item = data[index];
+            if (item) {
+                ticks.push(item.tick);
+            }
+        }
+        return ticks;
+    }
+
+    /**
+     * @returns {Summary[]}
+     */
+    summarizeObservations() {
+        /** @type {number[]} */
+        const rawSummary = [];
+        for (const obs of this.getObservations()) {
+            const year = new Date(obs.getObsDateString()).getFullYear();
+            if (rawSummary[year]) {
+                rawSummary[year] = rawSummary[year] + 1;
+            } else {
+                rawSummary[year] = 1;
+            }
+        }
+
+        const summary = [];
+        for (let index = 0; index < rawSummary.length; index++) {
+            const count = rawSummary[index];
+            if (summary.length || count) {
+                summary.push({
+                    tick: index,
+                    count: count ? count : 0,
+                });
+            }
+        }
+
+        return summary;
+    }
+
+    /**
+     * @param {Event} event
+     * @param {Summary} value
+     * @param {import("../types.js").SpeciesFilter} filter
+     */
+    viewInINat(event, value, filter) {
+        event.preventDefault();
+        if (!value || !value.count) {
+            return;
+        }
+        const url = filter.getURL();
+        url.searchParams.set("year", value.tick.toString());
+        window.open(url, "_blank");
+    }
+}
