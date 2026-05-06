@@ -354,7 +354,7 @@ class ObsDetailUI extends SearchUI {
         }
 
         const ui = new ObsDetailUI(initArgs);
-        await ui.initInstance(initArgs);
+        await ui.initInstance();
         return ui;
     }
 
@@ -421,7 +421,7 @@ class ObsDetailUI extends SearchUI {
         const types = [];
         for (const type of ALL_COORD_TYPES) {
             const id = "sel-" + type;
-            if (document.getElementById(id) && hdom.isChecked(id)) {
+            if (hdom.isChecked(id)) {
                 // @ts-ignore
                 types.push(type);
             }
@@ -477,28 +477,15 @@ class ObsDetailUI extends SearchUI {
         return userSummary;
     }
 
-    handleBranchClick() {
+    handleOptionChange() {
         if (!this.#rawResults) {
             return;
         }
         this.#processedResults = this.summarizeResults(this.#rawResults);
-        this.updateCoordOptions();
         this.updateDisplay();
     }
 
-    handleCommentsClick() {
-        if (!this.#rawResults) {
-            return;
-        }
-        this.#processedResults = this.summarizeResults(this.#rawResults);
-        this.updateCoordOptions();
-        this.updateDisplay();
-    }
-
-    /**
-     * @param {import("../types.js").ParamsPageObsDetail} params
-     */
-    async initInstance(params) {
+    async initInstance() {
         await super.init();
 
         // Add handlers for form.
@@ -509,7 +496,7 @@ class ObsDetailUI extends SearchUI {
 
         await this.initForm("f1", this.#f1);
 
-        this.#initObsOptions(params);
+        this.#initObsOptions();
 
         await this.onSubmit();
     }
@@ -644,8 +631,6 @@ class ObsDetailUI extends SearchUI {
         form.appendChild(optionDiv);
 
         hdom.setCheckBoxState("comments", !!this.#hashParams.comments);
-
-        this.updateCoordOptions();
 
         if (
             this.#processedResults.countPublic === 0 &&
@@ -1023,45 +1008,9 @@ class ObsDetailUI extends SearchUI {
         return taxonSummary;
     }
 
-    updateCoordOptions() {
-        /**
-         * @param {number} count
-         * @param {"public"|"obscured"|"trusted"} label
-         * @param {ObsDetailUI} ui
-         */
-        function addBucket(count, label, ui) {
-            if (count === 0) {
-                return;
-            }
-            const div = hdom.createElement("div", "checkbox");
-            const id = "sel-" + label;
-            const cb = hdom.createInputElement({
-                type: "checkbox",
-                id: id,
-            });
-            cb.checked = selArray.includes(label);
-            hdom.enableElement(cb, numTypes > 1);
-            cb.addEventListener("click", () => ui.updateDisplay());
-            const lbl = hdom.createElement("label", { for: id });
-            lbl.appendChild(document.createTextNode(count + " " + label));
-            div.appendChild(cb);
-            div.appendChild(lbl);
-            checkBoxes.appendChild(div);
-        }
-
-        const selArray = this.getSelectedTypes();
-        const checkBoxes = hdom.removeChildren("coordoptions");
-        const r = this.#processedResults;
-        const numTypes =
-            Math.sign(r.countObscured) +
-            Math.sign(r.countPublic) +
-            Math.sign(r.countTrusted);
-        addBucket(r.countPublic, "public", this);
-        addBucket(r.countTrusted, "trusted", this);
-        addBucket(r.countObscured, "obscured", this);
-    }
-
     updateDisplay() {
+        this.#updateOptions();
+
         switch (getViewMode()) {
             case "datehisto":
                 this.showDateHistogram();
@@ -1166,19 +1115,7 @@ class ObsDetailUI extends SearchUI {
         );
     }
 
-    /**
-     * @param {import("../types.js").ParamsPageObsDetail} params
-     */
-    #initObsOptions(params) {
-        let includeDescendants = params.branch;
-        if (
-            includeDescendants === undefined &&
-            document.getElementById("branch")
-        ) {
-            // Preserve the state of the Show descendants checkbox if present.
-            includeDescendants = hdom.isChecked("branch");
-        }
-
+    #initObsOptions() {
         const divIncludeOpts = hdom.createElement("div", "options");
         const form = hdom.getElement(OPTIONS_FORM_ID);
 
@@ -1188,30 +1125,34 @@ class ObsDetailUI extends SearchUI {
             id: "coordoptions",
         });
         divIncludeOpts.appendChild(checkBoxes);
+        ALL_COORD_TYPES.forEach((type) => {
+            checkBoxes.appendChild(
+                createCheckBoxDiv(
+                    `sel-${type}`,
+                    type,
+                    this.#hashParams.coords === undefined ||
+                        this.#hashParams.coords.includes(type),
+                    () => this.handleOptionChange(),
+                ),
+            );
+        });
 
-        const divComments = hdom.createElement("div", "checkbox");
-        divIncludeOpts.appendChild(divComments);
-        const cbComments = hdom.createCheckBox("comments", false);
-        hdom.addEventListener(cbComments, "click", () =>
-            this.handleCommentsClick(),
-        );
-        divComments.appendChild(cbComments);
-        divComments.appendChild(
-            hdom.createLabelElement("comments", "Show comments"),
+        divIncludeOpts.appendChild(
+            createCheckBoxDiv(
+                "comments",
+                "Show comments",
+                !!this.#hashParams.comments,
+                () => this.handleOptionChange(),
+            ),
         );
 
-        const divDescendants = hdom.createElement("div", "checkbox");
-        divIncludeOpts.appendChild(divDescendants);
-        const cbDescendants = hdom.createCheckBox(
-            "branch",
-            !!includeDescendants,
-        );
-        hdom.addEventListener(cbDescendants, "click", () =>
-            this.handleBranchClick(),
-        );
-        divDescendants.appendChild(cbDescendants);
-        divDescendants.appendChild(
-            hdom.createLabelElement("branch", "Show descendants"),
+        divIncludeOpts.appendChild(
+            createCheckBoxDiv(
+                "branch",
+                "Show descendants",
+                !!this.#hashParams.branch,
+                () => this.handleOptionChange(),
+            ),
         );
     }
 
@@ -1344,6 +1285,36 @@ class ObsDetailUI extends SearchUI {
         document.location.hash = JSON.stringify(params);
     }
 
+    #updateOptions() {
+        /**
+         * @param {number} count
+         * @param {"public"|"obscured"|"trusted"} name
+         */
+        function addBucket(count, name) {
+            const id = "sel-" + name;
+            const cb = hdom.getElement(id);
+            const label = cb.nextSibling;
+            if (label instanceof Element) {
+                hdom.setTextValue(label, `${count} ${name}`);
+            }
+            hdom.setCheckBoxState(cb, selArray.includes(name));
+            hdom.enableElement(cb, numTypes > 1);
+            if (cb.parentElement) {
+                hdom.showElement(cb.parentElement, count > 0);
+            }
+        }
+
+        const selArray = this.getSelectedTypes();
+        const r = this.#processedResults;
+        const numTypes =
+            Math.sign(r.countObscured) +
+            Math.sign(r.countPublic) +
+            Math.sign(r.countTrusted);
+        addBucket(r.countPublic, "public");
+        addBucket(r.countTrusted, "trusted");
+        addBucket(r.countObscured, "obscured");
+    }
+
     #updateViewInINaturalistLink() {
         const url = this.getINatObservationURL(
             this.#f1.getParams(),
@@ -1365,6 +1336,22 @@ class ObsDetailUI extends SearchUI {
         section.appendChild(eResultDetail);
         eResultsDiv.appendChild(section);
     }
+}
+
+/**
+ * @param {string} id
+ * @param {string} label
+ * @param {boolean} checked
+ * @param {function(Event):void} fnClickHandler
+ * @returns {HTMLElement}
+ */
+function createCheckBoxDiv(id, label, checked, fnClickHandler) {
+    const div = hdom.createElement("div", "checkbox");
+    const cb = hdom.createCheckBox(id, checked);
+    hdom.addEventListener(cb, "click", fnClickHandler);
+    div.appendChild(cb);
+    div.appendChild(hdom.createLabelElement(id, label));
+    return div;
 }
 
 /**
