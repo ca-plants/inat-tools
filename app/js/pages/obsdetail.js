@@ -20,7 +20,7 @@ import { Clusterer } from "../tools/clusterer.js";
 /** @typedef {{id:string,login:string,display_name:string,results:Results}} UserSummary */
 /** @typedef {("public" | "obscured" | "trusted")[]} SelArray */
 
-const RESULT_FORM_ID = "form-results";
+const OPTIONS_FORM_ID = "form-options";
 /** @type {SelArray} */
 const ALL_COORD_TYPES = ["public", "trusted", "obscured"];
 
@@ -164,21 +164,7 @@ class ObsDetailUI extends SearchUI {
     }
 
     clearResults() {
-        const elem = hdom.getElement("results");
-        const childrenToDelete = [];
-        for (const child of elem.childNodes) {
-            if (
-                !(child instanceof HTMLElement) ||
-                !["results-summary", RESULT_FORM_ID].includes(
-                    // @ts-ignore
-                    child.getAttribute("id"),
-                )
-            ) {
-                childrenToDelete.push(child);
-            }
-        }
-        childrenToDelete.forEach((child) => elem.removeChild(child));
-        return elem;
+        return hdom.removeChildren("results");
     }
 
     /**
@@ -608,11 +594,7 @@ class ObsDetailUI extends SearchUI {
         }
 
         // Show filter description.
-        const resultsSummary = hdom.createElement("div", {
-            id: "results-summary",
-            class: "section summary flex",
-        });
-        hdom.getElement("results").appendChild(resultsSummary);
+        const resultsSummary = hdom.getElement("results-summary");
         const divDesc = hdom.createElement("div", {
             style: "flex:3;min-width:20rem",
         });
@@ -632,8 +614,7 @@ class ObsDetailUI extends SearchUI {
             this.createChangeFilterButton((e) => this.changeFilter(e)),
         );
 
-        const form = hdom.createElement("form", { id: RESULT_FORM_ID });
-        hdom.getElement("results").appendChild(form);
+        const form = hdom.getElement(OPTIONS_FORM_ID);
 
         const radios = hdom.createElement("div", {
             class: "displayoptions",
@@ -1009,8 +990,8 @@ class ObsDetailUI extends SearchUI {
             /** @type {INatObservation[]} */ observations: [],
         };
 
-        const includeComments = this.#hashParams.comments;
-        const includeDescendants = this.#hashParams.branch;
+        const includeComments = hdom.isChecked("comments");
+        const includeDescendants = hdom.isChecked("branch");
 
         for (const rawResult of rawResults) {
             if (!includeDescendants && rawResult.taxon.id !== this.#taxon_id) {
@@ -1199,7 +1180,7 @@ class ObsDetailUI extends SearchUI {
         }
 
         const divIncludeOpts = hdom.createElement("div", "options");
-        const form = hdom.getElement(RESULT_FORM_ID);
+        const form = hdom.getElement(OPTIONS_FORM_ID);
 
         form.appendChild(divIncludeOpts);
 
@@ -1478,7 +1459,7 @@ function getPopDistance() {
  */
 function getViewMode() {
     const radioVal = hdom.getFormElementValue(
-        hdom.getFormElement(RESULT_FORM_ID, "displayopt"),
+        hdom.getFormElement(OPTIONS_FORM_ID, "displayopt"),
     );
     switch (radioVal) {
         case "datehisto":
