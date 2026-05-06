@@ -1,5 +1,6 @@
 import jstoxml from "jstoxml";
 import { hdom } from "@htmltools/hdom";
+import { marked } from "marked";
 import { ColDef } from "../lib/coldef.js";
 import { DataRetriever } from "../lib/dataretriever.js";
 import {
@@ -74,6 +75,19 @@ const DETAIL_COLS = {
     PROJECT: new ColDef("Proj Mem", (obs, ui) => {
         return ui.getMembershipStatus(obs.getUserID());
     }),
+    COMMENTS: new ColDef(
+        "Comments",
+        () => "",
+        (value, obs) => {
+            const html = obs
+                .getComments()
+                .map((c) => `${marked.parse(`**${c.user.login}:** ${c.body}`)}`)
+                .join("");
+            const div = hdom.createElement("div");
+            div.innerHTML = html;
+            return div;
+        },
+    ),
 };
 
 /** @type {Object<string,ColDef<UserSummary>>} */
@@ -715,6 +729,10 @@ class ObsDetailUI extends SearchUI {
         if (this.#project_members) {
             cols.push(DETAIL_COLS.PROJECT);
         }
+        if (hdom.isChecked("comments")) {
+            cols.push(DETAIL_COLS.COMMENTS);
+        }
+
         const eTable = ColDef.createTable(cols);
 
         const tbody = hdom.createElement("tbody");

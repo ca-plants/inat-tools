@@ -27,6 +27,10 @@ class INatObservation {
         }
     }
 
+    getComments() {
+        return this.#rawObservation.comments;
+    }
+
     /**
      * @returns {[number,number]}
      */
