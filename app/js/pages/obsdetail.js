@@ -590,7 +590,7 @@ class ObsDetailUI extends SearchUI {
         }
 
         // Show filter description.
-        const resultsSummary = hdom.getElement("results-summary");
+        const resultsSummary = hdom.removeChildren("results-summary");
         const divDesc = hdom.createElement("div", {
             style: "flex:3;min-width:20rem",
         });
