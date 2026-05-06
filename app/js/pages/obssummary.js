@@ -2,8 +2,8 @@ import { SearchUI } from "../lib/searchui.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { DataRetriever } from "../lib/dataretriever.js";
 import { ColDef } from "../lib/coldef.js";
-import { hdom } from "../lib/hdom.js";
 import { summarizeObservations } from "../lib/obsSummaryTools.js";
+import { hdom } from "@htmltools/hdom";
 
 /** @type {Object<string,ColDef<import("../lib/obsSummaryTools.js").SummaryEntry>>} */
 const COLUMNS = {
