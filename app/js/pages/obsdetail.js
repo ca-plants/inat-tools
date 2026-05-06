@@ -144,6 +144,14 @@ const SUMMARY_COLS = {
     }),
 };
 
+const DISPLAY_OPTIONS = [
+    { id: "details", label: "Details" },
+    { id: "mapdata", label: "Map Data" },
+    { id: "datehisto", label: "Histogram" },
+    { id: "usersumm", label: "Summary by Observer" },
+    { id: "map", label: "Map" },
+];
+
 class ObsDetailUI extends SearchUI {
     /** @type {number|undefined} */
     #taxon_id;
@@ -536,19 +544,6 @@ class ObsDetailUI extends SearchUI {
     }
 
     async onSubmit() {
-        /**
-         * @param {string} value
-         * @param {string} label
-         * @param {ObsDetailUI} ui
-         */
-        function addDisplayOption(value, label, ui) {
-            const id = "disp-" + value;
-            const div = createRadioDiv("displayopt", id, value, label, () =>
-                ui.updateDisplay(),
-            );
-            radios.appendChild(div);
-        }
-
         this.#f1 = this.initFilterFromForm("f1") ?? new SpeciesFilter({});
         const api = this.getAPI();
 
@@ -615,35 +610,6 @@ class ObsDetailUI extends SearchUI {
             this.createChangeFilterButton((e) => this.changeFilter(e)),
         );
 
-        const form = hdom.getElement(OPTIONS_FORM_ID);
-
-        const radios = hdom.createElement("div", {
-            class: "displayoptions",
-        });
-        const displayOptions = [
-            { id: "details", label: "Details" },
-            { id: "mapdata", label: "Map Data" },
-            { id: "datehisto", label: "Histogram" },
-            { id: "usersumm", label: "Summary by Observer" },
-            { id: "map", label: "Map" },
-        ];
-        displayOptions.forEach((opt) =>
-            addDisplayOption(opt.id, opt.label, this),
-        );
-
-        const iNatDiv = hdom.createElement("div", "right");
-        iNatDiv.appendChild(
-            hdom.createLinkElement("", "View in iNaturalist", {
-                target: "_blank",
-                id: "viewininat",
-            }),
-        );
-
-        const optionDiv = hdom.createElement("div", { class: "options" });
-        optionDiv.appendChild(radios);
-        optionDiv.appendChild(iNatDiv);
-        form.appendChild(optionDiv);
-
         hdom.setCheckBoxState("comments", !!this.#hashParams.comments);
 
         if (
@@ -657,7 +623,7 @@ class ObsDetailUI extends SearchUI {
 
         // Select initial view.
         let view = this.#hashParams.view;
-        const initialView = displayOptions.some((opt) => opt.id === view)
+        const initialView = DISPLAY_OPTIONS.some((opt) => opt.id === view)
             ? hdom.getElement("disp-" + view)
             : hdom.getElement("disp-details");
         hdom.clickElement(
@@ -1134,6 +1100,19 @@ class ObsDetailUI extends SearchUI {
     }
 
     #initObsOptions() {
+        /**
+         * @param {string} value
+         * @param {string} label
+         * @param {ObsDetailUI} ui
+         */
+        function addDisplayOption(value, label, ui) {
+            const id = "disp-" + value;
+            const div = createRadioDiv("displayopt", id, value, label, () =>
+                ui.updateDisplay(),
+            );
+            radios.appendChild(div);
+        }
+
         const divIncludeOpts = hdom.createElement("div", "options");
         const form = hdom.getElement(OPTIONS_FORM_ID);
 
@@ -1172,6 +1151,26 @@ class ObsDetailUI extends SearchUI {
                 () => this.handleOptionChange(),
             ),
         );
+
+        const radios = hdom.createElement("div", {
+            class: "displayoptions",
+        });
+        DISPLAY_OPTIONS.forEach((opt) =>
+            addDisplayOption(opt.id, opt.label, this),
+        );
+
+        const iNatDiv = hdom.createElement("div", "right");
+        iNatDiv.appendChild(
+            hdom.createLinkElement("", "View in iNaturalist", {
+                target: "_blank",
+                id: "viewininat",
+            }),
+        );
+
+        const optionDiv = hdom.createElement("div", { class: "options" });
+        optionDiv.appendChild(radios);
+        optionDiv.appendChild(iNatDiv);
+        form.appendChild(optionDiv);
     }
 
     /**
