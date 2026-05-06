@@ -456,54 +456,6 @@ class ObsDetailUI extends SearchUI {
         return types.length > 0 ? types : [...ALL_COORD_TYPES];
     }
 
-    #getTaxonData() {
-        if (!this.#taxon_data) {
-            throw new Error();
-        }
-        return this.#taxon_data;
-    }
-
-    /**
-     * @returns {Object<string,UserSummary>}
-     */
-    #getUserSummary() {
-        /** @type {Object<string,UserSummary>|undefined} */
-        const userSummary = {};
-
-        for (const obs of this.#processedResults.observations) {
-            const id = obs.getUserID();
-            let userSumm = userSummary[id];
-            if (!userSumm) {
-                userSumm = {
-                    id: id,
-                    login: obs.getUserLogin(),
-                    display_name: obs.getUserDisplayName(),
-                    results: {
-                        countPublic: 0,
-                        countObscured: 0,
-                        countTrusted: 0,
-                        observations: [],
-                    },
-                };
-                userSummary[id] = userSumm;
-            }
-            switch (obs.getCoordType()) {
-                case "public":
-                    userSumm.results.countPublic++;
-                    break;
-                case "trusted":
-                    userSumm.results.countTrusted++;
-                    break;
-                case "obscured":
-                    userSumm.results.countObscured++;
-                    break;
-            }
-            userSumm.results.observations.push(obs);
-        }
-
-        return userSummary;
-    }
-
     handleOptionChange() {
         if (!this.#rawResults) {
             return;
@@ -551,6 +503,9 @@ class ObsDetailUI extends SearchUI {
     async onSubmit() {
         this.#f1 = this.initFilterFromForm("f1") ?? new SpeciesFilter({});
         const api = this.getAPI();
+
+        // Hide the display options.
+        hdom.showElement("form-options", false);
 
         const taxonId = this.#f1.getTaxonID();
         if (!taxonId) {
@@ -627,6 +582,7 @@ class ObsDetailUI extends SearchUI {
         window.onresize = this.onResize;
 
         // Select initial view.
+        hdom.showElement("form-options", true);
         let view = this.#hashParams.view;
         const initialView = DISPLAY_OPTIONS.some((opt) => opt.id === view)
             ? hdom.getElement("disp-" + view)
@@ -1102,6 +1058,54 @@ class ObsDetailUI extends SearchUI {
         return this.#processedResults.observations.filter((obs) =>
             selectedTypes.includes(obs.getCoordType()),
         );
+    }
+
+    #getTaxonData() {
+        if (!this.#taxon_data) {
+            throw new Error();
+        }
+        return this.#taxon_data;
+    }
+
+    /**
+     * @returns {Object<string,UserSummary>}
+     */
+    #getUserSummary() {
+        /** @type {Object<string,UserSummary>|undefined} */
+        const userSummary = {};
+
+        for (const obs of this.#processedResults.observations) {
+            const id = obs.getUserID();
+            let userSumm = userSummary[id];
+            if (!userSumm) {
+                userSumm = {
+                    id: id,
+                    login: obs.getUserLogin(),
+                    display_name: obs.getUserDisplayName(),
+                    results: {
+                        countPublic: 0,
+                        countObscured: 0,
+                        countTrusted: 0,
+                        observations: [],
+                    },
+                };
+                userSummary[id] = userSumm;
+            }
+            switch (obs.getCoordType()) {
+                case "public":
+                    userSumm.results.countPublic++;
+                    break;
+                case "trusted":
+                    userSumm.results.countTrusted++;
+                    break;
+                case "obscured":
+                    userSumm.results.countObscured++;
+                    break;
+            }
+            userSumm.results.observations.push(obs);
+        }
+
+        return userSummary;
     }
 
     #initObsOptions() {
