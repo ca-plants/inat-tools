@@ -337,6 +337,11 @@ class ObsDetailUI extends SearchUI {
             return getIDListURL(selectedTypes);
         }
 
+        // If showing only observations with comments, use ID list.
+        if (hdom.isChecked("comments")) {
+            return getIDListURL(selectedTypes);
+        }
+
         const count = ObsDetailUI.#getObsCount(results, selectedTypes);
 
         if (count === results.observations.length) {
