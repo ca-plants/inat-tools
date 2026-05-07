@@ -19,6 +19,8 @@ export function makeObservationData(taxon, options = {}) {
         quality_grade: "research",
         taxon: taxon,
         user: { id: "", login: "", name: "" },
+        description: "",
+        comments: [],
     };
     return rawObservation;
 }
