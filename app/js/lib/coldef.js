@@ -1,5 +1,5 @@
+import { hdom } from "@htmltools/hdom";
 import { csvFormatRows } from "d3-dsv";
-import { hdom } from "./hdom.js";
 
 /**
  * @template T

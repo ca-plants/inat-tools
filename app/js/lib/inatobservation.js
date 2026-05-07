@@ -27,6 +27,10 @@ class INatObservation {
         }
     }
 
+    getComments() {
+        return this.#rawObservation.comments;
+    }
+
     /**
      * @returns {[number,number]}
      */
@@ -47,6 +51,13 @@ class INatObservation {
             return "public";
         }
         return this.isObscured() ? "obscured" : "trusted";
+    }
+
+    /**
+     * @returns {string}
+     */
+    getDescription() {
+        return this.#rawObservation.description ?? "";
     }
 
     getID() {
@@ -109,6 +120,14 @@ class INatObservation {
 
     getUserLogin() {
         return this.#rawObservation.user.login;
+    }
+
+    hasComments() {
+        return this.#rawObservation.comments.length > 0;
+    }
+
+    hasDescription() {
+        return (this.#rawObservation.description ?? "").length > 0;
     }
 
     #isObservationObscured() {
