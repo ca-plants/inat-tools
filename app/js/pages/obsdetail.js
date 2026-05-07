@@ -360,12 +360,8 @@ class ObsDetailUI extends SearchUI {
                 url.searchParams.set("geoprivacy", "open");
                 return url;
             }
-            case "public,trusted":
-            case "trusted":
-            case "obscured":
-                return getIDListURL(selectedTypes);
             default:
-                return "";
+                return getIDListURL(selectedTypes);
         }
     }
 
@@ -1339,6 +1335,12 @@ class ObsDetailUI extends SearchUI {
         addBucket(r.countPublic, "public");
         addBucket(r.countTrusted, "trusted");
         addBucket(r.countObscured, "obscured");
+
+        // Disable "Show comments" if none have comments.
+        hdom.enableElement(
+            "comments",
+            r.observations.some((obs) => obs.getComments().length > 0),
+        );
     }
 
     #updateViewInINaturalistLink() {
