@@ -79,10 +79,16 @@ const DETAIL_COLS = {
         "Comments",
         () => "",
         (value, obs) => {
-            const html = obs
-                .getComments()
-                .map((c) => `${marked.parse(`**${c.user.login}:** ${c.body}`)}`)
-                .join("");
+            const desc = obs.getDescription();
+            let html =
+                marked.parse(desc) +
+                obs
+                    .getComments()
+                    .map(
+                        (c) =>
+                            `${marked.parse(`**${c.user.login}:** ${c.body}`)}`,
+                    )
+                    .join("");
             const div = hdom.createElement("div");
             div.innerHTML = html;
             return div;
@@ -921,11 +927,16 @@ class ObsDetailUI extends SearchUI {
             if (!includeDescendants && rawResult.taxon.id !== this.#taxon_id) {
                 continue;
             }
-            if (includeComments && rawResult.comments.length === 0) {
+
+            const result = new INatObservation(rawResult);
+            if (
+                includeComments &&
+                !result.hasComments() &&
+                !result.hasDescription()
+            ) {
                 continue;
             }
 
-            const result = new INatObservation(rawResult);
             if (hdom.isChecked(`sel-${result.getCoordType()}`)) {
                 taxonSummary.observations.push(result);
             }

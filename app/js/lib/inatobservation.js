@@ -53,6 +53,13 @@ class INatObservation {
         return this.isObscured() ? "obscured" : "trusted";
     }
 
+    /**
+     * @returns {string}
+     */
+    getDescription() {
+        return this.#rawObservation.description ?? "";
+    }
+
     getID() {
         return this.#rawObservation.id;
     }
@@ -113,6 +120,14 @@ class INatObservation {
 
     getUserLogin() {
         return this.#rawObservation.user.login;
+    }
+
+    hasComments() {
+        return this.#rawObservation.comments.length > 0;
+    }
+
+    hasDescription() {
+        return (this.#rawObservation.description ?? "").length > 0;
     }
 
     #isObservationObscured() {

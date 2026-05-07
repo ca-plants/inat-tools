@@ -19,6 +19,7 @@
  *  taxon_geoprivacy: string;
  *  time_observed_at: string;
  *  user: INatDataUser;
+ *  description: string|null;
  *  comments: {body:string,user:{login:string}}[]
  * }} INatDataObs
  * @typedef {{display_name:string}} INatDataPlace
