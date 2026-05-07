@@ -908,11 +908,9 @@ class ObsDetailUI extends SearchUI {
         const taxonSummary = {
             taxon_id: taxon_data.id,
             rank: taxon_data.rank,
-            count: 0,
             countPublic: 0,
             countTrusted: 0,
             countObscured: 0,
-            countResearchGrade: 0,
             /** @type {INatObservation[]} */ observations: [],
         };
 
@@ -928,10 +926,8 @@ class ObsDetailUI extends SearchUI {
             }
 
             const result = new INatObservation(rawResult);
-            taxonSummary.observations.push(result);
-            taxonSummary.count++;
-            if (rawResult.quality_grade === "research") {
-                taxonSummary.countResearchGrade++;
+            if (hdom.isChecked(`sel-${result.getCoordType()}`)) {
+                taxonSummary.observations.push(result);
             }
             switch (result.getCoordType()) {
                 case "public":
