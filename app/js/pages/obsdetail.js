@@ -1311,10 +1311,8 @@ class ObsDetailUI extends SearchUI {
         function addBucket(count, name) {
             const id = "sel-" + name;
             const cb = hdom.getElement(id);
-            const label = cb.nextSibling;
-            if (label instanceof Element) {
-                hdom.setTextValue(label, `${count} ${name}`);
-            }
+            const label = hdom.getElement(`${id}-label`);
+            hdom.setTextValue(label, `${count} ${name}`);
             hdom.setCheckBoxState(cb, selArray.includes(name));
             hdom.enableElement(cb, numTypes > 1);
             if (cb.parentElement) {
@@ -1374,7 +1372,7 @@ function createCheckBoxDiv(id, label, checked, fnClickHandler) {
     const cb = hdom.createCheckBox(id, checked);
     hdom.addEventListener(cb, "click", fnClickHandler);
     div.appendChild(cb);
-    div.appendChild(hdom.createLabelElement(id, label));
+    div.appendChild(hdom.createLabelElement(id, label, { id: `${id}-label` }));
     return div;
 }
 
