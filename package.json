@@ -7,10 +7,10 @@
         "build-eleventy": "npx @11ty/eleventy --config config/config-eleventy.js",
         "build-eleventy-dev": "npx @11ty/eleventy --config config/config-eleventy.js --watch",
         "build-js-dev": "npx rollup --config ./config/config-rollup-dev.js",
-        "check": "npm run tsc && npm run eslint && npm run ava && npm run jest",
+        "check": "npm run tsc && npm run eslint && npm run ava && npm run jest -- tests/jest",
         "dev": "rm -rf public && concurrently -k \"npx rollup --config ./config/config-rollup-dev.js --watch\" \"npm run build-eleventy-dev\"",
         "eslint": "eslint app tests",
-        "jest": "node --experimental-vm-modules node_modules/jest/bin/jest.js tests/jest",
+        "jest": "node --experimental-vm-modules node_modules/jest/bin/jest.js",
         "prettier": "prettier -l .",
         "tsc": "tsc"
     },

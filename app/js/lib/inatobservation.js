@@ -28,7 +28,13 @@ class INatObservation {
     }
 
     getComments() {
-        return this.#rawObservation.comments;
+        return this.#rawObservation.comments
+            .concat(
+                this.#rawObservation.identifications.filter(
+                    (ident) => ident.body !== null && ident.body !== "",
+                ),
+            )
+            .sort((a, b) => a.created_at.localeCompare(b.created_at));
     }
 
     /**
@@ -123,7 +129,12 @@ class INatObservation {
     }
 
     hasComments() {
-        return this.#rawObservation.comments.length > 0;
+        return (
+            this.#rawObservation.comments.length > 0 ||
+            this.#rawObservation.identifications.some(
+                (ident) => ident.body !== null && ident.body !== "",
+            )
+        );
     }
 
     hasDescription() {
