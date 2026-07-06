@@ -4,9 +4,13 @@
  * @typedef {"datehisto" | "details" | "mapdata" | "usersumm" | "map"} EnumObsDetailView
  *
  * Types - INat Data
+ * @typedef {{created_at:string,body:string|null,user:{login:string}}} InatCommentData
  * @typedef {{
+ *  comments: InatCommentData[];
+ *  description: string|null;
  *  geoprivacy: string | null;
  *  id: string;
+ *  identifications: InatCommentData[];
  *  location: string;
  *  observed_on: string;
  *  place_guess: string;
@@ -19,8 +23,6 @@
  *  taxon_geoprivacy: string;
  *  time_observed_at: string;
  *  user: INatDataUser;
- *  description: string|null;
- *  comments: {body:string,user:{login:string}}[]
  * }} INatDataObs
  * @typedef {{display_name:string}} INatDataPlace
  * @typedef {{id: number;title: string;slug: string;user_ids: number[];}} INatDataProject

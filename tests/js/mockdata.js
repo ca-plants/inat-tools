@@ -1,6 +1,13 @@
 /**
+ * @typedef
+ * {{comments?:import("../../app/js/types.js").InatCommentData[],
+ * identifications?:import("../../app/js/types.js").InatCommentData[],
+ * taxon_geoprivacy?:string,geoprivacy?:string|null,private_location?:string}} MockDataOptions
+ */
+
+/**
  * @param {import("../../app/js/types.js").INatDataTaxon} taxon
- * @param {{taxon_geoprivacy?:string,geoprivacy?:string|null,private_location?:string}} [options={}]
+ * @param {MockDataOptions} [options={}]
  * @returns {import("../../app/js/types.js").INatDataObs}
  */
 export function makeObservationData(taxon, options = {}) {
@@ -12,6 +19,7 @@ export function makeObservationData(taxon, options = {}) {
         positional_accuracy: 0,
         public_positional_accuracy: 0,
         id: "",
+        identifications: options.identifications ?? [],
         location: "",
         time_observed_at: "",
         place_guess: "",
@@ -20,7 +28,7 @@ export function makeObservationData(taxon, options = {}) {
         taxon: taxon,
         user: { id: "", login: "", name: "" },
         description: "",
-        comments: [],
+        comments: options.comments ?? [],
     };
     return rawObservation;
 }
