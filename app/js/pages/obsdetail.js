@@ -164,7 +164,7 @@ class ObsDetailUI extends SearchUI {
     #f1;
     /** @type {import("../types.js").INatDataTaxon|undefined} */
     #taxon_data;
-    /** @type {import("../types.js").INatDataObs[]|undefined} */
+    /** @type {import("../types.js").INatObservation[]|undefined} */
     #rawResults;
     /** @type {Results} */
     #processedResults = {
@@ -518,16 +518,18 @@ class ObsDetailUI extends SearchUI {
         this.#taxon_id = parseInt(taxonId);
         this.#taxon_data = await api.getTaxonData(this.#taxon_id.toString());
 
-        this.#rawResults = await DataRetriever.getObservationData(
+        this.#rawResults = undefined;
+        const results = await DataRetriever.getObservationData(
             api,
             this.#f1,
             this.getProgressReporter(),
         );
-        if (!this.#rawResults) {
+        if (!results) {
             // If retrieval failed, make sure the search form is displayed.
             this.showSearchForm();
             return;
         }
+        this.#rawResults = results.map((r) => new INatObservation(r));
         this.#processedResults = this.summarizeResults(this.#rawResults);
 
         hdom.showElement("search-crit", false);
@@ -906,7 +908,7 @@ class ObsDetailUI extends SearchUI {
     }
 
     /**
-     * @param {import("../types.js").INatDataObs[]} rawResults
+     * @param {import("../types.js").INatObservation[]} rawResults
      * @returns {Results}
      */
     summarizeResults(rawResults) {
@@ -923,12 +925,11 @@ class ObsDetailUI extends SearchUI {
         const includeComments = hdom.isChecked("comments");
         const includeDescendants = hdom.isChecked("branch");
 
-        for (const rawResult of rawResults) {
-            if (!includeDescendants && rawResult.taxon.id !== this.#taxon_id) {
+        for (const result of rawResults) {
+            if (!includeDescendants && result.getTaxonID() !== this.#taxon_id) {
                 continue;
             }
 
-            const result = new INatObservation(rawResult);
             if (
                 includeComments &&
                 !result.hasComments() &&
