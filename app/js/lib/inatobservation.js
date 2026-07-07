@@ -102,6 +102,10 @@ class INatObservation {
         return "unknown";
     }
 
+    getTaxonID() {
+        return this.#rawObservation.taxon.id;
+    }
+
     getTaxonName() {
         return this.#rawObservation.taxon.name;
     }
