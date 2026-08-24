@@ -252,6 +252,7 @@ div.flex-fullwidth {
 }
 
 #svg-datehisto {
+  display: block;
   margin: auto;
   min-height: 400px;
 }

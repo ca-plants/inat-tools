@@ -3,11 +3,7 @@ import { hdom } from "@htmltools/hdom";
 import { marked } from "marked";
 import { ColDef } from "../lib/coldef.js";
 import { DataRetriever } from "../lib/dataretriever.js";
-import {
-    HistogramDate,
-    HistogramTime,
-    HistogramYear,
-} from "../lib/histogram.js";
+import { HistogramDate, HistogramTime } from "../lib/histogram.js";
 import { INatObservation } from "../lib/inatobservation.js";
 import { SearchUI } from "../lib/searchui.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
@@ -15,6 +11,7 @@ import { createDownloadLink } from "../lib/utils.js";
 import { InatURL } from "../lib/inaturl.js";
 import { DEFAULT_MAP_SOURCE, Map, MAP_SOURCES } from "../lib/map.js";
 import { Clusterer } from "../tools/clusterer.js";
+import { xHistogramYear } from "../lib/histo.js";
 
 /** @typedef {{role:string}} ProjectMember */
 /** @typedef {{countObscured:number,countPublic:number,countTrusted:number,observations:INatObservation[]}} Results */
@@ -1205,7 +1202,7 @@ class ObsDetailUI extends SearchUI {
                 );
                 break;
             case "year":
-                histo = new HistogramYear(
+                histo = new xHistogramYear(
                     this.#getSelectedObservations(),
                     this.#f1,
                 );
