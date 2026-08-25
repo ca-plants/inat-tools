@@ -8,7 +8,8 @@
 import { hdom } from "@htmltools/hdom";
 
 export class xHistogramYear {
-  #observations;
+  #bins;
+  #dataWidth = 100;
   #filter;
 
   /**
@@ -16,17 +17,18 @@ export class xHistogramYear {
    * @param {import("../types.js").SpeciesFilter} filter
    */
   constructor(observations, filter) {
-    this.#observations = observations;
+    this.#bins = this.binObservations(observations);
     this.#filter = filter;
   }
 
   /**
+   * @param {import("../types.js").INatObservation[]} observations
    * @returns {HistoBin[]}
    */
-  binObservations() {
+  binObservations(observations) {
     /** @type {Map<number,import("../types.js").INatObservation[]>} */
     const rawSummary = new Map();
-    for (const obs of this.#observations) {
+    for (const obs of observations) {
       const year = new Date(obs.getObsDateString()).getFullYear();
       let obsList = rawSummary.get(year);
       if (obsList === undefined) {
@@ -59,9 +61,6 @@ export class xHistogramYear {
    * @returns {SVGElement}
    */
   createSVG() {
-    const data = this.binObservations();
-
-    const dataWidth = 100;
     const dataHeight = 100;
 
     const svg = SVG.createElement("svg", { viewBox: "-20 0 120 120" });
@@ -104,9 +103,11 @@ export class xHistogramYear {
     );
 
     // Add x-axis labels.
-    const numBins = data.length;
-    const binWidth = dataWidth / numBins;
+    const numBins = this.#bins.length;
+    const binWidth = this.getBinWidth();
+    const gx = SVG.createElement("g", { id: "svg-datehisto-xlabel" }, svg);
     for (let index = 0; index < numBins; index++) {
+      const g = SVG.createElement("g", { style: "visibility:hidden" }, gx);
       const x = binWidth * index + binWidth / 2;
       SVG.createElement(
         "line",
@@ -117,18 +118,18 @@ export class xHistogramYear {
           x2: x,
           y2: dataHeight + 1,
         },
-        svg,
+        g,
       );
       const label = SVG.createElement(
         "text",
         { class: "label-x", x: x, y: dataHeight + 5 },
-        svg,
+        g,
       );
-      hdom.setTextValue(label, data[index].label);
+      hdom.setTextValue(label, this.#bins[index].label);
     }
 
     // Add y-axis labels.
-    const maxCount = data.reduce(
+    const maxCount = this.#bins.reduce(
       (m, bin) => Math.max(m, bin.observations ? bin.observations.length : 0),
       0,
     );
@@ -153,6 +154,10 @@ export class xHistogramYear {
     }
 
     return svg;
+  }
+
+  getBinWidth() {
+    return this.#dataWidth / this.#bins.length;
   }
 
   /**

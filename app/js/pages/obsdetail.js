@@ -172,6 +172,9 @@ class ObsDetailUI extends SearchUI {
   /** @type {import("geojson").FeatureCollection|undefined} */
   #downloadData;
 
+  /** @type {xHistogramYear|undefined} */
+  #histo;
+
   /**
    * @param {import("../types.js").ParamsPageObsDetail} params
    */
@@ -482,7 +485,38 @@ class ObsDetailUI extends SearchUI {
           }
           const height = window.innerHeight - svg.getBoundingClientRect().top;
           svg.setAttribute("style", `height:${height}px;`);
+
+          if (this.#histo === undefined) {
+            return;
+          }
+
+          // Process x-axis labels.
+          let maxLabelWidth = 0;
+          const gLabels = hdom.getElement("svg-datehisto-xlabel");
+          for (const element of gLabels.children) {
+            const eText = /** @type {SVGGraphicsElement} */ (
+              element.children[1]
+            );
+            maxLabelWidth = Math.max(maxLabelWidth, eText.getBBox().width);
+          }
+
+          const binWidth = this.#histo.getBinWidth();
+          const firstLabel = Math.ceil(
+            (maxLabelWidth - binWidth) / 2 / binWidth,
+          );
+          const increment = Math.ceil((maxLabelWidth + 1) / binWidth);
+
+          // Show non-overlapping, evenly spaced labels
+          for (let index = 0; index < gLabels.children.length; index++) {
+            const child = /** @type {HTMLElement} */ (gLabels.children[index]);
+            if ((index - firstLabel) % increment === 0) {
+              child.style.removeProperty("visibility");
+            } else {
+              child.style.visibility = "hidden";
+            }
+          }
         }
+
         break;
       case "map":
         setMapHeight();
@@ -1169,6 +1203,7 @@ class ObsDetailUI extends SearchUI {
       e.remove();
     }
     const eResults = hdom.getElement("results");
+    /** @deprecated */
     let histo;
     switch (type) {
       case "time":
@@ -1176,6 +1211,7 @@ class ObsDetailUI extends SearchUI {
         break;
       case "year":
         histo = new xHistogramYear(this.#getSelectedObservations(), this.#f1);
+        this.#histo = histo;
         break;
       default:
         histo = new HistogramDate(this.#getSelectedObservations(), this.#f1);
