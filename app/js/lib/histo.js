@@ -134,7 +134,9 @@ export class xHistogramYear {
     );
     const fontHeight = 3.8;
     const useableHeight = dataHeight - fontHeight / 2;
-    for (let index = 1; index <= maxCount; index++) {
+    const maxLabels = Math.floor(useableHeight / fontHeight);
+    const increment = Math.ceil(maxCount / maxLabels);
+    for (let index = increment; index <= maxCount; index += increment) {
       const y =
         fontHeight / 2 + useableHeight - (useableHeight * index) / maxCount;
       SVG.createElement(
