@@ -168,6 +168,7 @@ export class xHistogramYear {
       const bin = this.#bins[index];
       const height =
         (bin.observations.length / maxLabel) * (dataHeight - maxLabelY);
+      const g = SVG.createElement("g", {}, gBins);
       const rect = SVG.createElement(
         "rect",
         {
@@ -177,10 +178,18 @@ export class xHistogramYear {
           y: dataHeight - height,
           height: height,
         },
-        gBins,
+        g,
       );
       const title = SVG.createElement("title", {}, rect);
       title.textContent = `${bin.label}\n${bin.observations.length} observations`;
+      SVG.createElement(
+        "path",
+        {
+          class: "bin",
+          d: `M${x} ${dataHeight}v-${height}h${binWidth}v${height}`,
+        },
+        g,
+      );
       x += binWidth;
     }
     return svg;
