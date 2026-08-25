@@ -137,7 +137,13 @@ export class xHistogramYear {
     const useableHeight = dataHeight - fontHeight / 2;
     const maxLabels = Math.floor(useableHeight / fontHeight);
     const increment = Math.ceil(maxCount / maxLabels);
-    for (let index = increment; index <= maxCount; index += increment) {
+    let maxLabel = 0;
+    let maxLabelY = 0;
+    for (
+      let index = increment;
+      index < maxCount + increment;
+      index += increment
+    ) {
       const y =
         fontHeight / 2 + useableHeight - (useableHeight * index) / maxCount;
       SVG.createElement(
@@ -151,8 +157,32 @@ export class xHistogramYear {
         svg,
       );
       hdom.setTextValue(label, index.toString());
+      maxLabel = index;
+      maxLabelY = y;
     }
 
+    // Add bars.
+    const gBins = SVG.createElement("g", { id: "svg-datehisto-bins" }, svg);
+    let x = 0;
+    for (let index = 0; index < numBins; index++) {
+      const bin = this.#bins[index];
+      const height =
+        (bin.observations.length / maxLabel) * (dataHeight - maxLabelY);
+      const rect = SVG.createElement(
+        "rect",
+        {
+          class: "bin",
+          x: x,
+          width: binWidth,
+          y: dataHeight - height,
+          height: height,
+        },
+        gBins,
+      );
+      const title = SVG.createElement("title", {}, rect);
+      title.textContent = `${bin.label}\n${bin.observations.length} observations`;
+      x += binWidth;
+    }
     return svg;
   }
 
