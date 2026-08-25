@@ -36,15 +36,12 @@ export class xHistogramYear {
       obsList.push(obs);
     }
 
-    console.log(rawSummary);
     let minYear = Number.MAX_SAFE_INTEGER;
     let maxYear = Number.MIN_SAFE_INTEGER;
     for (const key of rawSummary.keys()) {
       minYear = Math.min(minYear, key);
       maxYear = Math.max(maxYear, key);
     }
-    console.log(minYear);
-    console.log(maxYear);
 
     /** @type {HistoBin[]} */
     const summary = [];
@@ -63,7 +60,9 @@ export class xHistogramYear {
    */
   createSVG() {
     const data = this.binObservations();
-    console.log(data);
+
+    const dataWidth = 100;
+    const dataHeight = 100;
 
     const svg = SVG.createElement("svg", { viewBox: "-20 0 120 120" });
 
@@ -103,6 +102,53 @@ export class xHistogramYear {
       },
       svg,
     );
+
+    // Add x-axis labels.
+    const numBins = data.length;
+    const binWidth = dataWidth / numBins;
+    for (let index = 0; index < numBins; index++) {
+      const x = binWidth * index + binWidth / 2;
+      SVG.createElement(
+        "line",
+        {
+          class: "tick",
+          x1: x,
+          y1: dataHeight,
+          x2: x,
+          y2: dataHeight + 1,
+        },
+        svg,
+      );
+      const label = SVG.createElement(
+        "text",
+        { class: "label-x", x: x, y: dataHeight + 5 },
+        svg,
+      );
+      hdom.setTextValue(label, data[index].label);
+    }
+
+    // Add y-axis labels.
+    const maxCount = data.reduce(
+      (m, bin) => Math.max(m, bin.observations ? bin.observations.length : 0),
+      0,
+    );
+    const fontHeight = 3.8;
+    const useableHeight = dataHeight - fontHeight / 2;
+    for (let index = 1; index <= maxCount; index++) {
+      const y =
+        fontHeight / 2 + useableHeight - (useableHeight * index) / maxCount;
+      SVG.createElement(
+        "line",
+        { class: "tick", x1: -1, y1: y, x2: 0, y2: y },
+        svg,
+      );
+      const label = SVG.createElement(
+        "text",
+        { class: "label-y", x: -2, y: y },
+        svg,
+      );
+      hdom.setTextValue(label, index.toString());
+    }
 
     return svg;
   }
