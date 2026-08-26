@@ -9,7 +9,7 @@ import { hdom } from "@htmltools/hdom";
  * svg:SVGElement,
  * gBins:SVGElement,
  * gXLabels:SVGElement,
- * maxXLabelWidth:number
+ * maxXLabelWidth:number,
  * }} SVGData
  */
 
@@ -146,6 +146,7 @@ export class xHistogramYear {
       hdom.setTextValue(label, this.#bins[index].label);
       maxLabelWidth = Math.max(maxLabelWidth, label.getBBox().width);
     }
+    this.#labYWidth = maxLabelWidth + 1;
 
     // Add y-axis labels.
     const maxCount = this.#bins.reduce(
@@ -158,6 +159,7 @@ export class xHistogramYear {
     const increment = Math.ceil(maxCount / maxLabels);
     let maxLabel = 0;
     let maxLabelY = 0;
+    let maxLabelYWidth = 0;
     for (
       let index = increment;
       index < maxCount + increment;
@@ -170,7 +172,7 @@ export class xHistogramYear {
         { class: "tick", x1: -1, y1: y, x2: 0, y2: y },
         svg,
       );
-      const label = SVG.createElement(
+      const label = /** @type {SVGGraphicsElement} */ SVG.createElement(
         "text",
         { class: "label-y", x: -2, y: y },
         svg,
@@ -178,6 +180,7 @@ export class xHistogramYear {
       hdom.setTextValue(label, index.toString());
       maxLabel = index;
       maxLabelY = y;
+      maxLabelYWidth = Math.max(maxLabelYWidth, label.getBBox().width);
     }
 
     // Add bars.
@@ -314,10 +317,11 @@ export class xHistogramYear {
 
 class SVG {
   /**
+   * @template T extends SVGElement
    * @param {string} elName
    * @param {Object<string,string|number|undefined>|string} [attributes]
    * @param {SVGElement} [parent]
-   * @returns {SVGElement}
+   * @returns {T}
    */
   static createElement(elName, attributes, parent) {
     const e = document.createElementNS("http://www.w3.org/2000/svg", elName);
@@ -337,6 +341,7 @@ class SVG {
     if (parent) {
       parent.appendChild(e);
     }
+    // @ts-ignore
     return e;
   }
 }
