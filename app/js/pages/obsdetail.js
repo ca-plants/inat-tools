@@ -474,7 +474,11 @@ class ObsDetailUI extends SearchUI {
     await this.onSubmit();
   }
 
-  onResize() {
+  /**
+   * @param {ObsDetailUI} ui
+   * @returns {void}
+   */
+  onResize(ui) {
     const mode = getViewMode();
     switch (mode) {
       case "datehisto":
@@ -486,35 +490,11 @@ class ObsDetailUI extends SearchUI {
           const height = window.innerHeight - svg.getBoundingClientRect().top;
           svg.setAttribute("style", `height:${height}px;`);
 
-          if (this.#histo === undefined) {
+          if (ui.#histo === undefined) {
             return;
           }
 
-          // Process x-axis labels.
-          let maxLabelWidth = 0;
-          const gLabels = hdom.getElement("svg-datehisto-xlabel");
-          for (const element of gLabels.children) {
-            const eText = /** @type {SVGGraphicsElement} */ (
-              element.children[1]
-            );
-            maxLabelWidth = Math.max(maxLabelWidth, eText.getBBox().width);
-          }
-
-          const binWidth = this.#histo.getBinWidth();
-          const firstLabel = Math.ceil(
-            (maxLabelWidth - binWidth) / 2 / binWidth,
-          );
-          const increment = Math.ceil((maxLabelWidth + 1) / binWidth);
-
-          // Show non-overlapping, evenly spaced labels
-          for (let index = 0; index < gLabels.children.length; index++) {
-            const child = /** @type {HTMLElement} */ (gLabels.children[index]);
-            if ((index - firstLabel) % increment === 0) {
-              child.style.removeProperty("visibility");
-            } else {
-              child.style.visibility = "hidden";
-            }
-          }
+          ui.#histo.setHorizontalScale(window.innerWidth / svg.clientHeight);
         }
 
         break;
@@ -605,7 +585,7 @@ class ObsDetailUI extends SearchUI {
       hdom.enableElement("disp-map", false);
       hdom.enableElement("disp-mapdata", false);
     }
-    window.onresize = this.onResize;
+    window.onresize = () => this.onResize(this);
 
     // Select initial view.
     hdom.showElement("form-options", true);
@@ -1205,23 +1185,26 @@ class ObsDetailUI extends SearchUI {
     const eResults = hdom.getElement("results");
     /** @deprecated */
     let histo;
+    let svg;
     switch (type) {
       case "time":
         histo = new HistogramTime(this.#getSelectedObservations(), this.#f1);
+        svg = histo.createSVG();
         break;
       case "year":
         histo = new xHistogramYear(this.#getSelectedObservations(), this.#f1);
         this.#histo = histo;
+        svg = this.#histo.getSVG();
         break;
       default:
         histo = new HistogramDate(this.#getSelectedObservations(), this.#f1);
+        svg = histo.createSVG();
         break;
     }
-    const svg = histo.createSVG();
 
     svg.setAttribute("id", "svg-datehisto");
     eResults.appendChild(svg);
-    this.onResize();
+    this.onResize(this);
 
     this.#updateHash();
   }
