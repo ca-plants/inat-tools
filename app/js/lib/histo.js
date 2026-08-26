@@ -154,19 +154,19 @@ export class xHistogramYear {
       0,
     );
     const fontHeight = 3.8;
-    const useableHeight = this.#dataHeight - fontHeight / 2;
-    const maxLabels = Math.floor(useableHeight / fontHeight);
-    const increment = Math.ceil(maxCount / maxLabels);
-    let maxLabel = 0;
-    let maxLabelY = 0;
+    const maxTickPos = fontHeight / 2;
+    const maxTickHeight = this.#dataHeight - maxTickPos;
+    const maxNumberOfLabels = Math.floor(this.#dataHeight / fontHeight);
+    const labelIncrement = Math.ceil(maxCount / maxNumberOfLabels);
+    const numberOfLabels = Math.ceil(maxCount / labelIncrement);
+    const maxLabelValue = numberOfLabels * labelIncrement;
     let maxLabelYWidth = 0;
-    for (
-      let index = increment;
-      index < maxCount + increment;
-      index += increment
-    ) {
+    for (let index = 0; index < numberOfLabels; index++) {
+      const labelValue = (index + 1) * labelIncrement;
       const y =
-        fontHeight / 2 + useableHeight - (useableHeight * index) / maxCount;
+        maxTickPos +
+        maxTickHeight -
+        (maxTickHeight * labelValue) / maxLabelValue;
       SVG.createElement(
         "line",
         { class: "tick", x1: -1, y1: y, x2: 0, y2: y },
@@ -177,9 +177,7 @@ export class xHistogramYear {
         { class: "label-y", x: -2, y: y },
         svg,
       );
-      hdom.setTextValue(label, index.toString());
-      maxLabel = index;
-      maxLabelY = y;
+      hdom.setTextValue(label, labelValue.toString());
       maxLabelYWidth = Math.max(maxLabelYWidth, label.getBBox().width);
     }
 
@@ -188,8 +186,7 @@ export class xHistogramYear {
     let x = 0;
     for (let index = 0; index < numBins; index++) {
       const bin = this.#bins[index];
-      const height =
-        (bin.observations.length / maxLabel) * (this.#dataHeight - maxLabelY);
+      const height = (bin.observations.length / maxLabelValue) * maxTickHeight;
       const g = SVG.createElement("g", {}, gBins);
       const rect = SVG.createElement(
         "rect",
