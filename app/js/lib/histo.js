@@ -7,7 +7,9 @@ import { hdom } from "@htmltools/hdom";
  * }} HistoBin
  * @typedef {{
  * svg:SVGElement,
- * gXLabels:SVGElement
+ * gBins:SVGElement,
+ * gXLabels:SVGElement,
+ * maxXLabelWidth:number
  * }} SVGData
  */
 
@@ -24,13 +26,14 @@ export class xHistogramYear {
   #filter;
 
   /**
+   * @param {HTMLElement} parent
    * @param {import("../types.js").INatObservation[]} observations
    * @param {import("../types.js").SpeciesFilter} filter
    */
-  constructor(observations, filter) {
+  constructor(parent, observations, filter) {
     this.#bins = this.binObservations(observations);
     this.#filter = filter;
-    this.#svg = this.#createSVG();
+    this.#svg = this.#createSVG(parent);
   }
 
   /**
@@ -70,10 +73,12 @@ export class xHistogramYear {
   }
 
   /**
+   * @param {HTMLElement} parent
    * @returns {SVGData}
    */
-  #createSVG() {
+  #createSVG(parent) {
     const svg = SVG.createElement("svg", { viewBox: this.#getViewBox() });
+    parent.appendChild(svg);
 
     const style = hdom.createElement("style");
     hdom.setTextValue(
@@ -114,8 +119,9 @@ export class xHistogramYear {
 
     // Add x-axis labels.
     const numBins = this.#bins.length;
-    const binWidth = this.getBinWidth();
+    const binWidth = this.#getBinWidth();
     const gx = SVG.createElement("g", {}, svg);
+    let maxLabelWidth = 0;
     for (let index = 0; index < numBins; index++) {
       const g = SVG.createElement("g", { style: "visibility:hidden" }, gx);
       const x = binWidth * index + binWidth / 2;
@@ -130,12 +136,15 @@ export class xHistogramYear {
         },
         g,
       );
-      const label = SVG.createElement(
-        "text",
-        { class: "label-x", x: x, y: this.#dataHeight + 5 },
-        g,
+      const label = /** @type {SVGGraphicsElement} */ (
+        SVG.createElement(
+          "text",
+          { class: "label-x", x: x, y: this.#dataHeight + 5 },
+          g,
+        )
       );
       hdom.setTextValue(label, this.#bins[index].label);
+      maxLabelWidth = Math.max(maxLabelWidth, label.getBBox().width);
     }
 
     // Add y-axis labels.
@@ -196,17 +205,32 @@ export class xHistogramYear {
         "path",
         {
           class: "bin",
-          d: `M${x} ${this.#dataHeight}v-${height}h${binWidth}v${height}`,
+          d: this.#getBinOutlinePath(x, binWidth, height),
         },
         g,
       );
       x += binWidth;
     }
 
-    return { svg: svg, gXLabels: gx };
+    return {
+      svg: svg,
+      gXLabels: gx,
+      gBins: gBins,
+      maxXLabelWidth: maxLabelWidth,
+    };
   }
 
-  getBinWidth() {
+  /**
+   * @param {number} x
+   * @param {number} binWidth
+   * @param {number|string} height
+   * @returns {string}
+   */
+  #getBinOutlinePath(x, binWidth, height) {
+    return `M${x} ${this.#dataHeight}v-${height}h${binWidth}v${height}`;
+  }
+
+  #getBinWidth() {
     return this.#dataWidth / this.#bins.length;
   }
 
@@ -218,7 +242,7 @@ export class xHistogramYear {
    * @returns {string}
    */
   #getViewBox() {
-    return `-${this.#labYWidth} 0 ${this.#dataWidth} ${this.#dataHeight + this.#labYWidth}`;
+    return `-${this.#labYWidth} 0 ${this.#dataWidth + this.#labYWidth} ${this.#dataHeight + this.#labXHeight}`;
   }
 
   /**
@@ -229,26 +253,46 @@ export class xHistogramYear {
       factor * (this.#dataHeight + this.#labXHeight) - this.#labYWidth;
     this.#svg.svg.setAttribute("viewBox", this.#getViewBox());
 
-    // Process x-axis labels.
-    let maxLabelWidth = 0;
+    const maxLabelWidth = this.#svg.maxXLabelWidth;
     const gLabels = this.#svg.gXLabels;
-    for (const element of gLabels.children) {
-      const eText = /** @type {SVGGraphicsElement} */ (element.children[1]);
-      maxLabelWidth = Math.max(maxLabelWidth, eText.getBBox().width);
-    }
-
-    const binWidth = this.getBinWidth();
+    const binWidth = this.#getBinWidth();
     const firstLabel = Math.ceil((maxLabelWidth - binWidth) / 2 / binWidth);
     const increment = Math.ceil((maxLabelWidth + 1) / binWidth);
 
     // Show non-overlapping, evenly spaced labels
     for (let index = 0; index < gLabels.children.length; index++) {
-      const child = /** @type {HTMLElement} */ (gLabels.children[index]);
+      const x = binWidth * index + binWidth / 2;
+      const g = /** @type {HTMLElement} */ (gLabels.children[index]);
+
       if ((index - firstLabel) % increment === 0) {
-        child.style.removeProperty("visibility");
+        g.style.removeProperty("visibility");
       } else {
-        child.style.visibility = "hidden";
+        g.style.visibility = "hidden";
       }
+
+      const tick = g.children[0];
+      tick.setAttribute("x1", x.toString());
+      tick.setAttribute("x2", x.toString());
+
+      const text = g.children[1];
+      text.setAttribute("x", x.toString());
+    }
+
+    // Resize bins.
+    for (let index = 0; index < this.#svg.gBins.children.length; index++) {
+      const x = binWidth * index;
+      const g = this.#svg.gBins.children[index];
+
+      const rect = g.children[0];
+      rect.setAttribute("x", x.toString());
+      rect.setAttribute("width", binWidth.toString());
+
+      const path = g.children[1];
+      path.setAttribute(
+        "d",
+        // @ts-ignore
+        this.#getBinOutlinePath(x, binWidth, rect.getAttribute("height")),
+      );
     }
   }
 

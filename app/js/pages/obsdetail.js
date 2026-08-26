@@ -494,7 +494,10 @@ class ObsDetailUI extends SearchUI {
             return;
           }
 
-          ui.#histo.setHorizontalScale(window.innerWidth / svg.clientHeight);
+          ui.#histo.setHorizontalScale(
+            // @ts-ignore
+            svg.parentElement.clientWidth / svg.clientHeight,
+          );
         }
 
         break;
@@ -1192,7 +1195,11 @@ class ObsDetailUI extends SearchUI {
         svg = histo.createSVG();
         break;
       case "year":
-        histo = new xHistogramYear(this.#getSelectedObservations(), this.#f1);
+        histo = new xHistogramYear(
+          eResults,
+          this.#getSelectedObservations(),
+          this.#f1,
+        );
         this.#histo = histo;
         svg = this.#histo.getSVG();
         break;
@@ -1203,7 +1210,9 @@ class ObsDetailUI extends SearchUI {
     }
 
     svg.setAttribute("id", "svg-datehisto");
-    eResults.appendChild(svg);
+    if (type !== "year") {
+      eResults.appendChild(svg);
+    }
     this.onResize(this);
 
     this.#updateHash();
