@@ -3,7 +3,7 @@ import { hdom } from "@htmltools/hdom";
 import { marked } from "marked";
 import { ColDef } from "../lib/coldef.js";
 import { DataRetriever } from "../lib/dataretriever.js";
-import { HistogramDate, HistogramTime } from "../lib/histogram.js";
+import { HistogramTime } from "../lib/histogram.js";
 import { INatObservation } from "../lib/inatobservation.js";
 import { SearchUI } from "../lib/searchui.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
@@ -11,7 +11,7 @@ import { createDownloadLink } from "../lib/utils.js";
 import { InatURL } from "../lib/inaturl.js";
 import { DEFAULT_MAP_SOURCE, Map, MAP_SOURCES } from "../lib/map.js";
 import { Clusterer } from "../tools/clusterer.js";
-import { xHistogramYear } from "../lib/histo.js";
+import { HistoDate, HistoYear } from "../lib/histo.js";
 
 /** @typedef {{role:string}} ProjectMember */
 /** @typedef {{countObscured:number,countPublic:number,countTrusted:number,observations:INatObservation[]}} Results */
@@ -172,7 +172,7 @@ class ObsDetailUI extends SearchUI {
   /** @type {import("geojson").FeatureCollection|undefined} */
   #downloadData;
 
-  /** @type {xHistogramYear|undefined} */
+  /** @type {import("../lib/histo.js").Histo|undefined} */
   #histo;
 
   /**
@@ -1189,26 +1189,31 @@ class ObsDetailUI extends SearchUI {
     /** @deprecated */
     let histo;
     let svg;
+    let iNatURL = this.getINatObservationURL(
+      this.#f1.getParams(),
+      this.#processedResults,
+    ).toString();
+
     switch (type) {
       case "time":
         histo = new HistogramTime(this.#getSelectedObservations(), this.#f1);
         svg = histo.createSVG();
         break;
       case "year":
-        histo = new xHistogramYear(
+        this.#histo = new HistoYear(
           eResults,
           this.#getSelectedObservations(),
-          this.getINatObservationURL(
-            this.#f1.getParams(),
-            this.#processedResults,
-          ).toString(),
+          iNatURL,
         );
-        this.#histo = histo;
         svg = this.#histo.getSVG();
         break;
       default:
-        histo = new HistogramDate(this.#getSelectedObservations(), this.#f1);
-        svg = histo.createSVG();
+        this.#histo = new HistoDate(
+          eResults,
+          this.#getSelectedObservations(),
+          iNatURL,
+        );
+        svg = this.#histo.getSVG();
         break;
     }
 

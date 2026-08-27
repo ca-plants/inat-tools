@@ -1,4 +1,5 @@
 import { hdom } from "@htmltools/hdom";
+import { DateUtils } from "./dateutils.js";
 
 /**
  * @typedef {{
@@ -14,7 +15,7 @@ import { hdom } from "@htmltools/hdom";
  * }} SVGData
  */
 
-export class xHistogramYear {
+export class Histo {
   #bins;
 
   #dataHeight = 100;
@@ -39,39 +40,11 @@ export class xHistogramYear {
   }
 
   /**
-   * @param {import("../types.js").INatObservation[]} observations
+   * @param {import("../types.js").INatObservation[]} _observations
    * @returns {HistoBin[]}
    */
-  binObservations(observations) {
-    /** @type {Map<number,import("../types.js").INatObservation[]>} */
-    const rawSummary = new Map();
-    for (const obs of observations) {
-      const year = new Date(obs.getObsDateString()).getFullYear();
-      let obsList = rawSummary.get(year);
-      if (obsList === undefined) {
-        obsList = [];
-        rawSummary.set(year, obsList);
-      }
-      obsList.push(obs);
-    }
-
-    let minYear = Number.MAX_SAFE_INTEGER;
-    let maxYear = Number.MIN_SAFE_INTEGER;
-    for (const key of rawSummary.keys()) {
-      minYear = Math.min(minYear, key);
-      maxYear = Math.max(maxYear, key);
-    }
-
-    /** @type {HistoBin[]} */
-    const summary = [];
-    for (let index = minYear; index <= maxYear; index++) {
-      summary.push({
-        label: index.toString(),
-        observations: rawSummary.get(index) ?? [],
-      });
-    }
-
-    return summary;
+  binObservations(_observations) {
+    throw new Error("must be implemented in subclass");
   }
 
   /**
@@ -193,10 +166,9 @@ export class xHistogramYear {
     let x = 0;
     for (let index = 0; index < numBins; index++) {
       const bin = this.#bins[index];
-      url.searchParams.set("year", bin.label);
       const link = SVG.createElement(
         "a",
-        { target: "_blank", href: url.toString() },
+        { target: "_blank", href: this.getInatURL(url, bin).toString() },
         gBins,
       );
 
@@ -238,6 +210,15 @@ export class xHistogramYear {
 
   #getBinWidth() {
     return this.#dataWidth / this.#bins.length;
+  }
+
+  /**
+   * @param {URL} _url
+   * @param {HistoBin} _bin
+   * @returns {URL}
+   */
+  getInatURL(_url, _bin) {
+    throw new Error("must be implemented in subclass");
   }
 
   getSVG() {
@@ -295,6 +276,108 @@ export class xHistogramYear {
         this.#getBinOutlinePath(x, binWidth, this.#bins[index]),
       );
     }
+  }
+}
+
+export class HistoDate extends Histo {
+  /**
+   * @param {import("../types.js").INatObservation[]} observations
+   * @returns {HistoBin[]}
+   */
+  binObservations(observations) {
+    /** @type {Map<number,import("../types.js").INatObservation[]>} */
+    const rawSummary = new Map();
+    for (const obs of observations) {
+      const dayOfYear = DateUtils.getDayOfYear(
+        new Date(obs.getObsDateString()),
+        true,
+      );
+      let obsList = rawSummary.get(dayOfYear);
+      if (obsList === undefined) {
+        obsList = [];
+        rawSummary.set(dayOfYear, obsList);
+      }
+      obsList.push(obs);
+    }
+
+    let minYear = Number.MAX_SAFE_INTEGER;
+    let maxYear = Number.MIN_SAFE_INTEGER;
+    for (const key of rawSummary.keys()) {
+      minYear = Math.min(minYear, key);
+      maxYear = Math.max(maxYear, key);
+    }
+
+    /** @type {HistoBin[]} */
+    const summary = [];
+    for (let index = minYear; index <= maxYear; index++) {
+      const md = DateUtils.getMonthAndDay(index, true);
+      summary.push({
+        label: `${md.month}/${md.day}`,
+        observations: rawSummary.get(index) ?? [],
+      });
+    }
+
+    return summary;
+  }
+
+  /**
+   * @param {URL} url
+   * @param {HistoBin} bin
+   * @returns {URL}
+   */
+  getInatURL(url, bin) {
+    const md = bin.label.split("/");
+    url.searchParams.set("month", md[0]);
+    url.searchParams.set("day", md[1]);
+    return url;
+  }
+}
+
+export class HistoYear extends Histo {
+  /**
+   * @param {import("../types.js").INatObservation[]} observations
+   * @returns {HistoBin[]}
+   */
+  binObservations(observations) {
+    /** @type {Map<number,import("../types.js").INatObservation[]>} */
+    const rawSummary = new Map();
+    for (const obs of observations) {
+      const year = new Date(obs.getObsDateString()).getFullYear();
+      let obsList = rawSummary.get(year);
+      if (obsList === undefined) {
+        obsList = [];
+        rawSummary.set(year, obsList);
+      }
+      obsList.push(obs);
+    }
+
+    let minYear = Number.MAX_SAFE_INTEGER;
+    let maxYear = Number.MIN_SAFE_INTEGER;
+    for (const key of rawSummary.keys()) {
+      minYear = Math.min(minYear, key);
+      maxYear = Math.max(maxYear, key);
+    }
+
+    /** @type {HistoBin[]} */
+    const summary = [];
+    for (let index = minYear; index <= maxYear; index++) {
+      summary.push({
+        label: index.toString(),
+        observations: rawSummary.get(index) ?? [],
+      });
+    }
+
+    return summary;
+  }
+
+  /**
+   * @param {URL} url
+   * @param {HistoBin} bin
+   * @returns {URL}
+   */
+  getInatURL(url, bin) {
+    url.searchParams.set("year", bin.label);
+    return url;
   }
 }
 
