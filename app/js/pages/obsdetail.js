@@ -1198,7 +1198,10 @@ class ObsDetailUI extends SearchUI {
         histo = new xHistogramYear(
           eResults,
           this.#getSelectedObservations(),
-          this.#f1,
+          this.getINatObservationURL(
+            this.#f1.getParams(),
+            this.#processedResults,
+          ).toString(),
         );
         this.#histo = histo;
         svg = this.#histo.getSVG();
@@ -1347,11 +1350,10 @@ class ObsDetailUI extends SearchUI {
       this.#f1.getParams(),
       this.#processedResults,
     );
+    /** @type {HTMLAnchorElement} */
     const link = hdom.getElement("viewininat");
-    if (link instanceof HTMLAnchorElement) {
-      link.inert = url === "";
-      link.href = url.toString();
-    }
+    link.inert = url === "";
+    link.href = url.toString();
   }
 
   /**

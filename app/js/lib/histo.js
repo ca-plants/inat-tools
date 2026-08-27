@@ -22,18 +22,19 @@ export class xHistogramYear {
   #labYWidth = 20;
   #labXHeight = 20;
 
+  #iNatURL;
+
   /** @type {SVGData} */
   #svg;
-  #filter;
 
   /**
    * @param {HTMLElement} parent
    * @param {import("../types.js").INatObservation[]} observations
-   * @param {import("../types.js").SpeciesFilter} filter
+   * @param {string} iNatURL
    */
-  constructor(parent, observations, filter) {
+  constructor(parent, observations, iNatURL) {
     this.#bins = this.binObservations(observations);
-    this.#filter = filter;
+    this.#iNatURL = iNatURL;
     this.#svg = this.#createSVG(parent);
   }
 
@@ -165,6 +166,7 @@ export class xHistogramYear {
     const maxLabelValue = numberOfLabels * labelIncrement;
     const heightFactor = maxTickHeight / maxLabelValue;
 
+    const url = new URL(this.#iNatURL);
     let maxLabelYWidth = 0;
     for (let index = 0; index < numberOfLabels; index++) {
       const labelValue = (index + 1) * labelIncrement;
@@ -191,7 +193,12 @@ export class xHistogramYear {
     let x = 0;
     for (let index = 0; index < numBins; index++) {
       const bin = this.#bins[index];
-      const g = SVG.createElement("g", {}, gBins);
+      url.searchParams.set("year", bin.label);
+      const link = SVG.createElement(
+        "a",
+        { target: "_blank", href: url.toString() },
+        gBins,
+      );
 
       const path = SVG.createElement(
         "path",
@@ -199,7 +206,7 @@ export class xHistogramYear {
           class: "bin",
           d: this.#getBinOutlinePath(x, binWidth, bin, heightFactor),
         },
-        g,
+        link,
       );
       const title = SVG.createElement("title", {}, path);
       title.textContent = `${bin.label}\n${bin.observations.length} observations`;
@@ -288,21 +295,6 @@ export class xHistogramYear {
         this.#getBinOutlinePath(x, binWidth, this.#bins[index]),
       );
     }
-  }
-
-  /**
-   * @param {Event} event
-   * @param {HistoBin} value
-   * @param {import("../types.js").SpeciesFilter} filter
-   */
-  viewInINat(event, value, filter) {
-    event.preventDefault();
-    if (!value || !value.count) {
-      return;
-    }
-    const url = filter.getURL();
-    url.searchParams.set("year", value.tick.toString());
-    window.open(url, "_blank");
   }
 }
 
