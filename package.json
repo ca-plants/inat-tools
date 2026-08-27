@@ -18,7 +18,6 @@
         "@11ty/eleventy": "^3.1.6",
         "@eslint/js": "^10.0.1",
         "@htmltools/hdom": "^0.1.4",
-        "@observablehq/plot": "^0.6.16",
         "@rollup/plugin-commonjs": "^29.0.3",
         "@rollup/plugin-node-resolve": "^16.0.3",
         "@rollup/plugin-terser": "^1.0.0",

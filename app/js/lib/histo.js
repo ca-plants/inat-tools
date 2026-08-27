@@ -342,6 +342,54 @@ export class HistoDate extends Histo {
   }
 }
 
+export class HistoTime extends Histo {
+  /**
+   * @param {import("../types.js").INatObservation[]} observations
+   * @returns {HistoBin[]}
+   */
+  binObservations(observations) {
+    /** @type {Map<number,import("../types.js").INatObservation[]>} */
+    const rawSummary = new Map();
+    for (const obs of observations) {
+      const t = obs.getObsTimeString();
+      if (!t) {
+        continue;
+      }
+      const hm = t.split(":");
+      const h = parseInt(hm[0]);
+      let obsList = rawSummary.get(h);
+      if (obsList === undefined) {
+        obsList = [];
+        rawSummary.set(h, obsList);
+      }
+      obsList.push(obs);
+    }
+
+    /** @type {HistoBin[]} */
+    const summary = [];
+    const range = this.getIndexRange(rawSummary.keys());
+    for (let index = range[0]; index <= range[1]; index++) {
+      summary.push({
+        label: `${index}:00`,
+        observations: rawSummary.get(index) ?? [],
+      });
+    }
+
+    return summary;
+  }
+
+  /**
+   * @param {URL} url
+   * @param {HistoBin} bin
+   * @returns {URL}
+   */
+  getInatURL(url, bin) {
+    const hm = bin.label.split(":");
+    url.searchParams.set("hour", hm[0]);
+    return url;
+  }
+}
+
 export class HistoYear extends Histo {
   /**
    * @param {import("../types.js").INatObservation[]} observations

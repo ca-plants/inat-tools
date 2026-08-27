@@ -3,7 +3,6 @@ import { hdom } from "@htmltools/hdom";
 import { marked } from "marked";
 import { ColDef } from "../lib/coldef.js";
 import { DataRetriever } from "../lib/dataretriever.js";
-import { HistogramTime } from "../lib/histogram.js";
 import { INatObservation } from "../lib/inatobservation.js";
 import { SearchUI } from "../lib/searchui.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
@@ -11,7 +10,7 @@ import { createDownloadLink } from "../lib/utils.js";
 import { InatURL } from "../lib/inaturl.js";
 import { DEFAULT_MAP_SOURCE, Map, MAP_SOURCES } from "../lib/map.js";
 import { Clusterer } from "../tools/clusterer.js";
-import { HistoDate, HistoYear } from "../lib/histo.js";
+import { HistoDate, HistoTime, HistoYear } from "../lib/histo.js";
 
 /** @typedef {{role:string}} ProjectMember */
 /** @typedef {{countObscured:number,countPublic:number,countTrusted:number,observations:INatObservation[]}} Results */
@@ -1186,18 +1185,18 @@ class ObsDetailUI extends SearchUI {
       e.remove();
     }
     const eResults = hdom.getElement("results");
-    /** @deprecated */
-    let histo;
-    let svg;
-    let iNatURL = this.getINatObservationURL(
+    const iNatURL = this.getINatObservationURL(
       this.#f1.getParams(),
       this.#processedResults,
     ).toString();
 
     switch (type) {
       case "time":
-        histo = new HistogramTime(this.#getSelectedObservations(), this.#f1);
-        svg = histo.createSVG();
+        this.#histo = new HistoTime(
+          eResults,
+          this.#getSelectedObservations(),
+          iNatURL,
+        );
         break;
       case "year":
         this.#histo = new HistoYear(
@@ -1205,7 +1204,6 @@ class ObsDetailUI extends SearchUI {
           this.#getSelectedObservations(),
           iNatURL,
         );
-        svg = this.#histo.getSVG();
         break;
       default:
         this.#histo = new HistoDate(
@@ -1213,14 +1211,11 @@ class ObsDetailUI extends SearchUI {
           this.#getSelectedObservations(),
           iNatURL,
         );
-        svg = this.#histo.getSVG();
         break;
     }
 
+    const svg = this.#histo.getSVG();
     svg.setAttribute("id", "svg-datehisto");
-    if (type !== "year") {
-      eResults.appendChild(svg);
-    }
     this.onResize(this);
 
     this.#updateHash();
