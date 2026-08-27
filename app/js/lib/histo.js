@@ -122,6 +122,7 @@ export class xHistogramYear {
     const binWidth = this.#getBinWidth();
     const gx = SVG.createElement("g", {}, svg);
     let maxLabelWidth = 0;
+    let maxLabelHeight = 0;
     for (let index = 0; index < numBins; index++) {
       const g = SVG.createElement("g", { style: "visibility:hidden" }, gx);
       const x = binWidth * index + binWidth / 2;
@@ -145,8 +146,10 @@ export class xHistogramYear {
       );
       hdom.setTextValue(label, this.#bins[index].label);
       maxLabelWidth = Math.max(maxLabelWidth, label.getBBox().width);
+      maxLabelHeight = Math.max(maxLabelHeight, label.getBBox().height);
     }
     this.#labYWidth = maxLabelWidth + 1;
+    this.#labXHeight = maxLabelHeight + 2;
 
     // Add y-axis labels.
     const maxCount = this.#bins.reduce(
