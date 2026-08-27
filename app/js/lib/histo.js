@@ -10,6 +10,7 @@ import { hdom } from "@htmltools/hdom";
  * gBins:SVGElement,
  * gXLabels:SVGElement,
  * maxXLabelWidth:number,
+ * heightFactor:number,
  * }} SVGData
  */
 
@@ -85,8 +86,7 @@ export class xHistogramYear {
       style,
       `text {font-family:sans-serif}
     line.axis {stroke:black;stroke-width:.25}
-    rect.bin {fill:grey;}
-    path.bin {stroke:black;stroke-width:.25;fill:none}
+    path.bin {stroke:black;stroke-width:.25;fill:grey}
     text.label-x {font-size:2.5pt;text-anchor:middle}
     text.label-y {font-size:2.5pt;text-anchor:end;alignment-baseline:central}
     line.tick {stroke:black;stroke-width:.25}`,
@@ -163,6 +163,8 @@ export class xHistogramYear {
     const labelIncrement = Math.ceil(maxCount / maxNumberOfLabels);
     const numberOfLabels = Math.ceil(maxCount / labelIncrement);
     const maxLabelValue = numberOfLabels * labelIncrement;
+    const heightFactor = maxTickHeight / maxLabelValue;
+
     let maxLabelYWidth = 0;
     for (let index = 0; index < numberOfLabels; index++) {
       const labelValue = (index + 1) * labelIncrement;
@@ -189,29 +191,19 @@ export class xHistogramYear {
     let x = 0;
     for (let index = 0; index < numBins; index++) {
       const bin = this.#bins[index];
-      const height = (bin.observations.length / maxLabelValue) * maxTickHeight;
       const g = SVG.createElement("g", {}, gBins);
-      const rect = SVG.createElement(
-        "rect",
-        {
-          class: "bin",
-          x: x,
-          width: binWidth,
-          y: this.#dataHeight - height,
-          height: height,
-        },
-        g,
-      );
-      const title = SVG.createElement("title", {}, rect);
-      title.textContent = `${bin.label}\n${bin.observations.length} observations`;
-      SVG.createElement(
+
+      const path = SVG.createElement(
         "path",
         {
           class: "bin",
-          d: this.#getBinOutlinePath(x, binWidth, height),
+          d: this.#getBinOutlinePath(x, binWidth, bin, heightFactor),
         },
         g,
       );
+      const title = SVG.createElement("title", {}, path);
+      title.textContent = `${bin.label}\n${bin.observations.length} observations`;
+
       x += binWidth;
     }
 
@@ -220,16 +212,20 @@ export class xHistogramYear {
       gXLabels: gx,
       gBins: gBins,
       maxXLabelWidth: maxLabelWidth,
+      heightFactor: heightFactor,
     };
   }
 
   /**
    * @param {number} x
    * @param {number} binWidth
-   * @param {number|string} height
+   * @param {HistoBin} bin
+   * @param {number} [heightFactor]
    * @returns {string}
    */
-  #getBinOutlinePath(x, binWidth, height) {
+  #getBinOutlinePath(x, binWidth, bin, heightFactor) {
+    const height =
+      bin.observations.length * (heightFactor ?? this.#svg.heightFactor);
     return `M${x} ${this.#dataHeight}v-${height}h${binWidth}v${height}`;
   }
 
@@ -286,15 +282,10 @@ export class xHistogramYear {
       const x = binWidth * index;
       const g = this.#svg.gBins.children[index];
 
-      const rect = g.children[0];
-      rect.setAttribute("x", x.toString());
-      rect.setAttribute("width", binWidth.toString());
-
-      const path = g.children[1];
+      const path = g.children[0];
       path.setAttribute(
         "d",
-        // @ts-ignore
-        this.#getBinOutlinePath(x, binWidth, rect.getAttribute("height")),
+        this.#getBinOutlinePath(x, binWidth, this.#bins[index]),
       );
     }
   }
