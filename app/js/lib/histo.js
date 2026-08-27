@@ -213,6 +213,21 @@ export class Histo {
   }
 
   /**
+   *
+   * @param {Iterable<number>} keys
+   * @returns {[number,number]}
+   */
+  getIndexRange(keys) {
+    let min = Number.MAX_SAFE_INTEGER;
+    let max = Number.MIN_SAFE_INTEGER;
+    for (const key of keys) {
+      min = Math.min(min, key);
+      max = Math.max(max, key);
+    }
+    return [min, max];
+  }
+
+  /**
    * @param {URL} _url
    * @param {HistoBin} _bin
    * @returns {URL}
@@ -300,16 +315,10 @@ export class HistoDate extends Histo {
       obsList.push(obs);
     }
 
-    let minYear = Number.MAX_SAFE_INTEGER;
-    let maxYear = Number.MIN_SAFE_INTEGER;
-    for (const key of rawSummary.keys()) {
-      minYear = Math.min(minYear, key);
-      maxYear = Math.max(maxYear, key);
-    }
-
     /** @type {HistoBin[]} */
     const summary = [];
-    for (let index = minYear; index <= maxYear; index++) {
+    const range = this.getIndexRange(rawSummary.keys());
+    for (let index = range[0]; index <= range[1]; index++) {
       const md = DateUtils.getMonthAndDay(index, true);
       summary.push({
         label: `${md.month}/${md.day}`,
@@ -351,16 +360,10 @@ export class HistoYear extends Histo {
       obsList.push(obs);
     }
 
-    let minYear = Number.MAX_SAFE_INTEGER;
-    let maxYear = Number.MIN_SAFE_INTEGER;
-    for (const key of rawSummary.keys()) {
-      minYear = Math.min(minYear, key);
-      maxYear = Math.max(maxYear, key);
-    }
-
     /** @type {HistoBin[]} */
     const summary = [];
-    for (let index = minYear; index <= maxYear; index++) {
+    const range = this.getIndexRange(rawSummary.keys());
+    for (let index = range[0]; index <= range[1]; index++) {
       summary.push({
         label: index.toString(),
         observations: rawSummary.get(index) ?? [],
