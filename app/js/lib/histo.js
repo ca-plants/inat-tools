@@ -163,9 +163,15 @@ export class Histo {
 
     // Add bars.
     const gBins = SVG.createElement("g", { id: "svg-datehisto-bins" }, svg);
-    let x = 0;
     for (let index = 0; index < numBins; index++) {
       const bin = this.#bins[index];
+
+      if (bin.observations.length === 0) {
+        continue;
+      }
+
+      const x = binWidth * index;
+
       const link = SVG.createElement(
         "a",
         { target: "_blank", href: this.getInatURL(url, bin).toString() },
@@ -176,14 +182,13 @@ export class Histo {
         "path",
         {
           class: "bin",
+          id: `bin-${index}`,
           d: this.#getBinOutlinePath(x, binWidth, bin, heightFactor),
         },
         link,
       );
       const title = SVG.createElement("title", {}, path);
       title.textContent = `${bin.label}\n${bin.observations.length} observations`;
-
-      x += binWidth;
     }
 
     return {
@@ -281,14 +286,14 @@ export class Histo {
     }
 
     // Resize bins.
-    for (let index = 0; index < this.#svg.gBins.children.length; index++) {
-      const x = binWidth * index;
-      const g = this.#svg.gBins.children[index];
-
-      const path = g.children[0];
+    for (let index = 0; index < this.#bins.length; index++) {
+      const path = document.getElementById(`bin-${index}`);
+      if (path === null) {
+        continue;
+      }
       path.setAttribute(
         "d",
-        this.#getBinOutlinePath(x, binWidth, this.#bins[index]),
+        this.#getBinOutlinePath(binWidth * index, binWidth, this.#bins[index]),
       );
     }
   }
