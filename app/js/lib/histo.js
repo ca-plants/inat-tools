@@ -1,5 +1,6 @@
 import { hdom } from "@htmltools/hdom";
 import { DateUtils } from "./dateutils.js";
+import { InatURL } from "./inaturl.js";
 
 /**
  * @typedef {{
@@ -139,7 +140,7 @@ export class Histo {
     const maxLabelValue = numberOfLabels * labelIncrement;
     const heightFactor = maxTickHeight / maxLabelValue;
 
-    const url = new URL(this.#iNatURL);
+    const url = this.#iNatURL ? new URL(this.#iNatURL) : undefined;
     let maxLabelYWidth = 0;
     for (let index = 0; index < numberOfLabels; index++) {
       const labelValue = (index + 1) * labelIncrement;
@@ -172,11 +173,17 @@ export class Histo {
 
       const x = binWidth * index;
 
-      const link = SVG.createElement(
-        "a",
-        { target: "_blank", href: this.getInatURL(url, bin).toString() },
-        gBins,
-      );
+      const iNatURL = url
+        ? this.getInatURL(url, bin)
+        : InatURL.getObsIDLink(bin.observations.map((o) => o.getID()));
+      // Don't create <a> if there is no URL.
+      const pathParent = iNatURL
+        ? SVG.createElement(
+            "a",
+            { target: "_blank", href: iNatURL.toString() },
+            gBins,
+          )
+        : gBins;
 
       const path = SVG.createElement(
         "path",
@@ -185,7 +192,7 @@ export class Histo {
           id: `bin-${index}`,
           d: this.#getBinOutlinePath(x, binWidth, bin, heightFactor),
         },
-        link,
+        pathParent,
       );
       const title = SVG.createElement("title", {}, path);
       title.textContent = `${bin.label}\n${bin.observations.length} observations`;

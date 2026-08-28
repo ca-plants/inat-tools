@@ -339,9 +339,8 @@ class ObsDetailUI extends SearchUI {
       return getIDListURL(selectedTypes);
     }
 
-    const count = ObsDetailUI.#getObsCount(results, selectedTypes);
-
-    if (count === results.observations.length) {
+    // If all types are selected, show everything.
+    if (selectedTypes.length === ALL_COORD_TYPES.length) {
       return showAll(this);
     }
 
@@ -442,7 +441,6 @@ class ObsDetailUI extends SearchUI {
     for (const type of ALL_COORD_TYPES) {
       const id = "sel-" + type;
       if (hdom.isChecked(id)) {
-        // @ts-ignore
         types.push(type);
       }
     }
