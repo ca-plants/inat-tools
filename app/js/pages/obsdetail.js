@@ -14,8 +14,8 @@ import { HistoDate, HistoTime, HistoYear } from "../lib/histo.js";
 
 /** @typedef {{role:string}} ProjectMember */
 /** @typedef {"public" | "obscured" | "trusted"} SelType */
-/** @typedef {{observations:INatObservation[],coordTypeCounts:{public:number,trusted:number,obscured:number}}} ProcessedResults */
-/** @typedef {{id:string,login:string,display_name:string,results:ProcessedResults}} UserSummary */
+/** @typedef {{observations:INatObservation[],coordTypeCounts:{public:number,trusted:number,obscured:number}}} SummarizedResults */
+/** @typedef {{id:string,login:string,display_name:string,results:SummarizedResults}} UserSummary */
 /** @typedef {SelType[]} SelArray */
 
 const OPTIONS_FORM_ID = "form-options";
@@ -156,8 +156,8 @@ class ObsDetailUI extends SearchUI {
   #taxon_data;
   /** @type {import("../types.js").INatObservation[]} */
   #rawResults = [];
-  /** @type {ProcessedResults} */
-  #processedResults = {
+  /** @type {SummarizedResults} */
+  #summarizedResults = {
     observations: [],
     coordTypeCounts: { public: 0, trusted: 0, obscured: 0 },
   };
@@ -295,7 +295,7 @@ class ObsDetailUI extends SearchUI {
 
   /**
    * @param {import("../types.js").ParamsSpeciesFilter} params
-   * @param {ProcessedResults} results
+   * @param {SummarizedResults} results
    * @param {string[]} [selectedTypes]
    */
   getINatObservationURL(params, results, selectedTypes) {
@@ -344,7 +344,7 @@ class ObsDetailUI extends SearchUI {
     }
 
     // Figure out whether we can get the list using a query string or if we need a list of IDs.
-    switch (selectedTypes.join(",")) {
+    switch (this.getSelectedTypes(true).join(",")) {
       case "public": {
         const filter = new SpeciesFilter(params);
         const url = filter.getURL();
@@ -392,7 +392,7 @@ class ObsDetailUI extends SearchUI {
   }
 
   /**
-   * @param {ProcessedResults} results
+   * @param {SummarizedResults} results
    * @param {SelType[]} selectedTypes
    */
   static #getObsCount(results, selectedTypes) {
@@ -426,14 +426,18 @@ class ObsDetailUI extends SearchUI {
   }
 
   /**
+   * @param {boolean} [omitZeros]
    * @returns {SelArray}
    */
-  getSelectedTypes() {
+  getSelectedTypes(omitZeros = false) {
     /** @type {SelArray} */
     const types = [];
     for (const type of ALL_COORD_TYPES) {
       const id = "sel-" + type;
-      if (hdom.isChecked(id)) {
+      if (
+        hdom.isChecked(id) &&
+        (!omitZeros || this.#summarizedResults.coordTypeCounts[type] > 0)
+      ) {
         types.push(type);
       }
     }
@@ -444,7 +448,7 @@ class ObsDetailUI extends SearchUI {
     if (!this.#rawResults) {
       return;
     }
-    this.#processedResults = this.summarizeResults(this.#rawResults);
+    this.#summarizedResults = this.summarizeResults(this.#rawResults);
     this.updateDisplay();
   }
 
@@ -525,7 +529,7 @@ class ObsDetailUI extends SearchUI {
       return;
     }
     this.#rawResults = results.map((r) => new INatObservation(r));
-    this.#processedResults = this.summarizeResults(this.#rawResults);
+    this.#summarizedResults = this.summarizeResults(this.#rawResults);
 
     hdom.showElement("search-crit", false);
     hdom.removeChildren("results");
@@ -572,8 +576,8 @@ class ObsDetailUI extends SearchUI {
     hdom.setCheckBoxState("comments", !!this.#hashParams.comments);
 
     if (
-      this.#processedResults.coordTypeCounts["public"] === 0 &&
-      this.#processedResults.coordTypeCounts["trusted"] === 0
+      this.#summarizedResults.coordTypeCounts["public"] === 0 &&
+      this.#summarizedResults.coordTypeCounts["trusted"] === 0
     ) {
       hdom.enableElement("disp-map", false);
       hdom.enableElement("disp-mapdata", false);
@@ -891,7 +895,7 @@ class ObsDetailUI extends SearchUI {
 
   /**
    * @param {import("../types.js").INatObservation[]} rawResults
-   * @returns {ProcessedResults}
+   * @returns {SummarizedResults}
    */
   summarizeResults(rawResults) {
     const taxon_data = this.#getTaxonData();
@@ -1030,7 +1034,7 @@ class ObsDetailUI extends SearchUI {
   #getSelectedObservations() {
     const selectedTypes = this.getSelectedTypes();
 
-    return this.#processedResults.observations.filter((obs) =>
+    return this.#summarizedResults.observations.filter((obs) =>
       selectedTypes.includes(obs.getCoordType()),
     );
   }
@@ -1049,7 +1053,7 @@ class ObsDetailUI extends SearchUI {
     /** @type {Object<string,UserSummary>|undefined} */
     const userSummary = {};
 
-    for (const obs of this.#processedResults.observations) {
+    for (const obs of this.#summarizedResults.observations) {
       const id = obs.getUserID();
       let userSumm = userSummary[id];
       if (!userSumm) {
@@ -1156,7 +1160,7 @@ class ObsDetailUI extends SearchUI {
     const eResults = hdom.getElement("results");
     const iNatURL = this.getINatObservationURL(
       this.#f1.getParams(),
-      this.#processedResults,
+      this.#summarizedResults,
     ).toString();
 
     switch (type) {
@@ -1243,9 +1247,18 @@ class ObsDetailUI extends SearchUI {
     /** @type {import("../types.js").ParamsPageObsDetail} */
     const params = {
       f1: this.#f1.getParams(),
-      coords: this.getSelectedTypes(),
       view: getViewMode(),
     };
+    // Only save the coordinate types if some of the non-zero types are unchecked.
+    if (
+      ALL_COORD_TYPES.some(
+        (t) =>
+          this.#summarizedResults.coordTypeCounts[t] > 0 &&
+          !hdom.isChecked(`sel-${t}`),
+      )
+    ) {
+      params.coords = this.getSelectedTypes(true);
+    }
     if (hdom.isChecked("comments")) {
       params.comments = true;
     }
@@ -1298,14 +1311,14 @@ class ObsDetailUI extends SearchUI {
     }
 
     const selArray = this.getSelectedTypes();
-    const r = this.#processedResults;
+    const r = this.#summarizedResults;
     const numTypes = ALL_COORD_TYPES.reduce(
       (count, t) =>
-        count + Math.sign(this.#processedResults.coordTypeCounts[t]),
+        count + Math.sign(this.#summarizedResults.coordTypeCounts[t]),
       0,
     );
     ALL_COORD_TYPES.forEach((t) =>
-      addBucket(this.#processedResults.coordTypeCounts[t], t),
+      addBucket(this.#summarizedResults.coordTypeCounts[t], t),
     );
 
     // Disable "Show comments" if none have comments.
@@ -1318,7 +1331,7 @@ class ObsDetailUI extends SearchUI {
   #updateViewInINaturalistLink() {
     const url = this.getINatObservationURL(
       this.#f1.getParams(),
-      this.#processedResults,
+      this.#summarizedResults,
     );
     /** @type {HTMLAnchorElement} */
     const link = hdom.getElement("viewininat");
