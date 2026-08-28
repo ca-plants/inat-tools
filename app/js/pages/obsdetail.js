@@ -13,9 +13,10 @@ import { Clusterer } from "../tools/clusterer.js";
 import { HistoDate, HistoTime, HistoYear } from "../lib/histo.js";
 
 /** @typedef {{role:string}} ProjectMember */
-/** @typedef {{countObscured:number,countPublic:number,countTrusted:number,observations:INatObservation[]}} Results */
-/** @typedef {{id:string,login:string,display_name:string,results:Results}} UserSummary */
-/** @typedef {("public" | "obscured" | "trusted")[]} SelArray */
+/** @typedef {"public" | "obscured" | "trusted"} SelType */
+/** @typedef {{observations:INatObservation[],coordTypeCounts:{public:number,trusted:number,obscured:number}}} ProcessedResults */
+/** @typedef {{id:string,login:string,display_name:string,results:ProcessedResults}} UserSummary */
+/** @typedef {SelType[]} SelArray */
 
 const OPTIONS_FORM_ID = "form-options";
 /** @type {SelArray} */
@@ -112,7 +113,7 @@ const SUMMARY_COLS = {
   ),
   NUM_PUBLIC: new ColDef(
     "Public",
-    (summ) => String(summ.results.countPublic),
+    (summ) => String(summ.results.coordTypeCounts["public"]),
     (value, summ, ui) => {
       return ui.getObserverINatLink(summ, value, ["public"]);
     },
@@ -120,7 +121,7 @@ const SUMMARY_COLS = {
   ),
   NUM_TRUSTED: new ColDef(
     "Trusted",
-    (summ) => String(summ.results.countTrusted),
+    (summ) => String(summ.results.coordTypeCounts["trusted"]),
     (value, summ, ui) => {
       return ui.getObserverINatLink(summ, value, ["trusted"]);
     },
@@ -128,7 +129,7 @@ const SUMMARY_COLS = {
   ),
   NUM_OBSCURED: new ColDef(
     "Obscured",
-    (summ) => String(summ.results.countObscured),
+    (summ) => String(summ.results.coordTypeCounts["obscured"]),
     (value, summ, ui) => {
       return ui.getObserverINatLink(summ, value, ["obscured"]);
     },
@@ -153,14 +154,12 @@ class ObsDetailUI extends SearchUI {
   #f1;
   /** @type {import("../types.js").INatDataTaxon|undefined} */
   #taxon_data;
-  /** @type {import("../types.js").INatObservation[]|undefined} */
-  #rawResults;
-  /** @type {Results} */
+  /** @type {import("../types.js").INatObservation[]} */
+  #rawResults = [];
+  /** @type {ProcessedResults} */
   #processedResults = {
-    countObscured: 0,
-    countPublic: 0,
-    countTrusted: 0,
     observations: [],
+    coordTypeCounts: { public: 0, trusted: 0, obscured: 0 },
   };
   /** @type {Object<string,ProjectMember>|undefined} */
   #project_members;
@@ -296,7 +295,7 @@ class ObsDetailUI extends SearchUI {
 
   /**
    * @param {import("../types.js").ParamsSpeciesFilter} params
-   * @param {Results} results
+   * @param {ProcessedResults} results
    * @param {string[]} [selectedTypes]
    */
   getINatObservationURL(params, results, selectedTypes) {
@@ -393,18 +392,12 @@ class ObsDetailUI extends SearchUI {
   }
 
   /**
-   * @param {Results} results
-   * @param {string[]} selectedTypes
+   * @param {ProcessedResults} results
+   * @param {SelType[]} selectedTypes
    */
   static #getObsCount(results, selectedTypes) {
     return selectedTypes.reduce((c, t) => {
-      switch (t) {
-        case "public":
-          return c + results.countPublic;
-        case "obscured":
-          return c + results.countObscured;
-      }
-      return c + results.countTrusted;
+      return c + results.coordTypeCounts[t];
     }, 0);
   }
 
@@ -433,10 +426,10 @@ class ObsDetailUI extends SearchUI {
   }
 
   /**
-   * @returns {("public" | "obscured" | "trusted")[]}
+   * @returns {SelArray}
    */
   getSelectedTypes() {
-    /** @type {("public" | "obscured" | "trusted")[]} */
+    /** @type {SelArray} */
     const types = [];
     for (const type of ALL_COORD_TYPES) {
       const id = "sel-" + type;
@@ -520,7 +513,7 @@ class ObsDetailUI extends SearchUI {
     this.#taxon_id = parseInt(taxonId);
     this.#taxon_data = await api.getTaxonData(this.#taxon_id.toString());
 
-    this.#rawResults = undefined;
+    this.#rawResults = [];
     const results = await DataRetriever.getObservationData(
       api,
       this.#f1,
@@ -579,8 +572,8 @@ class ObsDetailUI extends SearchUI {
     hdom.setCheckBoxState("comments", !!this.#hashParams.comments);
 
     if (
-      this.#processedResults.countPublic === 0 &&
-      this.#processedResults.countTrusted === 0
+      this.#processedResults.coordTypeCounts["public"] === 0 &&
+      this.#processedResults.coordTypeCounts["trusted"] === 0
     ) {
       hdom.enableElement("disp-map", false);
       hdom.enableElement("disp-mapdata", false);
@@ -867,10 +860,10 @@ class ObsDetailUI extends SearchUI {
     for (const userSumm of sortedSummary) {
       // Only show rows with something to display.
       if (
-        (selectedTypes.includes("public") && userSumm.results.countPublic) ||
-        (selectedTypes.includes("obscured") &&
-          userSumm.results.countObscured) ||
-        (selectedTypes.includes("trusted") && userSumm.results.countTrusted)
+        ALL_COORD_TYPES.some(
+          (t) =>
+            selectedTypes.includes(t) && userSumm.results.coordTypeCounts[t],
+        )
       ) {
         tbody.appendChild(ColDef.createRow(userSumm, cols, [this]));
       }
@@ -898,16 +891,14 @@ class ObsDetailUI extends SearchUI {
 
   /**
    * @param {import("../types.js").INatObservation[]} rawResults
-   * @returns {Results}
+   * @returns {ProcessedResults}
    */
   summarizeResults(rawResults) {
     const taxon_data = this.#getTaxonData();
     const taxonSummary = {
       taxon_id: taxon_data.id,
       rank: taxon_data.rank,
-      countPublic: 0,
-      countTrusted: 0,
-      countObscured: 0,
+      coordTypeCounts: { public: 0, trusted: 0, obscured: 0 },
       /** @type {INatObservation[]} */ observations: [],
     };
 
@@ -927,20 +918,11 @@ class ObsDetailUI extends SearchUI {
         continue;
       }
 
-      if (hdom.isChecked(`sel-${result.getCoordType()}`)) {
+      const ct = result.getCoordType();
+      if (hdom.isChecked(`sel-${ct}`)) {
         taxonSummary.observations.push(result);
       }
-      switch (result.getCoordType()) {
-        case "public":
-          taxonSummary.countPublic++;
-          break;
-        case "trusted":
-          taxonSummary.countTrusted++;
-          break;
-        case "obscured":
-          taxonSummary.countObscured++;
-          break;
-      }
+      taxonSummary.coordTypeCounts[ct]++;
     }
 
     return taxonSummary;
@@ -1076,25 +1058,14 @@ class ObsDetailUI extends SearchUI {
           login: obs.getUserLogin(),
           display_name: obs.getUserDisplayName(),
           results: {
-            countPublic: 0,
-            countObscured: 0,
-            countTrusted: 0,
             observations: [],
+            coordTypeCounts: { public: 0, trusted: 0, obscured: 0 },
           },
         };
         userSummary[id] = userSumm;
       }
-      switch (obs.getCoordType()) {
-        case "public":
-          userSumm.results.countPublic++;
-          break;
-        case "trusted":
-          userSumm.results.countTrusted++;
-          break;
-        case "obscured":
-          userSumm.results.countObscured++;
-          break;
-      }
+      userSumm.results.coordTypeCounts[obs.getCoordType()]++;
+
       userSumm.results.observations.push(obs);
     }
 
@@ -1312,7 +1283,7 @@ class ObsDetailUI extends SearchUI {
   #updateOptions() {
     /**
      * @param {number} count
-     * @param {"public"|"obscured"|"trusted"} name
+     * @param {SelType} name
      */
     function addBucket(count, name) {
       const id = "sel-" + name;
@@ -1328,13 +1299,14 @@ class ObsDetailUI extends SearchUI {
 
     const selArray = this.getSelectedTypes();
     const r = this.#processedResults;
-    const numTypes =
-      Math.sign(r.countObscured) +
-      Math.sign(r.countPublic) +
-      Math.sign(r.countTrusted);
-    addBucket(r.countPublic, "public");
-    addBucket(r.countTrusted, "trusted");
-    addBucket(r.countObscured, "obscured");
+    const numTypes = ALL_COORD_TYPES.reduce(
+      (count, t) =>
+        count + Math.sign(this.#processedResults.coordTypeCounts[t]),
+      0,
+    );
+    ALL_COORD_TYPES.forEach((t) =>
+      addBucket(this.#processedResults.coordTypeCounts[t], t),
+    );
 
     // Disable "Show comments" if none have comments.
     hdom.enableElement(
