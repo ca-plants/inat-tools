@@ -187,6 +187,68 @@ class ObsDetailUI extends SearchUI {
   }
 
   /**
+   * @returns {{content:string,fileName:string}}
+   */
+  #getHistoDownload() {
+    /**
+     * @param {Element} e
+     * @returns {{}}
+     */
+    function getJSON(e) {
+      /** @type {Object<string,string>} */
+      const attrs = {};
+      if (e.tagName === "svg") {
+        attrs["xmlns"] = "http://www.w3.org/2000/svg";
+      }
+      for (const attr of e.attributes) {
+        if (
+          attr.name === "id" ||
+          (e.tagName === "svg" && attr.name === "style")
+        ) {
+          continue;
+        }
+        attrs[attr.name] = attr.value;
+      }
+      /** @type {jstoxml.XmlElement} */
+      const json = { _name: e.tagName.toLowerCase(), _attrs: attrs };
+
+      /** @type {{}[]} */
+      const children = [];
+      for (const child of e.childNodes) {
+        switch (child.nodeType) {
+          case Node.ELEMENT_NODE:
+            children.push(getJSON(/** @type {Element} */ (child)));
+            break;
+          case Node.TEXT_NODE:
+            children.push(child.textContent ?? "");
+            break;
+        }
+      }
+      switch (children.length) {
+        case 0:
+          break;
+        case 1:
+          json["_content"] = children[0];
+          break;
+        default:
+          json["_content"] = children;
+          break;
+      }
+      return json;
+    }
+
+    const eHisto = hdom.getElement("svg-datehisto");
+
+    const json = getJSON(eHisto);
+
+    const svgXML = jstoxml.toXML(json, { indent: " " });
+    return {
+      content: svgXML,
+      fileName: "histo.svg",
+    };
+  }
+
+  /**
    * @param {number|undefined} [indent]
    * @param {string} [type]
    * @returns {{content:string,fileName:string}}
@@ -631,6 +693,13 @@ class ObsDetailUI extends SearchUI {
         ),
       );
     }
+
+    const downloadLink = createDownloadLink(
+      this.getPathPrefix(),
+      "Download Histogram",
+      () => this.#getHistoDownload(),
+    );
+    divHistoOptions.appendChild(downloadLink);
 
     const hashMode = this.#hashParams.hist?.view;
     const histMode =
