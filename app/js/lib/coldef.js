@@ -3,10 +3,18 @@ import { csvFormatRows } from "d3-dsv";
 
 /**
  * @template T
+ * @callback FnColDefGetStringVal
+ * @param {T} entry
+ * @param {any[]} [args]
+ * @returns {string}
+ */
+
+/**
+ * @template T
  */
 export class ColDef {
   #th;
-  /** @type {function (T,...any) : string} */
+  /** @type {FnColDefGetStringVal<T>} */
   #fnValue;
   /** @type {(function (string,T,...any) : (Element|string))|undefined} */
   #fnCellContent;
@@ -14,7 +22,7 @@ export class ColDef {
 
   /**
    * @param {string} th
-   * @param {function (T,...any) : string} fnValue
+   * @param {FnColDefGetStringVal<T>} fnValue
    * @param {function (string,T,...any) : (Element|string)} [fnCellContent]
    * @param {string} [className]
    */
