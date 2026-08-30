@@ -21,6 +21,11 @@ const QUALITY_GRADES = [
  * @callback FnRetrieveSuggestions
  * @param {string} partialText
  * @returns {Promise<Object<string,number>>}
+ *
+ * @callback FnSetQueryParamId
+ * @param {import("../types.js").ParamsSpeciesFilter} params
+ * @param {string} id
+ * @returns {void}
  */
 
 export class AutoCompleteConfig {
@@ -31,8 +36,8 @@ export class AutoCompleteConfig {
 
   /**
    * @param {string} prefix
-   * @param {function (string): Promise<Object<string,number>>} fnRetrieve
-   * @param {function (string): void|undefined} [fnHandleChange]
+   * @param {FnRetrieveSuggestions} fnRetrieve
+   * @param {FnAutocompleteChangeHandler} [fnHandleChange]
    */
   constructor(prefix, fnRetrieve, fnHandleChange) {
     this.#prefix = prefix;
@@ -133,16 +138,12 @@ export class SearchUI extends UI {
 
     eList.style.top = `${e.target.offsetTop + e.target.offsetHeight - window.pageYOffset + 5}px`;
     eList.style.left = `${e.target.offsetLeft}px`;
-    hdomOld.showElement(eList, true);
+    hdom.showElement(eList, true);
 
-    hdomOld.removeChildren(eList);
+    hdom.removeChildren(eList);
     let first = true;
     for (const [k, v] of Object.entries(results)) {
-      const li = hdomOld.createTextElement(
-        "li",
-        { "data-id": v.toString() },
-        k,
-      );
+      const li = hdom.createTextElement("li", { "data-id": v.toString() }, k);
       if (first) {
         li.setAttribute("data-highlight", "");
         first = false;
@@ -161,7 +162,7 @@ export class SearchUI extends UI {
    * @returns {HTMLInputElement}
    */
   createChangeFilterButton(fnClick) {
-    const button = hdomOld.createElement("input", {
+    const button = hdom.createElement("input", {
       type: "button",
       value: "Change Filter",
       style: "width:100%;",
@@ -289,7 +290,7 @@ export class SearchUI extends UI {
    * @param {string} prefix
    * @param {string} name
    * @param {FnRetrieveSuggestions} fnRetrieve
-   * @param {FnAutocompleteChangeHandler|undefined} [fnHandleChange]
+   * @param {FnAutocompleteChangeHandler} [fnHandleChange]
    */
   initAutoCompleteField(prefix, name, fnRetrieve, fnHandleChange) {
     const config = new AutoCompleteConfig(
@@ -298,13 +299,13 @@ export class SearchUI extends UI {
       fnHandleChange,
     );
 
-    const input = hdomOld.getElement(config.getInputID());
+    const input = hdom.getElement(config.getInputID());
     input.addEventListener("blur", () => {
       if (config.isSelected()) {
         config.setSelected(false);
-        hdomOld.setFocusTo(input);
+        hdom.setFocusTo(input);
       }
-      hdomOld.showElement("autocomplete", false);
+      hdom.showElement("autocomplete", false);
     });
     hdom.addEventListener(input, "keydown", (e) =>
       handleAutoCompleteKey(/** @type {KeyboardEvent} **/ (e), config),
@@ -364,7 +365,7 @@ export class SearchUI extends UI {
       }
     }
 
-    /** @type{{name:string,fnRetrieve:function(string):Promise<Object<string,number>>,fnHandleChange?:function(string):void}[]} */
+    /** @type{{name:string,fnRetrieve:FnRetrieveSuggestions,fnHandleChange?:FnAutocompleteChangeHandler}[]} */
     const fields = [
       {
         name: "observer",
@@ -418,7 +419,7 @@ export class SearchUI extends UI {
    */
   initFilterFromForm(prefix) {
     /**
-     * @type {{name:string,setQueryParam:function (import("../types.js").ParamsSpeciesFilter,string):void,label:string}[]}
+     * @type {{name:string,setQueryParam:FnSetQueryParamId,label:string}[]}
      */
     const FILT_AUTOCOMPLETE_FIELDS = [
       {
@@ -456,8 +457,8 @@ export class SearchUI extends UI {
       if (field.name === "place" && locationType !== "place") {
         continue;
       }
-      const id = hdomOld.getFormElementValue(prefix + "-" + field.name + "-id");
-      const input = hdomOld.getElement(prefix + "-" + field.name + "-name");
+      const id = hdom.getFormElementValue(prefix + "-" + field.name + "-id");
+      const input = hdom.getElement(prefix + "-" + field.name + "-name");
       if (id) {
         field.setQueryParam(filterArgs, id);
       } else {
@@ -465,7 +466,7 @@ export class SearchUI extends UI {
         if (input instanceof HTMLInputElement) {
           if (input.value) {
             input.setCustomValidity("Invalid " + field.label + ".");
-            hdomOld.setFocusTo(input);
+            hdom.setFocusTo(input);
             hasErrors = true;
           } else {
             input.setCustomValidity("");
