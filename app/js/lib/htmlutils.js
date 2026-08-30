@@ -6,7 +6,7 @@ export class HTMLUtils {
    * @param {string} id
    * @param {string|undefined} value
    * @param {string} label
-   * @param {function(Event):void} [fnClickHandler]
+   * @param {import("../types.js").FnClickListener} [fnClickHandler]
    * @returns {HTMLElement}
    */
   static createCheckboxDiv(name, id, value, label, fnClickHandler) {

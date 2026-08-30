@@ -1,5 +1,6 @@
+import { hdom } from "@htmltools/hdom";
 import { DateUtils } from "./dateutils.js";
-import { hdom } from "./hdom.js";
+import { hdom as hdomOld } from "./hdom.js";
 import { HTMLUtils } from "./htmlutils.js";
 import { INatAPI } from "./inatapi.js";
 import { SpeciesFilter } from "./speciesfilter.js";
@@ -16,9 +17,6 @@ const QUALITY_GRADES = [
  *
  * @callback FnAutocompleteChangeHandler
  * @param {string} id
- *
- * @callback FnClickListener
- * @param {Event} e
  *
  * @callback FnRetrieveSuggestions
  * @param {string} partialText
@@ -117,11 +115,11 @@ export class SearchUI extends UI {
     }
 
     /** @type {HTMLElement} */
-    const eList = hdom.getElement("autocomplete");
+    const eList = hdomOld.getElement("autocomplete");
 
     const value = e.target.value;
     if (value.length < 3) {
-      hdom.showElement(eList, false);
+      hdomOld.showElement(eList, false);
       this.#autoCompleteRunning = false;
       return;
     }
@@ -135,12 +133,16 @@ export class SearchUI extends UI {
 
     eList.style.top = `${e.target.offsetTop + e.target.offsetHeight - window.pageYOffset + 5}px`;
     eList.style.left = `${e.target.offsetLeft}px`;
-    hdom.showElement(eList, true);
+    hdomOld.showElement(eList, true);
 
-    hdom.removeChildren(eList);
+    hdomOld.removeChildren(eList);
     let first = true;
     for (const [k, v] of Object.entries(results)) {
-      const li = hdom.createTextElement("li", { "data-id": v.toString() }, k);
+      const li = hdomOld.createTextElement(
+        "li",
+        { "data-id": v.toString() },
+        k,
+      );
       if (first) {
         li.setAttribute("data-highlight", "");
         first = false;
@@ -155,11 +157,11 @@ export class SearchUI extends UI {
   }
 
   /**
-   * @param {FnClickListener} fnClick
+   * @param {import("../types.js").FnClickListener} fnClick
    * @returns {HTMLInputElement}
    */
   createChangeFilterButton(fnClick) {
-    const button = hdom.createElement("input", {
+    const button = hdomOld.createElement("input", {
       type: "button",
       value: "Change Filter",
       style: "width:100%;",
@@ -177,7 +179,7 @@ export class SearchUI extends UI {
       return;
     }
     this.showSearchForm();
-    hdom.showElement(e.currentTarget, false);
+    hdomOld.showElement(e.currentTarget, false);
   }
 
   /**
@@ -227,7 +229,7 @@ export class SearchUI extends UI {
      * @param {string|null} value
      */
     function setValue(config, value) {
-      hdom.setFormElementValue(config.getValueID(), value);
+      hdomOld.setFormElementValue(config.getValueID(), value);
       config.handleChange();
     }
 
@@ -239,7 +241,7 @@ export class SearchUI extends UI {
       case "focus":
         target.select();
         // If there's no id set, and there's text present, open the suggestion list.
-        if (hdom.getFormElementValue(config.getValueID()) === "") {
+        if (hdomOld.getFormElementValue(config.getValueID()) === "") {
           this.#debounce(e, config);
         }
         break;
@@ -260,7 +262,7 @@ export class SearchUI extends UI {
     const prefix = valueElementID.split("-")[0];
     await this.updateAnnotationsFields(
       prefix,
-      hdom.getFormElementValue(valueElementID),
+      hdomOld.getFormElementValue(valueElementID),
     );
   }
 
@@ -270,14 +272,14 @@ export class SearchUI extends UI {
     // Create <ul> for autocompletes.
     const body = document.documentElement.getElementsByTagName("body").item(0);
     if (body) {
-      const ul = hdom.createElement("ul", {
+      const ul = hdomOld.createElement("ul", {
         id: "autocomplete",
         hidden: "",
       });
       body.appendChild(ul);
     }
 
-    const eCancel = hdom.getElement("cancel-query");
+    const eCancel = hdomOld.getElement("cancel-query");
     eCancel.addEventListener("click", () => {
       this.getAPI().cancelQuery(true);
     });
@@ -296,13 +298,13 @@ export class SearchUI extends UI {
       fnHandleChange,
     );
 
-    const input = hdom.getElement(config.getInputID());
+    const input = hdomOld.getElement(config.getInputID());
     input.addEventListener("blur", () => {
       if (config.isSelected()) {
         config.setSelected(false);
-        hdom.setFocusTo(input);
+        hdomOld.setFocusTo(input);
       }
-      hdom.showElement("autocomplete", false);
+      hdomOld.showElement("autocomplete", false);
     });
     hdom.addEventListener(input, "keydown", (e) =>
       handleAutoCompleteKey(/** @type {KeyboardEvent} **/ (e), config),
@@ -340,8 +342,8 @@ export class SearchUI extends UI {
        * @param {string|number} year
        */
       function setValues(e, year) {
-        hdom.setFormElementValue(e.id + "1", year.toString());
-        hdom.setFormElementValue(e.id + "2", year.toString());
+        hdomOld.setFormElementValue(e.id + "1", year.toString());
+        hdomOld.setFormElementValue(e.id + "2", year.toString());
         SearchUI.setYearMinMax(e.id);
       }
 
@@ -349,7 +351,7 @@ export class SearchUI extends UI {
         throw new Error();
       }
 
-      switch (hdom.getFormElementValue(e)) {
+      switch (hdomOld.getFormElementValue(e)) {
         case "Any":
           setValues(e, "");
           break;
@@ -454,8 +456,8 @@ export class SearchUI extends UI {
       if (field.name === "place" && locationType !== "place") {
         continue;
       }
-      const id = hdom.getFormElementValue(prefix + "-" + field.name + "-id");
-      const input = hdom.getElement(prefix + "-" + field.name + "-name");
+      const id = hdomOld.getFormElementValue(prefix + "-" + field.name + "-id");
+      const input = hdomOld.getElement(prefix + "-" + field.name + "-name");
       if (id) {
         field.setQueryParam(filterArgs, id);
       } else {
@@ -463,7 +465,7 @@ export class SearchUI extends UI {
         if (input instanceof HTMLInputElement) {
           if (input.value) {
             input.setCustomValidity("Invalid " + field.label + ".");
-            hdom.setFocusTo(input);
+            hdomOld.setFocusTo(input);
             hasErrors = true;
           } else {
             input.setCustomValidity("");
@@ -472,19 +474,19 @@ export class SearchUI extends UI {
       }
     }
 
-    const month1 = hdom.getFormElementValue(prefix + "-month1");
-    const month2 = hdom.getFormElementValue(prefix + "-month2");
+    const month1 = hdomOld.getFormElementValue(prefix + "-month1");
+    const month2 = hdomOld.getFormElementValue(prefix + "-month2");
     if (month1 && month2) {
       filterArgs.month = getMonthList(month1, month2);
     }
 
     // If annotation fields are visible, include them.
-    if (hdom.isVisible(prefix + "-annotation-filter")) {
+    if (hdomOld.isVisible(prefix + "-annotation-filter")) {
       /** @type {{ type: "ev-mammal" | "plants"; value: string }[]} */
       const annotations = [];
       for (const type of ANNOTATION_TYPES) {
-        if (hdom.isVisible(prefix + "-ann-type-" + type)) {
-          const value = hdom.getFormElementValue(prefix + "-ann-" + type);
+        if (hdomOld.isVisible(prefix + "-ann-type-" + type)) {
+          const value = hdomOld.getFormElementValue(prefix + "-ann-" + type);
           if (value !== "Any" && value !== undefined) {
             annotations.push({ type: type, value: value });
           }
@@ -495,8 +497,8 @@ export class SearchUI extends UI {
       }
     }
 
-    const year1 = hdom.getFormElementValue(prefix + "-year1");
-    const year2 = hdom.getFormElementValue(prefix + "-year2");
+    const year1 = hdomOld.getFormElementValue(prefix + "-year1");
+    const year2 = hdomOld.getFormElementValue(prefix + "-year2");
     if (year1) {
       filterArgs.year1 = parseInt(year1);
     }
@@ -507,7 +509,7 @@ export class SearchUI extends UI {
     /** @type {import("../types.js").INatDataQualityGrade[]} */
     const grades = [];
     for (const qg of QUALITY_GRADES) {
-      if (hdom.isChecked(`${prefix}-${qg.id}`)) {
+      if (hdomOld.isChecked(`${prefix}-${qg.id}`)) {
         grades.push(qg.id);
       }
     }
@@ -515,24 +517,26 @@ export class SearchUI extends UI {
       filterArgs.quality_grade = grades;
     }
 
-    const establishment = hdom.getFormElementValue(prefix + "-establishment");
+    const establishment = hdomOld.getFormElementValue(
+      prefix + "-establishment",
+    );
     if (establishment === "native" || establishment === "introduced") {
       filterArgs.establishment = establishment;
     }
 
-    const accuracy = hdom.getFormElementValue(`${prefix}-accuracy`);
+    const accuracy = hdomOld.getFormElementValue(`${prefix}-accuracy`);
     if (accuracy !== "") {
       filterArgs.accuracy = parseInt(accuracy);
     }
 
-    const taxonObscured = hdom.isChecked(`${prefix}-taxon-obscured`);
+    const taxonObscured = hdomOld.isChecked(`${prefix}-taxon-obscured`);
     if (taxonObscured) {
       filterArgs.obscuration = "taxon";
     }
 
     if (locationType === "boundary") {
       filterArgs.boundary = JSON.parse(
-        hdom.getFormElementValue(prefix + "-boundary-text"),
+        hdomOld.getFormElementValue(prefix + "-boundary-text"),
       );
     }
 
@@ -572,7 +576,7 @@ export class SearchUI extends UI {
    */
   async initProject(prefix, projId) {
     // Check for project.
-    hdom.setFormElementValue(prefix + "-proj-id", projId);
+    hdomOld.setFormElementValue(prefix + "-proj-id", projId);
     if (!projId) {
       return;
     }
@@ -581,7 +585,7 @@ export class SearchUI extends UI {
     if (!projectData) {
       return;
     }
-    hdom.setFormElementValue(prefix + "-proj-name", projectData.title);
+    hdomOld.setFormElementValue(prefix + "-proj-name", projectData.title);
   }
 
   /**
@@ -602,8 +606,8 @@ export class SearchUI extends UI {
         m1 = months[0];
         m2 = months[months.length - 1];
       }
-      hdom.setFormElementValue(prefix + "-month1", m1);
-      hdom.setFormElementValue(prefix + "-month2", m2);
+      hdomOld.setFormElementValue(prefix + "-month1", m1);
+      hdomOld.setFormElementValue(prefix + "-month2", m2);
       ui.setMonthLock(prefix, m1 === m2);
     }
 
@@ -613,7 +617,7 @@ export class SearchUI extends UI {
      */
     async function initObserver(api, filter) {
       const id = filter.getUserID();
-      hdom.setFormElementValue(prefix + "-observer-id", id);
+      hdomOld.setFormElementValue(prefix + "-observer-id", id);
       if (!id) {
         return;
       }
@@ -622,7 +626,7 @@ export class SearchUI extends UI {
       if (!data) {
         return;
       }
-      hdom.setFormElementValue(prefix + "-observer-name", data.login);
+      hdomOld.setFormElementValue(prefix + "-observer-name", data.login);
     }
 
     /**
@@ -632,7 +636,7 @@ export class SearchUI extends UI {
     async function initPlace(api, filter) {
       // Check for place.
       const placeID = filter.getPlaceID();
-      hdom.setFormElementValue(prefix + "-place-id", placeID);
+      hdomOld.setFormElementValue(prefix + "-place-id", placeID);
       if (!placeID) {
         return;
       }
@@ -641,7 +645,10 @@ export class SearchUI extends UI {
       if (!placeData) {
         return;
       }
-      hdom.setFormElementValue(prefix + "-place-name", placeData.display_name);
+      hdomOld.setFormElementValue(
+        prefix + "-place-name",
+        placeData.display_name,
+      );
     }
 
     /**
@@ -651,7 +658,7 @@ export class SearchUI extends UI {
     async function initTaxon(api, filter) {
       // Check for taxon.
       const taxonID = filter.getTaxonID();
-      hdom.setFormElementValue(prefix + "-taxon-id", taxonID);
+      hdomOld.setFormElementValue(prefix + "-taxon-id", taxonID);
       if (!taxonID) {
         return;
       }
@@ -660,7 +667,7 @@ export class SearchUI extends UI {
       if (!taxonData) {
         return;
       }
-      hdom.setFormElementValue(
+      hdomOld.setFormElementValue(
         prefix + "-taxon-name",
         INatAPI.getTaxonFormName(taxonData),
       );
@@ -669,7 +676,7 @@ export class SearchUI extends UI {
       const annotations = filter.getAnnotations();
       if (annotations !== undefined) {
         for (const annotation of annotations) {
-          hdom.setFormElementValue(
+          hdomOld.setFormElementValue(
             prefix + "-ann-" + annotation.type,
             annotation.value,
           );
@@ -684,11 +691,11 @@ export class SearchUI extends UI {
       const years = filter.getYears();
       const year1 = years.year1;
       const year2 = years.year2;
-      hdom.setFormElementValue(
+      hdomOld.setFormElementValue(
         prefix + "-year1",
         year1 ? year1.toString() : "",
       );
-      hdom.setFormElementValue(
+      hdomOld.setFormElementValue(
         prefix + "-year2",
         year2 ? year2.toString() : "",
       );
@@ -709,20 +716,20 @@ export class SearchUI extends UI {
 
     const qualityGrades = filter.getQualityGrade();
     for (const qg of QUALITY_GRADES) {
-      hdom.setCheckBoxState(
+      hdomOld.setCheckBoxState(
         `${prefix}-${qg.id}`,
         qualityGrades.includes(qg.id),
       );
     }
 
-    hdom.setFormElementValue(
+    hdomOld.setFormElementValue(
       prefix + "-establishment",
       filter.getEstablishment() ?? "",
     );
 
-    hdom.setFormElementValue(`${prefix}-accuracy`, filter.getMinAccuracy());
+    hdomOld.setFormElementValue(`${prefix}-accuracy`, filter.getMinAccuracy());
 
-    hdom.setCheckBoxState(
+    hdomOld.setCheckBoxState(
       `${prefix}-taxon-obscured`,
       filter.getParams().obscuration === "taxon",
     );
@@ -730,11 +737,11 @@ export class SearchUI extends UI {
     if (this.#options.allowBoundary) {
       // Select location type.
       const locType = filter.getBoundary() ? "boundary" : "place";
-      hdom.clickElement(prefix + "-loc-type-" + locType);
+      hdomOld.clickElement(prefix + "-loc-type-" + locType);
 
       const boundary = filter.getBoundary();
       if (boundary) {
-        hdom.setFormElementValue(
+        hdomOld.setFormElementValue(
           prefix + "-boundary-text",
           JSON.stringify(boundary),
         );
@@ -757,8 +764,8 @@ export class SearchUI extends UI {
     const d1 = document.getElementById(prefix + "1");
     const d2 = document.getElementById(prefix + "2");
     if (d1 && d2) {
-      const d1Val = hdom.getFormElementValue(d1);
-      const d2Val = hdom.getFormElementValue(d2);
+      const d1Val = hdomOld.getFormElementValue(d1);
+      const d2Val = hdomOld.getFormElementValue(d2);
       d1.setAttribute(
         "max",
         d2Val ? d2Val : DateUtils.getCurrentYear().toString(),
@@ -773,8 +780,8 @@ export class SearchUI extends UI {
    */
   static setYearMode(prefix) {
     function getMode() {
-      const d1 = hdom.getFormElementValue(prefix + "1");
-      const d2 = hdom.getFormElementValue(prefix + "2");
+      const d1 = hdomOld.getFormElementValue(prefix + "1");
+      const d2 = hdomOld.getFormElementValue(prefix + "2");
       if (d1 === d2 && d1 !== undefined) {
         if (d1 === "") {
           return "Any";
@@ -789,12 +796,12 @@ export class SearchUI extends UI {
       return "Range";
     }
 
-    hdom.setFormElementValue(prefix, getMode());
+    hdomOld.setFormElementValue(prefix, getMode());
   }
 
   showSearchForm() {
-    hdom.showElement("search-crit", true);
-    hdom.setFocusTo("f1-proj-name");
+    hdomOld.showElement("search-crit", true);
+    hdomOld.setFocusTo("f1-proj-name");
   }
 
   /**
@@ -804,18 +811,18 @@ export class SearchUI extends UI {
   async updateAnnotationsFields(prefix, taxonID) {
     const fieldSetID = prefix + "-annotation-filter";
     if (!taxonID) {
-      hdom.showElement(fieldSetID, false);
+      hdomOld.showElement(fieldSetID, false);
       return;
     }
     const annotations = await SearchUI.getAnnotationsForTaxon(
       parseInt(taxonID),
       this.getAPI(),
     );
-    hdom.showElement(fieldSetID, annotations.length > 0);
+    hdomOld.showElement(fieldSetID, annotations.length > 0);
 
     // Show only the relevant annotation options.
     for (const type of ANNOTATION_TYPES) {
-      hdom.showElement(
+      hdomOld.showElement(
         prefix + "-ann-type-" + type,
         annotations.includes(type),
       );
@@ -879,28 +886,28 @@ function createLocationElements(prefix, options) {
     return;
   }
 
-  const locationsDiv = hdom.getElement(prefix + "-locations");
+  const locationsDiv = hdomOld.getElement(prefix + "-locations");
 
-  const boundaryDiv = hdom.createElement("div", {
+  const boundaryDiv = hdomOld.createElement("div", {
     id: prefix + "-locations-boundary",
   });
-  const boundaryTextDiv = hdom.createElement("div", {
+  const boundaryTextDiv = hdomOld.createElement("div", {
     class: "form-input",
   });
-  boundaryTextDiv.appendChild(hdom.createElement("label"));
+  boundaryTextDiv.appendChild(hdomOld.createElement("label"));
   boundaryTextDiv.appendChild(
-    hdom.createElement("textarea", {
+    hdomOld.createElement("textarea", {
       id: prefix + "-boundary-text",
       rows: 1,
       readonly: "",
     }),
   );
   boundaryDiv.appendChild(boundaryTextDiv);
-  const boundaryFileDiv = hdom.createElement("div", {
+  const boundaryFileDiv = hdomOld.createElement("div", {
     class: "form-input",
   });
-  boundaryFileDiv.appendChild(hdom.createElement("label"));
-  const boundaryUpload = hdom.createInputElement({
+  boundaryFileDiv.appendChild(hdomOld.createElement("label"));
+  const boundaryUpload = hdomOld.createInputElement({
     id: prefix + "-boundary-file",
     type: "file",
     title: "Upload GeoJSON with boundary",
@@ -914,9 +921,9 @@ function createLocationElements(prefix, options) {
   boundaryDiv.appendChild(boundaryFileDiv);
   locationsDiv.appendChild(boundaryDiv);
 
-  const locationTypeDiv = hdom.createElement("div", "form-input");
+  const locationTypeDiv = hdomOld.createElement("div", "form-input");
   locationTypeDiv.appendChild(
-    hdom
+    hdomOld
       .createElement("label")
       .appendChild(document.createTextNode("Location")),
   );
@@ -925,7 +932,7 @@ function createLocationElements(prefix, options) {
     { type: "boundary", label: "Boundary" },
   ];
   for (const data of radioData) {
-    const radio = hdom.createRadioElement(
+    const radio = hdomOld.createRadioElement(
       prefix + "-loc-type",
       prefix + "-loc-type-" + data.type,
       data.type,
@@ -961,7 +968,7 @@ function createMiscFields(prefix) {
   divForm.appendChild(divQuality);
 
   // Add establishment select.
-  const establishment = hdom.createSelectElementWithLabel(
+  const establishment = hdomOld.createSelectElementWithLabel(
     prefix + "-establishment",
     "Establishment",
     [
@@ -970,30 +977,30 @@ function createMiscFields(prefix) {
       { value: "introduced", label: "Introduced" },
     ],
   );
-  const divEst = hdom.createElement("div", "form-input");
+  const divEst = hdomOld.createElement("div", "form-input");
   divEst.appendChild(establishment.label);
   divEst.appendChild(establishment.select);
   divForm.appendChild(divEst);
 
-  const divAccuracy = hdom.createElement("div", "form-input");
+  const divAccuracy = hdomOld.createElement("div", "form-input");
   divAccuracy.appendChild(
-    hdom.createLabelElement(`${prefix}-accuracy`, "Accuracy"),
+    hdomOld.createLabelElement(`${prefix}-accuracy`, "Accuracy"),
   );
   divAccuracy.appendChild(
-    hdom.createIntegerInput(`${prefix}-accuracy`, undefined, 99999),
+    hdomOld.createIntegerInput(`${prefix}-accuracy`, undefined, 99999),
   );
   divAccuracy.appendChild(
-    hdom.createTextElement("span", {}, " meters or less"),
+    hdomOld.createTextElement("span", {}, " meters or less"),
   );
   divForm.appendChild(divAccuracy);
 
   // Add "taxon obscured" option.
-  const divObscured = hdom.createElement("div");
+  const divObscured = hdomOld.createElement("div");
   divObscured.appendChild(
-    hdom.createCheckBox(`${prefix}-taxon-obscured`, false),
+    hdomOld.createCheckBox(`${prefix}-taxon-obscured`, false),
   );
   divObscured.appendChild(
-    hdom.createLabelElement(`${prefix}-taxon-obscured`, "Taxon obscured"),
+    hdomOld.createLabelElement(`${prefix}-taxon-obscured`, "Taxon obscured"),
   );
   divForm.appendChild(divObscured);
 }
@@ -1009,12 +1016,12 @@ function createMonthSelects(prefix, ui) {
     }),
   );
 
-  const select1 = hdom.createSelectElementWithLabel(
+  const select1 = hdomOld.createSelectElementWithLabel(
     prefix + "-month1",
     "Month",
     options,
   );
-  const div = hdom.createElement("div", "form-input");
+  const div = hdomOld.createElement("div", "form-input");
   if (select1.label) {
     div.appendChild(select1.label);
   }
@@ -1023,12 +1030,12 @@ function createMonthSelects(prefix, ui) {
     handleMonth1Change(e, ui),
   );
 
-  hdom.appendTextValue(div, " to ");
-  const select2 = hdom.createSelectElement(prefix + "-month2", options);
+  hdomOld.appendTextValue(div, " to ");
+  const select2 = hdomOld.createSelectElement(prefix + "-month2", options);
   div.appendChild(select2);
   hdom.addEventListener(select2, "change", (e) => handleMonth2Change(e, ui));
 
-  const yearsDiv = hdom.getElement(`${prefix}-date-years`);
+  const yearsDiv = hdomOld.getElement(`${prefix}-date-years`);
   // @ts-ignore - remove once all controls are generated dynamically
   yearsDiv.parentElement.insertBefore(div, yearsDiv);
 }
@@ -1037,7 +1044,7 @@ function createMonthSelects(prefix, ui) {
  * @returns {HTMLElement|undefined}
  */
 function getAutoCompleteSelection() {
-  const ul = hdom.getElement("autocomplete");
+  const ul = hdomOld.getElement("autocomplete");
   if (ul.hidden) {
     return;
   }
@@ -1053,8 +1060,8 @@ function getAutoCompleteSelection() {
  * @returns {string}
  */
 function getLocationType(prefix) {
-  const locType = hdom.getFormElement("form", prefix + "-loc-type");
-  return hdom.getFormElementValue(locType);
+  const locType = hdomOld.getFormElement("form", prefix + "-loc-type");
+  return hdomOld.getFormElementValue(locType);
 }
 
 /**
@@ -1144,7 +1151,7 @@ function handleAutoCompleteKey(e, config) {
       }
       break;
     case "Escape":
-      hdom.showElement("autocomplete", false);
+      hdomOld.showElement("autocomplete", false);
       break;
   }
 }
@@ -1167,7 +1174,7 @@ async function handleBoundaryChange(event, prefix) {
     return;
   }
   const str = await file.text();
-  hdom.setFormElementValue(
+  hdomOld.setFormElementValue(
     prefix + "-boundary-text",
     JSON.stringify(JSON.parse(str)),
   );
@@ -1178,8 +1185,8 @@ async function handleBoundaryChange(event, prefix) {
  */
 function handleLocationTypeClick(prefix) {
   const type = getLocationType(prefix);
-  hdom.showElement(prefix + "-locations-boundary", type === "boundary");
-  hdom.showElement(prefix + "-locations-place", type === "place");
+  hdomOld.showElement(prefix + "-locations-boundary", type === "boundary");
+  hdomOld.showElement(prefix + "-locations-place", type === "place");
 }
 
 /**
@@ -1193,15 +1200,15 @@ function handleMonth1Change(e, ui) {
   }
   const prefix = target.id.split("-")[0];
   const locked = ui.getMonthLock(prefix);
-  const value = hdom.getFormElementValue(target);
+  const value = hdomOld.getFormElementValue(target);
   if (value === "") {
     // Clear both values when one is cleared.
-    hdom.setFormElementValue(prefix + "-month2", "");
+    hdomOld.setFormElementValue(prefix + "-month2", "");
     ui.setMonthLock(prefix, true);
     return;
   }
   if (locked) {
-    hdom.setFormElementValue(prefix + "-month2", value);
+    hdomOld.setFormElementValue(prefix + "-month2", value);
   }
 }
 
@@ -1215,14 +1222,14 @@ function handleMonth2Change(e, ui) {
     throw new Error();
   }
   const prefix = target.id.split("-")[0];
-  const value = hdom.getFormElementValue(target);
+  const value = hdomOld.getFormElementValue(target);
   if (value === "") {
     // Clear both values when one is cleared.
-    hdom.setFormElementValue(prefix + "-month1", "");
+    hdomOld.setFormElementValue(prefix + "-month1", "");
   }
   ui.setMonthLock(
     prefix,
-    value === hdom.getFormElementValue(prefix + "-month1"),
+    value === hdomOld.getFormElementValue(prefix + "-month1"),
   );
 }
 
@@ -1235,16 +1242,16 @@ function handleSetFromURL(ui, prefix) {
    * @param {HTMLDialogElement} eDlg
    */
   function createDialog(eDlg) {
-    const eForm = hdom.createElement("form");
+    const eForm = hdomOld.createElement("form");
     eForm.addEventListener("submit", (e) => setFromURL(e, ui, eDlg, prefix));
     eDlg.appendChild(eForm);
 
     const inputId = prefix + "-set-url-value";
-    const eLabel = hdom.createLabelElement(
+    const eLabel = hdomOld.createLabelElement(
       inputId,
       "Enter the iNaturalist URL or query string from which to create the filter",
     );
-    const eInput = hdom.createInputElement({
+    const eInput = hdomOld.createInputElement({
       type: "text",
       id: inputId,
       required: "",
@@ -1253,15 +1260,15 @@ function handleSetFromURL(ui, prefix) {
     eForm.appendChild(eLabel);
     eForm.appendChild(eInput);
 
-    const divBtn = hdom.createElement("div", "flex-fullwidth");
+    const divBtn = hdomOld.createElement("div", "flex-fullwidth");
 
-    const btnCancel = hdom.createInputElement({
+    const btnCancel = hdomOld.createInputElement({
       type: "button",
       value: "Cancel",
     });
     btnCancel.addEventListener("click", () => eDlg.close());
 
-    const btnSubmit = hdom.createInputElement({
+    const btnSubmit = hdomOld.createInputElement({
       type: "submit",
       value: "Submit",
     });
@@ -1270,14 +1277,14 @@ function handleSetFromURL(ui, prefix) {
     divBtn.appendChild(btnSubmit);
     eForm.appendChild(divBtn);
 
-    hdom.getElement(prefix).appendChild(eDlg);
+    hdomOld.getElement(prefix).appendChild(eDlg);
   }
 
   const id = prefix + "-set-url-dlg";
   let eDlg = document.getElementById(id);
   if (!eDlg) {
     // Create dialog element if it is not there.
-    eDlg = hdom.createElement("dialog", { id: id });
+    eDlg = hdomOld.createElement("dialog", { id: id });
     // @ts-ignore
     createDialog(eDlg);
   }
@@ -1291,9 +1298,9 @@ function handleSetFromURL(ui, prefix) {
  * @param {boolean} [setSelected=true]
  */
 function selectAutoComplete(config, li, setSelected = true) {
-  hdom.setFormElementValue(config.getInputID(), li.textContent);
-  hdom.setFormElementValue(config.getValueID(), li.dataset.id);
-  hdom.showElement("autocomplete", false);
+  hdomOld.setFormElementValue(config.getInputID(), li.textContent);
+  hdomOld.setFormElementValue(config.getValueID(), li.dataset.id);
+  hdomOld.showElement("autocomplete", false);
   config.setSelected(setSelected);
 }
 
@@ -1305,7 +1312,7 @@ function selectAutoComplete(config, li, setSelected = true) {
  */
 function setFromURL(e, ui, eDlg, prefix) {
   e.preventDefault();
-  const value = hdom.getFormElementValue(prefix + "-set-url-value");
+  const value = hdomOld.getFormElementValue(prefix + "-set-url-value");
   let searchParams;
   if (URL.canParse(value)) {
     const url = new URL(value);
