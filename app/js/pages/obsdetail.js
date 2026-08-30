@@ -1455,7 +1455,7 @@ function createRadioDiv(name, id, value, label, fnClickHandler) {
   div.appendChild(rb);
   div.appendChild(lbl);
   if (fnClickHandler) {
-    rb.addEventListener("click", fnClickHandler);
+    hdom.addEventListener(rb, "click", fnClickHandler);
   }
   return div;
 }

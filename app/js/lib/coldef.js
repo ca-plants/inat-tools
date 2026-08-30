@@ -5,7 +5,7 @@ import { csvFormatRows } from "d3-dsv";
  * @template T
  * @callback FnColDefGetStringVal
  * @param {T} entry
- * @param {any[]} [args]
+ * @param {...any} args
  * @returns {string}
  */
 
