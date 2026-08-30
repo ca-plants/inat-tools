@@ -11,19 +11,28 @@ import { csvFormatRows } from "d3-dsv";
 
 /**
  * @template T
+ * @callback FnColDefGetColVal
+ * @param {string} value
+ * @param {T} entry
+ * @param {any[]} [args]
+ * @returns {Element|string}
+ */
+
+/**
+ * @template T
  */
 export class ColDef {
   #th;
   /** @type {FnColDefGetStringVal<T>} */
   #fnValue;
-  /** @type {(function (string,T,...any) : (Element|string))|undefined} */
+  /** @type {FnColDefGetColVal<T>|undefined} */
   #fnCellContent;
   #className;
 
   /**
    * @param {string} th
    * @param {FnColDefGetStringVal<T>} fnValue
-   * @param {function (string,T,...any) : (Element|string)} [fnCellContent]
+   * @param {FnColDefGetColVal<T>} [fnCellContent]
    * @param {string} [className]
    */
   constructor(th, fnValue, fnCellContent, className) {
