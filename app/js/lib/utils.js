@@ -1,4 +1,7 @@
 /**
+ * @callback FnDownloadDataGetter
+ * @returns {{content:string,fileName?:string}}
+ *
  * @callback FnTaxaSummaryColText
  * @param {import("../types.js").INatDataTaxonObsSummary} summary
  * @returns {string}
@@ -72,7 +75,7 @@ export const TAXA_SUMMARY_COLUMNS = [
 /**
  * @param {string} pathPrefix
  * @param {string} title
- * @param {function():{content:string,fileName?:string}} fnGetData
+ * @param {FnDownloadDataGetter} fnGetData
  * @returns {HTMLElement}
  */
 export function createDownloadLink(pathPrefix, title, fnGetData) {
