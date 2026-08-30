@@ -14,8 +14,11 @@ const QUALITY_GRADES = [
 /**
  * @typedef {{allowBoundary?:boolean}} SearchUIOptions
  *
- * @callback FnChangeHandler
- * @param {string} xxx
+ * @callback FnAutocompleteChangeHandler
+ * @param {string} id
+ *
+ * @callback FnClickListener
+ * @param {Event} e
  *
  * @callback FnRetrieveSuggestions
  * @param {string} partialText
@@ -152,7 +155,7 @@ export class SearchUI extends UI {
   }
 
   /**
-   * @param {function((Event|null)?):void} fnClick
+   * @param {FnClickListener} fnClick
    * @returns {HTMLInputElement}
    */
   createChangeFilterButton(fnClick) {
@@ -284,7 +287,7 @@ export class SearchUI extends UI {
    * @param {string} prefix
    * @param {string} name
    * @param {FnRetrieveSuggestions} fnRetrieve
-   * @param {FnChangeHandler|undefined} [fnHandleChange]
+   * @param {FnAutocompleteChangeHandler|undefined} [fnHandleChange]
    */
   initAutoCompleteField(prefix, name, fnRetrieve, fnHandleChange) {
     const config = new AutoCompleteConfig(
