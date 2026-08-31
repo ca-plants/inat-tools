@@ -17,7 +17,7 @@
     "devDependencies": {
         "@11ty/eleventy": "^3.1.6",
         "@eslint/js": "^10.0.1",
-        "@htmltools/hdom": "^0.1.4",
+        "@htmltools/hdom": "^0.1.6",
         "@rollup/plugin-commonjs": "^29.0.3",
         "@rollup/plugin-node-resolve": "^16.0.3",
         "@rollup/plugin-terser": "^1.0.0",
@@ -32,7 +32,7 @@
         "d3-dsv": "^3.0.1",
         "eslint": "^10.9.1",
         "globals": "^17.11.0",
-        "jest": "^30.4.2",
+        "jest": "^30.5.0",
         "jstoxml": "^7.1.1",
         "leaflet": "^1.9.4",
         "marked": "^18.0.5",
