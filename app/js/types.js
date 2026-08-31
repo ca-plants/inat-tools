@@ -3,6 +3,11 @@
  * @typedef {"exclude"|"subtract"} EnumCompareType
  * @typedef {"datehisto" | "details" | "mapdata" | "usersumm" | "map"} EnumObsDetailView
  *
+ * Callbacks
+ * @callback FnClickListener
+ * @param {Event} e
+ * @returns {void}
+ *
  * Types - INat Data
  * @typedef {{created_at:string,body:string|null,user:{login:string}}} InatCommentData
  * @typedef {{

@@ -1423,7 +1423,7 @@ class ObsDetailUI extends SearchUI {
  * @param {string} id
  * @param {string} label
  * @param {boolean} checked
- * @param {function(Event):void} fnClickHandler
+ * @param {import("../types.js").FnClickListener} fnClickHandler
  * @returns {HTMLElement}
  */
 function createCheckBoxDiv(id, label, checked, fnClickHandler) {
@@ -1440,7 +1440,7 @@ function createCheckBoxDiv(id, label, checked, fnClickHandler) {
  * @param {string} id
  * @param {string} value
  * @param {string} label
- * @param {function(Event):void} [fnClickHandler]
+ * @param {import("../types.js").FnClickListener} [fnClickHandler]
  * @returns {HTMLElement}
  */
 function createRadioDiv(name, id, value, label, fnClickHandler) {
@@ -1455,7 +1455,7 @@ function createRadioDiv(name, id, value, label, fnClickHandler) {
   div.appendChild(rb);
   div.appendChild(lbl);
   if (fnClickHandler) {
-    rb.addEventListener("click", fnClickHandler);
+    hdom.addEventListener(rb, "click", fnClickHandler);
   }
   return div;
 }
