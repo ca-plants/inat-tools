@@ -11,6 +11,7 @@ import { InatURL } from "../lib/inaturl.js";
 import { DEFAULT_MAP_SOURCE, Map, MAP_SOURCES } from "../lib/map.js";
 import { Clusterer } from "../tools/clusterer.js";
 import { HistoDate, HistoTime, HistoYear } from "../lib/histo.js";
+import { INatAPI } from "../lib/inatapi.js";
 
 /** @typedef {{role:string}} ProjectMember */
 /** @typedef {"public" | "obscured" | "trusted"} SelType */
@@ -790,7 +791,7 @@ class ObsDetailUI extends SearchUI {
       {
         value: "pop",
         label: "Populations",
-        handler: () => this.#setMapTypePop(map, gj),
+        handler: async () => await this.#setMapTypePop(map, gj),
       },
     ];
     for (const type of types) {
@@ -828,7 +829,7 @@ class ObsDetailUI extends SearchUI {
     });
 
     hdom.addEventListener("mt-pop-distance", "change", () =>
-      this.#debounce(() => this.#setMapTypePop(map, gj)),
+      this.#debounce(async () => await this.#setMapTypePop(map, gj)),
     );
     const mapMode = this.#getMapMode();
     hdom.clickElement(mapMode);
@@ -1279,7 +1280,7 @@ class ObsDetailUI extends SearchUI {
    * @param {Map} map
    * @param {import("geojson").FeatureCollection<import("geojson").Point>} gj
    */
-  #setMapTypePop(map, gj) {
+  async #setMapTypePop(map, gj) {
     hdom.showElement("mt-pop-options", true);
     hdom.setFocusTo("mt-pop-distance");
     map.clearFeatures();
@@ -1288,7 +1289,14 @@ class ObsDetailUI extends SearchUI {
 
     const clusterer = new Clusterer();
     const clustered = clusterer.cluster(gj, distance);
-    const bordered = clusterer.addBorders(clustered, distance);
+    const taxon_id = this.#f1.getTaxonID();
+    const props = {};
+    if (taxon_id) {
+      const taxon = await this.getAPI().getTaxonData(taxon_id);
+      const name = INatAPI.getTaxonFormName(taxon, false);
+      props["taxon_name"] = name;
+    }
+    const bordered = clusterer.addBorders(clustered, distance, props);
 
     map.addObservations(bordered);
     this.#downloadData = bordered;

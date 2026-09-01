@@ -115,10 +115,11 @@ export class Map {
         return;
       }
       for (const property of [
-        "cluster",
-        "hectares",
+        "taxon_name",
         "observations",
         "pop_num",
+        "hectares",
+        "cluster",
       ]) {
         switch (property) {
           case "cluster":
@@ -157,6 +158,11 @@ export class Map {
               div,
               `Population #${properties.pop_num} of ${maxPopNum}`,
             );
+            break;
+          case "taxon_name":
+            if (properties.taxon_name) {
+              hdom.appendTextValue(div, `${properties.taxon_name}`);
+            }
             break;
           default:
             continue;
