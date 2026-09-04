@@ -207,8 +207,9 @@ class UI extends SearchUI {
     }
     this.#f1 = f1;
     this.#f2 = hasExclusions ? this.initFilterFromForm("f2") : undefined;
-    // @ts-ignore
-    this.#compareType = hdom.getFormElementValue("comp-exclude");
+    this.#compareType = hdom.isChecked("comp-subtract")
+      ? "subtract"
+      : "exclude";
 
     const errorMsg = checkFilters(this.#f1, this.#f2);
     if (errorMsg) {
