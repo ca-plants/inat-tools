@@ -2,6 +2,11 @@ import { hdom } from "@htmltools/hdom";
 import { csvFormatRows } from "d3-dsv";
 
 /**
+ * @callback FnColDefGetHeaderVal
+ * @returns {HTMLElement|string}
+ */
+
+/**
  * @template T
  * @callback FnColDefGetStringVal
  * @param {T} entry
@@ -15,7 +20,7 @@ import { csvFormatRows } from "d3-dsv";
  * @param {string} value
  * @param {T} entry
  * @param {...any} args
- * @returns {Element|string}
+ * @returns {HTMLElement|string}
  */
 
 /**
@@ -30,7 +35,7 @@ export class ColDef {
   #className;
 
   /**
-   * @param {string} th
+   * @param {string|FnColDefGetHeaderVal} th
    * @param {FnColDefGetStringVal<T>} fnValue
    * @param {FnColDefGetColVal<T>} [fnCellContent]
    * @param {string} [className]
@@ -101,7 +106,12 @@ export class ColDef {
     for (const col of cols) {
       const th = hdom.createElement("th", col.getClass());
       tr.appendChild(th);
-      th.appendChild(document.createTextNode(col.getHeaderLabel()));
+      const content = col.getHeaderLabel();
+      th.appendChild(
+        typeof content === "string"
+          ? document.createTextNode(content)
+          : content,
+      );
     }
 
     return table;
@@ -112,7 +122,7 @@ export class ColDef {
   }
 
   getHeaderLabel() {
-    return this.#th;
+    return typeof this.#th === "string" ? this.#th : this.#th();
   }
 
   /**
@@ -135,8 +145,17 @@ export class ColDef {
    * @returns {string}
    */
   static getCSVData(results, cols, ...otherArgs) {
+    /** @type {string[][]} */
     const data = [];
-    data.push(cols.map((col) => col.getHeaderLabel()));
+    data.push(
+      cols.map((col) => {
+        const h = col.getHeaderLabel();
+        if (typeof h !== "string") {
+          throw new Error();
+        }
+        return h;
+      }),
+    );
 
     for (const result of results) {
       const row = [];

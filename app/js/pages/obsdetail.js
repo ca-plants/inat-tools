@@ -26,7 +26,9 @@ const ALL_COORD_TYPES = ["public", "trusted", "obscured"];
 /** @type {Object<string,ColDef<INatObservation>>} */
 const DETAIL_COLS = {
   INCLUDE: new ColDef(
-    "x",
+    () => {
+      return hdom.createCheckBox("include-all", true);
+    },
     () => "",
     (value, obs) => {
       return hdom.createCheckBox(`include-${obs.getID()}`, true);
