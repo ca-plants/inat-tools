@@ -25,6 +25,13 @@ const ALL_COORD_TYPES = ["public", "trusted", "obscured"];
 
 /** @type {Object<string,ColDef<INatObservation>>} */
 const DETAIL_COLS = {
+  INCLUDE: new ColDef(
+    "x",
+    () => "",
+    (value, obs) => {
+      return hdom.createCheckBox(`include-${obs.getID()}`, true);
+    },
+  ),
   OBS_DATE: new ColDef(
     "Date",
     (obs) => {
@@ -717,6 +724,7 @@ class ObsDetailUI extends SearchUI {
     const selectedTypes = this.getSelectedTypes();
 
     const cols = [
+      DETAIL_COLS.INCLUDE,
       DETAIL_COLS.OBS_DATE,
       DETAIL_COLS.TAXON,
       DETAIL_COLS.OBSERVER,
