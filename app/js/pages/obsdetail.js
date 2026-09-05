@@ -26,13 +26,9 @@ const ALL_COORD_TYPES = ["public", "trusted", "obscured"];
 /** @type {Object<string,ColDef<INatObservation>>} */
 const DETAIL_COLS = {
   INCLUDE: new ColDef(
-    () => {
-      return hdom.createCheckBox("include-all", true);
-    },
+    (ui) => ui.createIncludeCheckBox("all"),
     () => "",
-    (value, obs) => {
-      return hdom.createCheckBox(`include-${obs.getID()}`, true);
-    },
+    (value, obs, ui) => ui.createIncludeCheckBox(obs.getID()),
   ),
   OBS_DATE: new ColDef(
     "Date",
@@ -194,6 +190,16 @@ class ObsDetailUI extends SearchUI {
 
   clearResults() {
     return hdom.removeChildren("results");
+  }
+
+  /**
+   * @param {string} id
+   * @returns  {HTMLElement}
+   */
+  createIncludeCheckBox(id) {
+    const cb = hdom.createCheckBox(`include-${id}`, true);
+    hdom.addEventListener(cb, "click", () => this.handleIncludeClick(id));
+    return cb;
   }
 
   /**
@@ -516,6 +522,13 @@ class ObsDetailUI extends SearchUI {
     return types.length > 0 ? types : [...ALL_COORD_TYPES];
   }
 
+  /**
+   * @param {string} id
+   */
+  handleIncludeClick(id) {
+    console.log(id);
+  }
+
   handleOptionChange() {
     if (!this.#rawResults) {
       return;
@@ -743,7 +756,7 @@ class ObsDetailUI extends SearchUI {
       cols.push(DETAIL_COLS.COMMENTS);
     }
 
-    const eTable = ColDef.createTable(cols);
+    const eTable = ColDef.createTable(cols, this);
 
     const tbody = hdom.createElement("tbody");
     eTable.appendChild(tbody);
@@ -936,7 +949,7 @@ class ObsDetailUI extends SearchUI {
       cols.push(SUMMARY_COLS.PROJECT);
       csvCols.push(SUMMARY_COLS.PROJECT);
     }
-    const eTable = ColDef.createTable(cols);
+    const eTable = ColDef.createTable(cols, this);
 
     const tbody = hdom.createElement("tbody");
     eTable.appendChild(tbody);

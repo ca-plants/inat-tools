@@ -3,6 +3,7 @@ import { csvFormatRows } from "d3-dsv";
 
 /**
  * @callback FnColDefGetHeaderVal
+ * @param {...any} args
  * @returns {HTMLElement|string}
  */
 
@@ -95,8 +96,9 @@ export class ColDef {
   /**
    * @template T
    * @param {ColDef<T>[]} cols
+   * @param {...any} [otherArgs]
    */
-  static createTable(cols) {
+  static createTable(cols, otherArgs) {
     const table = hdom.createElement("table");
 
     const thead = hdom.createElement("thead");
@@ -106,7 +108,7 @@ export class ColDef {
     for (const col of cols) {
       const th = hdom.createElement("th", col.getClass());
       tr.appendChild(th);
-      const content = col.getHeaderLabel();
+      const content = col.getHeaderLabel(otherArgs);
       th.appendChild(
         typeof content === "string"
           ? document.createTextNode(content)
@@ -121,8 +123,11 @@ export class ColDef {
     return this.#className;
   }
 
-  getHeaderLabel() {
-    return typeof this.#th === "string" ? this.#th : this.#th();
+  /**
+   * @param {...any} [args]
+   */
+  getHeaderLabel(args) {
+    return typeof this.#th === "string" ? this.#th : this.#th(args);
   }
 
   /**
@@ -149,7 +154,7 @@ export class ColDef {
     const data = [];
     data.push(
       cols.map((col) => {
-        const h = col.getHeaderLabel();
+        const h = col.getHeaderLabel(...otherArgs);
         if (typeof h !== "string") {
           throw new Error();
         }
