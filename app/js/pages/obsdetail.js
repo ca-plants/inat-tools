@@ -197,8 +197,15 @@ class ObsDetailUI extends SearchUI {
    * @returns  {HTMLElement}
    */
   createIncludeCheckBox(id) {
-    const cb = hdom.createCheckBox(`include-${id}`, true);
+    const cb = hdom.createCheckBox(
+      `include-${id}`,
+      this.#hashParams.exclude === undefined ||
+        !this.#hashParams.exclude.includes(id),
+    );
     hdom.addEventListener(cb, "click", () => this.handleIncludeClick(id));
+    if (id === "all") {
+      this.#setIncludeAll(cb);
+    }
     return cb;
   }
 
@@ -526,18 +533,28 @@ class ObsDetailUI extends SearchUI {
    * @param {string} id
    */
   handleIncludeClick(id) {
-    let exclude = this.#hashParams.exclude ?? [];
-    if (hdom.isChecked(`include-${id}`)) {
-      exclude = exclude.filter((e) => e !== id);
+    if (id === "all") {
+      if (this.#summarizedResults) {
+        delete this.#hashParams.exclude;
+        for (const obs of this.#summarizedResults.observations) {
+          hdom.setCheckBoxState(`include-${obs.getID()}`, true);
+        }
+      }
     } else {
-      exclude.push(id);
-      exclude = exclude.sort();
+      let exclude = this.#hashParams.exclude ?? [];
+      if (hdom.isChecked(`include-${id}`)) {
+        exclude = exclude.filter((e) => e !== id);
+      } else {
+        exclude.push(id);
+        exclude = exclude.sort();
+      }
+      if (exclude.length > 0) {
+        this.#hashParams.exclude = exclude;
+      } else {
+        delete this.#hashParams.exclude;
+      }
     }
-    if (exclude.length > 0) {
-      this.#hashParams.exclude = exclude;
-    } else {
-      delete this.#hashParams.exclude;
-    }
+    this.#setIncludeAll();
     document.location.hash = JSON.stringify(this.#hashParams);
   }
 
@@ -1300,6 +1317,17 @@ class ObsDetailUI extends SearchUI {
   }
 
   /**
+   * @param {HTMLInputElement} [cb]
+   */
+  #setIncludeAll(cb) {
+    if (cb === undefined) {
+      cb = hdom.getElement("include-all");
+    }
+    hdom.setCheckBoxState(cb, this.#hashParams.exclude === undefined);
+    hdom.enableElement(cb, this.#hashParams.exclude !== undefined);
+  }
+
+  /**
    * @param {Map} map
    * @param {import("geojson").FeatureCollection} gj
    */
@@ -1361,6 +1389,10 @@ class ObsDetailUI extends SearchUI {
       f1: this.#f1.getParams(),
       view: getViewMode(),
     };
+    // Exclusions are tracked in the hash, retrieve them from the current hash.
+    if (this.#hashParams.exclude) {
+      params.exclude = this.#hashParams.exclude;
+    }
     // Only save the coordinate types if some of the non-zero types are unchecked.
     if (
       ALL_COORD_TYPES.some(
