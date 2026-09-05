@@ -8,10 +8,10 @@ import { SearchUI } from "../lib/searchui.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { createDownloadLink } from "../lib/utils.js";
 import { InatURL } from "../lib/inaturl.js";
-import { DEFAULT_MAP_SOURCE, Map, MAP_SOURCES } from "../lib/map.js";
 import { Clusterer } from "../tools/clusterer.js";
 import { HistoDate, HistoTime, HistoYear } from "../lib/histo.js";
 import { INatAPI } from "../lib/inatapi.js";
+import { DEFAULT_MAP_SOURCE, MAP_SOURCES, ObsMap } from "../lib/obsmap.js";
 
 /** @typedef {{role:string}} ProjectMember */
 /** @typedef {"public" | "obscured" | "trusted"} SelType */
@@ -870,7 +870,7 @@ class ObsDetailUI extends SearchUI {
     setMapHeight();
 
     const source = this.#hashParams.map?.source ?? DEFAULT_MAP_SOURCE;
-    const map = new Map(source);
+    const map = new ObsMap(source);
     const gj = this.#getGeoJSONPoints();
     map.fitBounds(gj);
 
@@ -1342,7 +1342,7 @@ class ObsDetailUI extends SearchUI {
   }
 
   /**
-   * @param {Map} map
+   * @param {ObsMap} map
    * @param {import("geojson").FeatureCollection} gj
    */
   #setMapTypeObs(map, gj) {
@@ -1354,7 +1354,7 @@ class ObsDetailUI extends SearchUI {
   }
 
   /**
-   * @param {Map} map
+   * @param {ObsMap} map
    * @param {import("geojson").FeatureCollection<import("geojson").Point>} gj
    */
   async #setMapTypePop(map, gj) {

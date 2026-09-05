@@ -38,7 +38,7 @@ export const MAP_SOURCES = {
   },
 };
 
-export class Map {
+export class ObsMap {
   #map;
   /** @type {import("leaflet").TileLayer|undefined} */
   #tileLayer;
@@ -108,7 +108,7 @@ export class Map {
     /**
      * @param {HTMLElement} div
      * @param {import("geojson").GeoJsonProperties} properties
-     * @param {Map} map
+     * @param {ObsMap} map
      */
     function createPolygonPopup(div, properties, map) {
       if (!properties) {
@@ -185,7 +185,7 @@ export class Map {
 
     /**
      * @param {import("leaflet").Layer} layer
-     * @param {Map} map
+     * @param {ObsMap} map
      * @returns {HTMLElement}
      */
     function popup(layer, map) {
