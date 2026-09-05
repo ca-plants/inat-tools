@@ -526,7 +526,19 @@ class ObsDetailUI extends SearchUI {
    * @param {string} id
    */
   handleIncludeClick(id) {
-    console.log(id);
+    let exclude = this.#hashParams.exclude ?? [];
+    if (hdom.isChecked(`include-${id}`)) {
+      exclude = exclude.filter((e) => e !== id);
+    } else {
+      exclude.push(id);
+      exclude = exclude.sort();
+    }
+    if (exclude.length > 0) {
+      this.#hashParams.exclude = exclude;
+    } else {
+      delete this.#hashParams.exclude;
+    }
+    document.location.hash = JSON.stringify(this.#hashParams);
   }
 
   handleOptionChange() {
