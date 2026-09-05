@@ -790,7 +790,7 @@ class ObsDetailUI extends SearchUI {
     const tbody = hdom.createElement("tbody");
     eTable.appendChild(tbody);
 
-    for (const obs of this.#getSelectedObservations()) {
+    for (const obs of this.#getSelectedObservations(true)) {
       tbody.appendChild(ColDef.createRow(obs, cols, [this]));
     }
 
@@ -1151,13 +1151,16 @@ class ObsDetailUI extends SearchUI {
   }
 
   /**
+   * @param {boolean} [includeExcluded]
    * @returns {INatObservation[]}
    */
-  #getSelectedObservations() {
+  #getSelectedObservations(includeExcluded = false) {
     const selectedTypes = this.getSelectedTypes();
 
-    return this.#summarizedResults.observations.filter((obs) =>
-      selectedTypes.includes(obs.getCoordType()),
+    return this.#summarizedResults.observations.filter(
+      (obs) =>
+        selectedTypes.includes(obs.getCoordType()) &&
+        (includeExcluded || !this.#isExcluded(obs.getID())),
     );
   }
 
@@ -1268,6 +1271,17 @@ class ObsDetailUI extends SearchUI {
     optionDiv.appendChild(radios);
     optionDiv.appendChild(iNatDiv);
     form.appendChild(optionDiv);
+  }
+
+  /**
+   * @param {string} id
+   * @returns {boolean}
+   */
+  #isExcluded(id) {
+    return (
+      this.#hashParams.exclude !== undefined &&
+      this.#hashParams.exclude.includes(id)
+    );
   }
 
   /**
