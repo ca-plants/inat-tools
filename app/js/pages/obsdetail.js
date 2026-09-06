@@ -541,18 +541,7 @@ class ObsDetailUI extends SearchUI {
         }
       }
     } else {
-      let exclude = this.#hashParams.exclude ?? [];
-      if (hdom.isChecked(`include-${id}`)) {
-        exclude = exclude.filter((e) => e !== id);
-      } else {
-        exclude.push(id);
-        exclude = exclude.sort();
-      }
-      if (exclude.length > 0) {
-        this.#hashParams.exclude = exclude;
-      } else {
-        delete this.#hashParams.exclude;
-      }
+      this.#updateExcludes(id, !hdom.isChecked(`include-${id}`));
     }
     this.#setIncludeAll();
     document.location.hash = JSON.stringify(this.#hashParams);
@@ -870,7 +859,7 @@ class ObsDetailUI extends SearchUI {
     setMapHeight();
 
     const source = this.#hashParams.map?.source ?? DEFAULT_MAP_SOURCE;
-    const map = new ObsMap(source);
+    const map = new ObsMap(source, (props) => this.#handleMapPopup(props));
     const gj = this.#getGeoJSONPoints();
     map.fitBounds(gj);
 
@@ -1201,6 +1190,66 @@ class ObsDetailUI extends SearchUI {
     return userSummary;
   }
 
+  /**
+   * @param {Object<string,any>} properties
+   * @returns {HTMLElement}
+   */
+  #handleMapPopup(properties) {
+    const div = hdom.createElement("div");
+    let first = true;
+    for (const property of [
+      "taxon_name",
+      "date",
+      "observer",
+      "accuracy",
+      "cluster",
+      "min_distance",
+    ]) {
+      if (!properties || properties[property] === undefined) {
+        continue;
+      }
+      if (!first) {
+        div.appendChild(hdom.createElement("br"));
+      }
+      first = false;
+      switch (property) {
+        case "accuracy":
+          hdom.appendTextValue(div, `Accuracy ${properties.accuracy} meters`);
+          break;
+        case "cluster":
+          hdom.appendTextValue(div, `Cluster ${properties.cluster}`);
+          break;
+        case "min_distance":
+          hdom.appendTextValue(
+            div,
+            `${properties.min_distance.distance} meters from population ${properties.min_distance.pop_num}`,
+          );
+          break;
+        case "taxon_name":
+          div.appendChild(
+            hdom.createLinkElement(properties.url, properties.taxon_name, {
+              target: "_blank",
+            }),
+          );
+          break;
+        default:
+          hdom.appendTextValue(div, properties[property]);
+          break;
+      }
+    }
+
+    const exclude = hdom.createElement("p", {}, div);
+    const link = hdom.createLinkElement("", "Exclude from map", {});
+    hdom.addEventListener(link, "click", (e) => {
+      e.preventDefault();
+      this.#updateExcludes(properties.id, true);
+      this.updateDisplay();
+    });
+    exclude.appendChild(link);
+
+    return div;
+  }
+
   #initObsOptions() {
     /**
      * @param {string} value
@@ -1378,6 +1427,25 @@ class ObsDetailUI extends SearchUI {
     map.addObservations(bordered);
     this.#downloadData = bordered;
     this.#updateHash();
+  }
+
+  /**
+   * @param {string} id
+   * @param {boolean} isExcluded
+   */
+  #updateExcludes(id, isExcluded) {
+    let exclude = this.#hashParams.exclude ?? [];
+    if (!isExcluded) {
+      exclude = exclude.filter((e) => e !== id);
+    } else {
+      exclude.push(id);
+      exclude = exclude.sort();
+    }
+    if (exclude.length > 0) {
+      this.#hashParams.exclude = exclude;
+    } else {
+      delete this.#hashParams.exclude;
+    }
   }
 
   #updateGeoJSONFormat() {
