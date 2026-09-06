@@ -26,7 +26,7 @@ const ALL_COORD_TYPES = ["public", "trusted", "obscured"];
 /** @type {Object<string,ColDef<INatObservation>>} */
 const DETAIL_COLS = {
   INCLUDE: new ColDef(
-    (ui) => ui.createIncludeCheckBox("all"),
+    (ui) => ui[0].createIncludeCheckBox("all"),
     () => "",
     (value, obs, ui) => ui.createIncludeCheckBox(obs.getID()),
   ),

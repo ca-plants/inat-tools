@@ -96,9 +96,9 @@ export class ColDef {
   /**
    * @template T
    * @param {ColDef<T>[]} cols
-   * @param {...any} [otherArgs]
+   * @param {...any} otherArgs
    */
-  static createTable(cols, otherArgs) {
+  static createTable(cols, ...otherArgs) {
     const table = hdom.createElement("table");
 
     const thead = hdom.createElement("thead");
