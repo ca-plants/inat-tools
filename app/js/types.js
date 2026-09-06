@@ -48,6 +48,7 @@
  * Types - Parameters
  * @typedef {{
  *      f1?: ParamsSpeciesFilter;
+ *      exclude?: string[],
  *      coords?: ("public" | "obscured" | "trusted")[];
  *      view?: EnumObsDetailView
  *      comments?: boolean;

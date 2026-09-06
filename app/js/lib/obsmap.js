@@ -6,6 +6,8 @@ import { hdom } from "@htmltools/hdom";
 
 /**
  * @typedef {{label:string,url:string,attribution:string}} MapSource
+ * @callback FnMapPopupHandler
+ * @param {Object<string,any>} properties
  */
 
 export const DEFAULT_MAP_SOURCE = "stadia";
@@ -38,19 +40,22 @@ export const MAP_SOURCES = {
   },
 };
 
-export class Map {
+export class ObsMap {
   #map;
   /** @type {import("leaflet").TileLayer|undefined} */
   #tileLayer;
   /** @type {import("leaflet").GeoJSON|undefined} */
   #featureLayer;
+  #fnPopupHandler;
 
   /**
    * @param {string} source
+   * @param {FnMapPopupHandler} fnPopupHandler
    */
-  constructor(source) {
+  constructor(source, fnPopupHandler) {
     this.#map = L.map("map");
     this.setSource(source);
+    this.#fnPopupHandler = fnPopupHandler;
   }
 
   /**
@@ -58,62 +63,12 @@ export class Map {
    */
   addObservations(gj) {
     /**
-     * @param {HTMLElement} div
-     * @param {import("geojson").GeoJsonProperties} properties
+     * @param {Object<string,any>} properties
+     * @param {ObsMap} map
+     * @returns {HTMLElement}
      */
-    function createPointPopup(div, properties) {
-      let first = true;
-      for (const property of [
-        "taxon_name",
-        "date",
-        "observer",
-        "accuracy",
-        "cluster",
-        "min_distance",
-      ]) {
-        if (!properties || properties[property] === undefined) {
-          continue;
-        }
-        if (!first) {
-          div.appendChild(hdom.createElement("br"));
-        }
-        first = false;
-        switch (property) {
-          case "accuracy":
-            hdom.appendTextValue(div, `Accuracy ${properties.accuracy} meters`);
-            break;
-          case "cluster":
-            hdom.appendTextValue(div, `Cluster ${properties.cluster}`);
-            break;
-          case "min_distance":
-            hdom.appendTextValue(
-              div,
-              `${properties.min_distance.distance} meters from population ${properties.min_distance.pop_num}`,
-            );
-            break;
-          case "taxon_name":
-            div.appendChild(
-              hdom.createLinkElement(properties.url, properties.taxon_name, {
-                target: "_blank",
-              }),
-            );
-            break;
-          default:
-            hdom.appendTextValue(div, properties[property]);
-            break;
-        }
-      }
-    }
-
-    /**
-     * @param {HTMLElement} div
-     * @param {import("geojson").GeoJsonProperties} properties
-     * @param {Map} map
-     */
-    function createPolygonPopup(div, properties, map) {
-      if (!properties) {
-        return;
-      }
+    function createPolygonPopup(properties, map) {
+      const div = hdom.createElement("div");
       for (const property of [
         "taxon_name",
         "observations",
@@ -181,28 +136,26 @@ export class Map {
         map.fitBounds(fc);
       });
       div.appendChild(link);
+
+      return div;
     }
 
     /**
      * @param {import("leaflet").Layer} layer
-     * @param {Map} map
+     * @param {ObsMap} map
      * @returns {HTMLElement}
      */
     function popup(layer, map) {
       /** @type {import("geojson").Feature} */
       // @ts-ignore
       const feature = layer.feature;
-      const properties = feature.properties;
-      const div = hdom.createElement("div");
+      /** @type {Object<string,any>} */
+      const properties = feature.properties ?? {};
       switch (feature.geometry.type) {
         case "Point":
-          createPointPopup(div, properties);
-          break;
-        case "Polygon":
-          createPolygonPopup(div, properties, map);
-          break;
+          return map.#fnPopupHandler(properties);
       }
-      return div;
+      return createPolygonPopup(properties, map);
     }
 
     /** Find the largest population number. */

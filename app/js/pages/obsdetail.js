@@ -8,10 +8,10 @@ import { SearchUI } from "../lib/searchui.js";
 import { SpeciesFilter } from "../lib/speciesfilter.js";
 import { createDownloadLink } from "../lib/utils.js";
 import { InatURL } from "../lib/inaturl.js";
-import { DEFAULT_MAP_SOURCE, Map, MAP_SOURCES } from "../lib/map.js";
 import { Clusterer } from "../tools/clusterer.js";
 import { HistoDate, HistoTime, HistoYear } from "../lib/histo.js";
 import { INatAPI } from "../lib/inatapi.js";
+import { DEFAULT_MAP_SOURCE, MAP_SOURCES, ObsMap } from "../lib/obsmap.js";
 
 /** @typedef {{role:string}} ProjectMember */
 /** @typedef {"public" | "obscured" | "trusted"} SelType */
@@ -25,6 +25,11 @@ const ALL_COORD_TYPES = ["public", "trusted", "obscured"];
 
 /** @type {Object<string,ColDef<INatObservation>>} */
 const DETAIL_COLS = {
+  INCLUDE: new ColDef(
+    (ui) => ui[0].createIncludeCheckBox("all"),
+    () => "",
+    (value, obs, ui) => ui.createIncludeCheckBox(obs.getID()),
+  ),
   OBS_DATE: new ColDef(
     "Date",
     (obs) => {
@@ -185,6 +190,23 @@ class ObsDetailUI extends SearchUI {
 
   clearResults() {
     return hdom.removeChildren("results");
+  }
+
+  /**
+   * @param {string} id
+   * @returns  {HTMLElement}
+   */
+  createIncludeCheckBox(id) {
+    const cb = hdom.createCheckBox(
+      `include-${id}`,
+      this.#hashParams.exclude === undefined ||
+        !this.#hashParams.exclude.includes(id),
+    );
+    hdom.addEventListener(cb, "click", () => this.handleIncludeClick(id));
+    if (id === "all") {
+      this.#setIncludeAll(cb);
+    }
+    return cb;
   }
 
   /**
@@ -507,6 +529,24 @@ class ObsDetailUI extends SearchUI {
     return types.length > 0 ? types : [...ALL_COORD_TYPES];
   }
 
+  /**
+   * @param {string} id
+   */
+  handleIncludeClick(id) {
+    if (id === "all") {
+      if (this.#summarizedResults) {
+        delete this.#hashParams.exclude;
+        for (const obs of this.#summarizedResults.observations) {
+          hdom.setCheckBoxState(`include-${obs.getID()}`, true);
+        }
+      }
+    } else {
+      this.#updateExcludes(id, !hdom.isChecked(`include-${id}`));
+    }
+    this.#setIncludeAll();
+    document.location.hash = JSON.stringify(this.#hashParams);
+  }
+
   handleOptionChange() {
     if (!this.#rawResults) {
       return;
@@ -717,6 +757,7 @@ class ObsDetailUI extends SearchUI {
     const selectedTypes = this.getSelectedTypes();
 
     const cols = [
+      DETAIL_COLS.INCLUDE,
       DETAIL_COLS.OBS_DATE,
       DETAIL_COLS.TAXON,
       DETAIL_COLS.OBSERVER,
@@ -733,12 +774,12 @@ class ObsDetailUI extends SearchUI {
       cols.push(DETAIL_COLS.COMMENTS);
     }
 
-    const eTable = ColDef.createTable(cols);
+    const eTable = ColDef.createTable(cols, this);
 
     const tbody = hdom.createElement("tbody");
     eTable.appendChild(tbody);
 
-    for (const obs of this.#getSelectedObservations()) {
+    for (const obs of this.#getSelectedObservations(true)) {
       tbody.appendChild(ColDef.createRow(obs, cols, [this]));
     }
 
@@ -818,7 +859,7 @@ class ObsDetailUI extends SearchUI {
     setMapHeight();
 
     const source = this.#hashParams.map?.source ?? DEFAULT_MAP_SOURCE;
-    const map = new Map(source);
+    const map = new ObsMap(source, (props) => this.#handleMapPopup(props));
     const gj = this.#getGeoJSONPoints();
     map.fitBounds(gj);
 
@@ -926,7 +967,7 @@ class ObsDetailUI extends SearchUI {
       cols.push(SUMMARY_COLS.PROJECT);
       csvCols.push(SUMMARY_COLS.PROJECT);
     }
-    const eTable = ColDef.createTable(cols);
+    const eTable = ColDef.createTable(cols, this);
 
     const tbody = hdom.createElement("tbody");
     eTable.appendChild(tbody);
@@ -1099,13 +1140,16 @@ class ObsDetailUI extends SearchUI {
   }
 
   /**
+   * @param {boolean} [includeExcluded]
    * @returns {INatObservation[]}
    */
-  #getSelectedObservations() {
+  #getSelectedObservations(includeExcluded = false) {
     const selectedTypes = this.getSelectedTypes();
 
-    return this.#summarizedResults.observations.filter((obs) =>
-      selectedTypes.includes(obs.getCoordType()),
+    return this.#summarizedResults.observations.filter(
+      (obs) =>
+        selectedTypes.includes(obs.getCoordType()) &&
+        (includeExcluded || !this.#isExcluded(obs.getID())),
     );
   }
 
@@ -1144,6 +1188,66 @@ class ObsDetailUI extends SearchUI {
     }
 
     return userSummary;
+  }
+
+  /**
+   * @param {Object<string,any>} properties
+   * @returns {HTMLElement}
+   */
+  #handleMapPopup(properties) {
+    const div = hdom.createElement("div");
+    let first = true;
+    for (const property of [
+      "taxon_name",
+      "date",
+      "observer",
+      "accuracy",
+      "cluster",
+      "min_distance",
+    ]) {
+      if (!properties || properties[property] === undefined) {
+        continue;
+      }
+      if (!first) {
+        div.appendChild(hdom.createElement("br"));
+      }
+      first = false;
+      switch (property) {
+        case "accuracy":
+          hdom.appendTextValue(div, `Accuracy ${properties.accuracy} meters`);
+          break;
+        case "cluster":
+          hdom.appendTextValue(div, `Cluster ${properties.cluster}`);
+          break;
+        case "min_distance":
+          hdom.appendTextValue(
+            div,
+            `${properties.min_distance.distance} meters from population ${properties.min_distance.pop_num}`,
+          );
+          break;
+        case "taxon_name":
+          div.appendChild(
+            hdom.createLinkElement(properties.url, properties.taxon_name, {
+              target: "_blank",
+            }),
+          );
+          break;
+        default:
+          hdom.appendTextValue(div, properties[property]);
+          break;
+      }
+    }
+
+    const exclude = hdom.createElement("p", {}, div);
+    const link = hdom.createLinkElement("", "Exclude from map", {});
+    hdom.addEventListener(link, "click", (e) => {
+      e.preventDefault();
+      this.#updateExcludes(properties.id, true);
+      this.updateDisplay();
+    });
+    exclude.appendChild(link);
+
+    return div;
   }
 
   #initObsOptions() {
@@ -1219,6 +1323,17 @@ class ObsDetailUI extends SearchUI {
   }
 
   /**
+   * @param {string} id
+   * @returns {boolean}
+   */
+  #isExcluded(id) {
+    return (
+      this.#hashParams.exclude !== undefined &&
+      this.#hashParams.exclude.includes(id)
+    );
+  }
+
+  /**
    * @param {"date"|"time"|"year"} type
    */
   #setHistoType(type) {
@@ -1265,7 +1380,18 @@ class ObsDetailUI extends SearchUI {
   }
 
   /**
-   * @param {Map} map
+   * @param {HTMLInputElement} [cb]
+   */
+  #setIncludeAll(cb) {
+    if (cb === undefined) {
+      cb = hdom.getElement("include-all");
+    }
+    hdom.setCheckBoxState(cb, this.#hashParams.exclude === undefined);
+    hdom.enableElement(cb, this.#hashParams.exclude !== undefined);
+  }
+
+  /**
+   * @param {ObsMap} map
    * @param {import("geojson").FeatureCollection} gj
    */
   #setMapTypeObs(map, gj) {
@@ -1277,7 +1403,7 @@ class ObsDetailUI extends SearchUI {
   }
 
   /**
-   * @param {Map} map
+   * @param {ObsMap} map
    * @param {import("geojson").FeatureCollection<import("geojson").Point>} gj
    */
   async #setMapTypePop(map, gj) {
@@ -1303,6 +1429,25 @@ class ObsDetailUI extends SearchUI {
     this.#updateHash();
   }
 
+  /**
+   * @param {string} id
+   * @param {boolean} isExcluded
+   */
+  #updateExcludes(id, isExcluded) {
+    let exclude = this.#hashParams.exclude ?? [];
+    if (!isExcluded) {
+      exclude = exclude.filter((e) => e !== id);
+    } else {
+      exclude.push(id);
+      exclude = exclude.sort();
+    }
+    if (exclude.length > 0) {
+      this.#hashParams.exclude = exclude;
+    } else {
+      delete this.#hashParams.exclude;
+    }
+  }
+
   #updateGeoJSONFormat() {
     hdom.setFormElementValue(
       "geojson-value",
@@ -1326,6 +1471,10 @@ class ObsDetailUI extends SearchUI {
       f1: this.#f1.getParams(),
       view: getViewMode(),
     };
+    // Exclusions are tracked in the hash, retrieve them from the current hash.
+    if (this.#hashParams.exclude) {
+      params.exclude = this.#hashParams.exclude;
+    }
     // Only save the coordinate types if some of the non-zero types are unchecked.
     if (
       ALL_COORD_TYPES.some(

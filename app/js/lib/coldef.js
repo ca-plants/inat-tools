@@ -2,6 +2,12 @@ import { hdom } from "@htmltools/hdom";
 import { csvFormatRows } from "d3-dsv";
 
 /**
+ * @callback FnColDefGetHeaderVal
+ * @param {...any} args
+ * @returns {HTMLElement|string}
+ */
+
+/**
  * @template T
  * @callback FnColDefGetStringVal
  * @param {T} entry
@@ -15,7 +21,7 @@ import { csvFormatRows } from "d3-dsv";
  * @param {string} value
  * @param {T} entry
  * @param {...any} args
- * @returns {Element|string}
+ * @returns {HTMLElement|string}
  */
 
 /**
@@ -30,7 +36,7 @@ export class ColDef {
   #className;
 
   /**
-   * @param {string} th
+   * @param {string|FnColDefGetHeaderVal} th
    * @param {FnColDefGetStringVal<T>} fnValue
    * @param {FnColDefGetColVal<T>} [fnCellContent]
    * @param {string} [className]
@@ -90,8 +96,9 @@ export class ColDef {
   /**
    * @template T
    * @param {ColDef<T>[]} cols
+   * @param {...any} otherArgs
    */
-  static createTable(cols) {
+  static createTable(cols, ...otherArgs) {
     const table = hdom.createElement("table");
 
     const thead = hdom.createElement("thead");
@@ -101,7 +108,12 @@ export class ColDef {
     for (const col of cols) {
       const th = hdom.createElement("th", col.getClass());
       tr.appendChild(th);
-      th.appendChild(document.createTextNode(col.getHeaderLabel()));
+      const content = col.getHeaderLabel(otherArgs);
+      th.appendChild(
+        typeof content === "string"
+          ? document.createTextNode(content)
+          : content,
+      );
     }
 
     return table;
@@ -111,8 +123,11 @@ export class ColDef {
     return this.#className;
   }
 
-  getHeaderLabel() {
-    return this.#th;
+  /**
+   * @param {...any} [args]
+   */
+  getHeaderLabel(args) {
+    return typeof this.#th === "string" ? this.#th : this.#th(args);
   }
 
   /**
@@ -135,8 +150,17 @@ export class ColDef {
    * @returns {string}
    */
   static getCSVData(results, cols, ...otherArgs) {
+    /** @type {string[][]} */
     const data = [];
-    data.push(cols.map((col) => col.getHeaderLabel()));
+    data.push(
+      cols.map((col) => {
+        const h = col.getHeaderLabel(...otherArgs);
+        if (typeof h !== "string") {
+          throw new Error();
+        }
+        return h;
+      }),
+    );
 
     for (const result of results) {
       const row = [];
