@@ -120,11 +120,11 @@ export class SearchUI extends UI {
     }
 
     /** @type {HTMLElement} */
-    const eList = hdomOld.getElement("autocomplete");
+    const eList = hdom.getElement("autocomplete");
 
     const value = e.target.value;
     if (value.length < 3) {
-      hdomOld.showElement(eList, false);
+      hdom.showElement(eList, false);
       this.#autoCompleteRunning = false;
       return;
     }
@@ -263,7 +263,7 @@ export class SearchUI extends UI {
     const prefix = valueElementID.split("-")[0];
     await this.updateAnnotationsFields(
       prefix,
-      hdomOld.getFormElementValue(valueElementID),
+      hdom.getFormElementValue(valueElementID),
     );
   }
 
@@ -801,8 +801,8 @@ export class SearchUI extends UI {
   }
 
   showSearchForm() {
-    hdomOld.showElement("search-crit", true);
-    hdomOld.setFocusTo("f1-proj-name");
+    hdom.showElement("search-crit", true);
+    hdom.setFocusTo("f1-proj-name");
   }
 
   /**
@@ -812,18 +812,18 @@ export class SearchUI extends UI {
   async updateAnnotationsFields(prefix, taxonID) {
     const fieldSetID = prefix + "-annotation-filter";
     if (!taxonID) {
-      hdomOld.showElement(fieldSetID, false);
+      hdom.showElement(fieldSetID, false);
       return;
     }
     const annotations = await SearchUI.getAnnotationsForTaxon(
       parseInt(taxonID),
       this.getAPI(),
     );
-    hdomOld.showElement(fieldSetID, annotations.length > 0);
+    hdom.showElement(fieldSetID, annotations.length > 0);
 
     // Show only the relevant annotation options.
     for (const type of ANNOTATION_TYPES) {
-      hdomOld.showElement(
+      hdom.showElement(
         prefix + "-ann-type-" + type,
         annotations.includes(type),
       );
@@ -1299,10 +1299,11 @@ function handleSetFromURL(ui, prefix) {
  * @param {boolean} [setSelected=true]
  */
 function selectAutoComplete(config, li, setSelected = true) {
-  hdomOld.setFormElementValue(config.getInputID(), li.textContent);
-  hdomOld.setFormElementValue(config.getValueID(), li.dataset.id);
-  hdomOld.showElement("autocomplete", false);
+  hdom.setFormElementValue(config.getInputID(), li.textContent);
+  hdom.setFormElementValue(config.getValueID(), li.dataset.id || "");
+  hdom.showElement("autocomplete", false);
   config.setSelected(setSelected);
+  config.handleChange();
 }
 
 /**
@@ -1313,7 +1314,7 @@ function selectAutoComplete(config, li, setSelected = true) {
  */
 function setFromURL(e, ui, eDlg, prefix) {
   e.preventDefault();
-  const value = hdomOld.getFormElementValue(prefix + "-set-url-value");
+  const value = hdom.getFormElementValue(prefix + "-set-url-value");
   let searchParams;
   if (URL.canParse(value)) {
     const url = new URL(value);
