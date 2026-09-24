@@ -66,6 +66,7 @@
  *  place_id?: string;
  *  project_id?: string;
  *  quality_grade?: INatDataQualityGrade[];
+ *  verifiable?: boolean;
  *  taxon_id?: string;
  *  user_id?: string;
  *  year1?: number;

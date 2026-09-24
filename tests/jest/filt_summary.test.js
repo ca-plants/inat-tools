@@ -167,3 +167,9 @@ test(
   undefined,
   "Species observed in Tilden Regional Park, CA, US where taxon is obscured",
 );
+test(
+  "casual",
+  { place_id: "3523", verifiable: false },
+  undefined,
+  "Species observed in Tilden Regional Park, CA, US (including casual)",
+);

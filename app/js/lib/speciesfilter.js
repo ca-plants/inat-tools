@@ -149,6 +149,9 @@ export class SpeciesFilter {
     if (this.#params.obscuration === "taxon") {
       descrip += " where taxon is obscured";
     }
+    if (!this.getVerifiableOnly()) {
+      descrip += " (including casual)";
+    }
 
     if (comparisonFilter) {
       descrip += ", excluding ";
@@ -306,6 +309,10 @@ export class SpeciesFilter {
       url.searchParams.set("quality_grade", params.quality_grade.join(","));
     }
 
+    if (this.getVerifiableOnly()) {
+      url.searchParams.set("verifiable", "true");
+    }
+
     addString("taxon_id");
     addString("user_id");
 
@@ -327,6 +334,13 @@ export class SpeciesFilter {
 
   getUserID() {
     return this.#params.user_id;
+  }
+
+  /**
+   * @returns {boolean}
+   */
+  getVerifiableOnly() {
+    return this.#params.verifiable === undefined || this.#params.verifiable;
   }
 
   getYears() {
