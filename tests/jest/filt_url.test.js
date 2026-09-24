@@ -7,29 +7,29 @@ import { SpeciesFilter } from "../../app/js/lib/speciesfilter.js";
  * @param {string} expected
  */
 function test(name, f1, expected) {
-    it(name, () => {
-        const filter = new SpeciesFilter(f1);
-        expect(filter.getURL().toString()).toBe(expected);
-    });
+  it(name, () => {
+    const filter = new SpeciesFilter(f1);
+    expect(filter.getURL().toString()).toBe(expected);
+  });
 }
 
 test(
-    "month and year",
-    { month: 12, year1: 2023, year2: 2023 },
-    "https://www.inaturalist.org/observations?subview=grid&month=12&d1=2023-01-01&d2=2023-12-31",
+  "month and year",
+  { month: 12, year1: 2023, year2: 2023 },
+  "https://www.inaturalist.org/observations?subview=grid&month=12&verifiable=true&d1=2023-01-01&d2=2023-12-31",
 );
 test(
-    "month and years",
-    { month: 12, year1: 2021, year2: 2023 },
-    "https://www.inaturalist.org/observations?subview=grid&month=12&d1=2021-01-01&d2=2023-12-31",
+  "month and years",
+  { month: 12, year1: 2021, year2: 2023 },
+  "https://www.inaturalist.org/observations?subview=grid&month=12&verifiable=true&d1=2021-01-01&d2=2023-12-31",
 );
 test(
-    "month and start year",
-    { month: 12, year1: 2023 },
-    "https://www.inaturalist.org/observations?subview=grid&month=12&d1=2023-01-01",
+  "month and start year",
+  { month: 12, year1: 2023 },
+  "https://www.inaturalist.org/observations?subview=grid&month=12&verifiable=true&d1=2023-01-01",
 );
 test(
-    "month and start year",
-    { month: 11, year2: 2023 },
-    "https://www.inaturalist.org/observations?subview=grid&month=11&d2=2023-12-31",
+  "month and start year",
+  { month: 11, year2: 2023 },
+  "https://www.inaturalist.org/observations?subview=grid&month=11&verifiable=true&d2=2023-12-31",
 );

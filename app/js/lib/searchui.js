@@ -510,12 +510,15 @@ export class SearchUI extends UI {
     /** @type {import("../types.js").INatDataQualityGrade[]} */
     const grades = [];
     for (const qg of QUALITY_GRADES) {
-      if (hdomOld.isChecked(`${prefix}-${qg.id}`)) {
+      if (hdom.isChecked(`${prefix}-${qg.id}`)) {
         grades.push(qg.id);
       }
     }
     if (grades.length > 0) {
       filterArgs.quality_grade = grades;
+    }
+    if (!hdom.isChecked(`${prefix}-verifiable`)) {
+      filterArgs.verifiable = false;
     }
 
     const establishment = hdomOld.getFormElementValue(
@@ -717,11 +720,12 @@ export class SearchUI extends UI {
 
     const qualityGrades = filter.getQualityGrade();
     for (const qg of QUALITY_GRADES) {
-      hdomOld.setCheckBoxState(
+      hdom.setCheckBoxState(
         `${prefix}-${qg.id}`,
         qualityGrades.includes(qg.id),
       );
     }
+    hdom.setCheckBoxState(`${prefix}-verifiable`, filter.getVerifiableOnly());
 
     hdomOld.setFormElementValue(
       prefix + "-establishment",
@@ -966,6 +970,14 @@ function createMiscFields(prefix) {
       ),
     );
   }
+  divQuality.appendChild(
+    HTMLUtils.createCheckboxDiv(
+      undefined,
+      `${prefix}-verifiable`,
+      undefined,
+      "Verifiable only",
+    ),
+  );
   divForm.appendChild(divQuality);
 
   // Add establishment select.
