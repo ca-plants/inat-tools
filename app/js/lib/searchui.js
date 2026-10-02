@@ -475,10 +475,28 @@ export class SearchUI extends UI {
       }
     }
 
-    const month1 = hdomOld.getFormElementValue(prefix + "-month1");
-    const month2 = hdomOld.getFormElementValue(prefix + "-month2");
+    const month1 = hdom.getFormElementValue(prefix + "-month1");
+    const month2 = hdom.getFormElementValue(prefix + "-month2");
     if (month1 && month2) {
       filterArgs.month = getMonthList(month1, month2);
+    }
+
+    const year1 = hdom.getFormElementValue(prefix + "-year1");
+    const year2 = hdom.getFormElementValue(prefix + "-year2");
+    if (year1) {
+      filterArgs.year1 = parseInt(year1);
+    }
+    if (year2) {
+      filterArgs.year2 = parseInt(year2);
+    }
+
+    const date1 = hdom.getFormElementValue(prefix + "-date1");
+    const date2 = hdom.getFormElementValue(prefix + "-date2");
+    if (date1) {
+      filterArgs.date1 = date1;
+    }
+    if (date2) {
+      filterArgs.date2 = date2;
     }
 
     // If annotation fields are visible, include them.
@@ -496,15 +514,6 @@ export class SearchUI extends UI {
       if (annotations.length) {
         filterArgs.annotations = annotations;
       }
-    }
-
-    const year1 = hdomOld.getFormElementValue(prefix + "-year1");
-    const year2 = hdomOld.getFormElementValue(prefix + "-year2");
-    if (year1) {
-      filterArgs.year1 = parseInt(year1);
-    }
-    if (year2) {
-      filterArgs.year2 = parseInt(year2);
     }
 
     /** @type {import("../types.js").INatDataQualityGrade[]} */
@@ -563,6 +572,7 @@ export class SearchUI extends UI {
    */
   async initForm(prefix, filter = new SpeciesFilter({})) {
     createMonthSelects(prefix, this);
+    this.#createDateRangeFields(prefix);
 
     createMiscFields(prefix);
 
@@ -597,6 +607,15 @@ export class SearchUI extends UI {
    * @param {SpeciesFilter} filter
    */
   async setFormValues(prefix, filter) {
+    /**
+     * @param {SpeciesFilter} filter
+     */
+    function initDate(filter) {
+      const dates = filter.getDates();
+      hdom.setFormElementValue(`${prefix}-date1`, dates.date1 ?? "");
+      hdom.setFormElementValue(`${prefix}-date2`, dates.date2 ?? "");
+    }
+
     /**
      * @param {SpeciesFilter} filter
      * @param {SearchUI} ui
@@ -695,11 +714,11 @@ export class SearchUI extends UI {
       const years = filter.getYears();
       const year1 = years.year1;
       const year2 = years.year2;
-      hdomOld.setFormElementValue(
+      hdom.setFormElementValue(
         prefix + "-year1",
         year1 ? year1.toString() : "",
       );
-      hdomOld.setFormElementValue(
+      hdom.setFormElementValue(
         prefix + "-year2",
         year2 ? year2.toString() : "",
       );
@@ -717,6 +736,7 @@ export class SearchUI extends UI {
 
     initMonth(filter, this);
     initYear(filter);
+    initDate(filter);
 
     const qualityGrades = filter.getQualityGrade();
     for (const qg of QUALITY_GRADES) {
@@ -832,6 +852,20 @@ export class SearchUI extends UI {
         annotations.includes(type),
       );
     }
+  }
+
+  /**
+   * @param {string} prefix
+   */
+  #createDateRangeFields(prefix) {
+    const eDateOptions = hdom.getElement(`${prefix}-date-options`);
+    const eDiv = hdom.createElement("div", "form-input", eDateOptions);
+    const id1 = `${prefix}-date1`;
+    const id2 = `${prefix}-date2`;
+    eDiv.appendChild(hdom.createLabelElement(id1, "Date between"));
+    eDiv.appendChild(hdom.createInputElement({ id: id1, type: "date" }));
+    eDiv.appendChild(hdom.createLabelElement(id2, "and"));
+    eDiv.appendChild(hdom.createInputElement({ id: id2, type: "date" }));
   }
 }
 
@@ -1029,12 +1063,12 @@ function createMonthSelects(prefix, ui) {
     }),
   );
 
-  const select1 = hdomOld.createSelectElementWithLabel(
+  const select1 = hdom.createSelectElementWithLabel(
     prefix + "-month1",
     "Month",
     options,
   );
-  const div = hdomOld.createElement("div", "form-input");
+  const div = hdom.createElement("div", "form-input");
   if (select1.label) {
     div.appendChild(select1.label);
   }
@@ -1043,12 +1077,12 @@ function createMonthSelects(prefix, ui) {
     handleMonth1Change(e, ui),
   );
 
-  hdomOld.appendTextValue(div, " to ");
-  const select2 = hdomOld.createSelectElement(prefix + "-month2", options);
+  hdom.appendTextValue(div, " to ");
+  const select2 = hdom.createSelectElement(prefix + "-month2", options);
   div.appendChild(select2);
   hdom.addEventListener(select2, "change", (e) => handleMonth2Change(e, ui));
 
-  const yearsDiv = hdomOld.getElement(`${prefix}-date-years`);
+  const yearsDiv = hdom.getElement(`${prefix}-date-years`);
   // @ts-ignore - remove once all controls are generated dynamically
   yearsDiv.parentElement.insertBefore(div, yearsDiv);
 }

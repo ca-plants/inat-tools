@@ -149,7 +149,6 @@ export function createTaxaSummaryTable(filter, results, showDiffs = false) {
     obsURL.searchParams.set("taxon_id", result.taxon.id.toString());
     if (!filter.getVerifiableOnly()) {
       obsURL.searchParams.set("verifiable", "any");
-      console.log(obsURL.toString());
     }
     const eLinkInat = hdom.createLinkElement(obsURL, "iNat", {
       target: "_blank",

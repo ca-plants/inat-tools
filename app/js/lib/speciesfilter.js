@@ -45,6 +45,9 @@ export class SpeciesFilter {
     return this.#params.boundary;
   }
 
+  getDates() {
+    return { date1: this.#params.date1, date2: this.#params.date2 };
+  }
   /**
    * @param {import("../types.js").INatAPI} api
    * @param {SpeciesFilter} [comparisonFilter]
@@ -130,6 +133,21 @@ export class SpeciesFilter {
         descrip += " in " + year2 + " or earlier";
       }
     }
+
+    const date1 = this.#params.date1;
+    const date2 = this.#params.date2;
+    if (date1 !== undefined) {
+      if (date2 === date1) {
+        descrip += ` where date is ${date1}`;
+      } else if (date2 !== undefined) {
+        descrip += ` where date is from ${date1} to ${date2}`;
+      } else {
+        descrip += ` where date is on or after ${date1}`;
+      }
+    } else if (date2 !== undefined) {
+      descrip += ` where date is on or before ${date2}`;
+    }
+
     if (this.#params.quality_grade) {
       if (this.#params.quality_grade.length > 1) {
         throw new Error(JSON.stringify(this.#params.quality_grade));
