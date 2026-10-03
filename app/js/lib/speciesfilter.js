@@ -347,6 +347,13 @@ export class SpeciesFilter {
       );
     }
 
+    if (params.date1 !== undefined) {
+      url.searchParams.set("d1", params.date1);
+    }
+    if (params.date2 !== undefined) {
+      url.searchParams.set("d2", params.date2);
+    }
+
     return url;
   }
 
