@@ -330,7 +330,7 @@ export class SearchUI extends UI {
         throw new Error();
       }
       const prefix = e.id.substring(0, e.id.length - 1);
-      SearchUI.setYearMinMax(prefix);
+      handleDateRangeChange(prefix);
       SearchUI.setYearMode(prefix);
     }
 
@@ -343,16 +343,16 @@ export class SearchUI extends UI {
        * @param {string|number} year
        */
       function setValues(e, year) {
-        hdomOld.setFormElementValue(e.id + "1", year.toString());
-        hdomOld.setFormElementValue(e.id + "2", year.toString());
-        SearchUI.setYearMinMax(e.id);
+        hdom.setFormElementValue(e.id + "1", year.toString());
+        hdom.setFormElementValue(e.id + "2", year.toString());
+        handleDateRangeChange(e.id);
       }
 
       if (!(e instanceof HTMLElement)) {
         throw new Error();
       }
 
-      switch (hdomOld.getFormElementValue(e)) {
+      switch (hdom.getFormElementValue(e)) {
         case "Any":
           setValues(e, "");
           break;
@@ -722,7 +722,7 @@ export class SearchUI extends UI {
         prefix + "-year2",
         year2 ? year2.toString() : "",
       );
-      SearchUI.setYearMinMax(prefix + "-year");
+      handleDateRangeChange(prefix + "-year");
       SearchUI.setYearMode(prefix + "-year");
     }
 
@@ -805,8 +805,8 @@ export class SearchUI extends UI {
    */
   static setYearMode(prefix) {
     function getMode() {
-      const d1 = hdomOld.getFormElementValue(prefix + "1");
-      const d2 = hdomOld.getFormElementValue(prefix + "2");
+      const d1 = hdom.getFormElementValue(prefix + "1");
+      const d2 = hdom.getFormElementValue(prefix + "2");
       if (d1 === d2 && d1 !== undefined) {
         if (d1 === "") {
           return "Any";
@@ -821,7 +821,7 @@ export class SearchUI extends UI {
       return "Range";
     }
 
-    hdomOld.setFormElementValue(prefix, getMode());
+    hdom.setFormElementValue(prefix, getMode());
   }
 
   showSearchForm() {
@@ -1225,6 +1225,25 @@ async function handleBoundaryChange(event, prefix) {
     prefix + "-boundary-text",
     JSON.stringify(JSON.parse(str)),
   );
+}
+
+/**
+ * Handle a date range change; make sure field values are consistent and properly enabled.
+ * @param {string} idYear *-year
+ */
+function handleDateRangeChange(idYear) {
+  const prefix = idYear.split("-")[0];
+  const year1 = hdom.getFormElementValue(`${idYear}1`);
+  const year2 = hdom.getFormElementValue(`${idYear}2`);
+  const hasYearRange = year1 || year2;
+  if (hasYearRange) {
+    // Disable the date range.
+    hdom.setFormElementValue(`${prefix}-date1`, "");
+    hdom.setFormElementValue(`${prefix}-date2`, "");
+  }
+  hdom.enableElement(`${prefix}-date1`, !hasYearRange);
+  hdom.enableElement(`${prefix}-date2`, !hasYearRange);
+  SearchUI.setYearMinMax(idYear);
 }
 
 /**
