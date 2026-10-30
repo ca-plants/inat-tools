@@ -168,6 +168,30 @@ test(
   "Species observed in Tilden Regional Park, CA, US where taxon is obscured",
 );
 test(
+  "place and date",
+  { place_id: "3523", date1: "2020-09-01", date2: "2020-09-01" },
+  undefined,
+  "Species observed in Tilden Regional Park, CA, US where date is 2020-09-01",
+);
+test(
+  "place and dates",
+  { place_id: "3523", date1: "2020-09-01", date2: "2020-09-02" },
+  undefined,
+  "Species observed in Tilden Regional Park, CA, US where date is from 2020-09-01 to 2020-09-02",
+);
+test(
+  "place and start date",
+  { place_id: "3523", date1: "2020-09-01" },
+  undefined,
+  "Species observed in Tilden Regional Park, CA, US where date is on or after 2020-09-01",
+);
+test(
+  "place and end date",
+  { place_id: "3523", date2: "2020-09-01" },
+  undefined,
+  "Species observed in Tilden Regional Park, CA, US where date is on or before 2020-09-01",
+);
+test(
   "casual",
   { place_id: "3523", verifiable: false },
   undefined,

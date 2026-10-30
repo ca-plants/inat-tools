@@ -39,6 +39,10 @@ input[type="checkbox"] {
   margin-right: .25rem;
 }
 
+input[type="date"] {
+  width: 7rem;
+}
+
 input:invalid {
   border-color: red;
 }

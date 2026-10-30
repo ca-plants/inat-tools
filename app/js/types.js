@@ -71,6 +71,8 @@
  *  user_id?: string;
  *  year1?: number;
  *  year2?: number;
+ *  date1?: string;
+ *  date2?: string;
  * }} ParamsSpeciesFilter
  *
  * Classes
