@@ -407,6 +407,13 @@ export class SearchUI extends UI {
       );
     }
 
+    hdom.addEventListener(`${prefix}-date1`, "change", () =>
+      SearchUI.setDateMinMax(prefix),
+    );
+    hdom.addEventListener(`${prefix}-date2`, "change", () =>
+      SearchUI.setDateMinMax(prefix),
+    );
+
     const eSetURL = document.getElementById(prefix + "-set-from-url");
     if (eSetURL) {
       eSetURL.addEventListener("click", () => handleSetFromURL(this, prefix));
@@ -614,6 +621,7 @@ export class SearchUI extends UI {
       const dates = filter.getDates();
       hdom.setFormElementValue(`${prefix}-date1`, dates.date1 ?? "");
       hdom.setFormElementValue(`${prefix}-date2`, dates.date2 ?? "");
+      SearchUI.setDateMinMax(prefix);
     }
 
     /**
@@ -785,12 +793,24 @@ export class SearchUI extends UI {
   /**
    * @param {string} prefix
    */
+  static setDateMinMax(prefix) {
+    /** @type {HTMLInputElement} */
+    const d1 = hdom.getElement(`${prefix}-date1`);
+    /** @type {HTMLInputElement} */
+    const d2 = hdom.getElement(`${prefix}-date2`);
+    d1.max = d2.value;
+    d2.min = d1.value;
+  }
+
+  /**
+   * @param {string} prefix
+   */
   static setYearMinMax(prefix) {
     const d1 = document.getElementById(prefix + "1");
     const d2 = document.getElementById(prefix + "2");
     if (d1 && d2) {
-      const d1Val = hdomOld.getFormElementValue(d1);
-      const d2Val = hdomOld.getFormElementValue(d2);
+      const d1Val = hdom.getFormElementValue(d1);
+      const d2Val = hdom.getFormElementValue(d2);
       d1.setAttribute(
         "max",
         d2Val ? d2Val : DateUtils.getCurrentYear().toString(),
@@ -1243,6 +1263,7 @@ function handleDateRangeChange(idYear) {
   }
   hdom.enableElement(`${prefix}-date1`, !hasYearRange);
   hdom.enableElement(`${prefix}-date2`, !hasYearRange);
+  SearchUI.setDateMinMax(prefix);
   SearchUI.setYearMinMax(idYear);
 }
 
